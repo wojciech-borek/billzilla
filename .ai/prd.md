@@ -27,24 +27,29 @@ Billzilla adresuje te problemy, oferując proste, zautomatyzowane i scentralizow
 - F-007: Po opuszczeniu grupy, użytkownik otrzymuje w niej status "Nieaktywny", a jego dane finansowe i salda pozostają w historii grupy w celu umożliwienia końcowych rozliczeń.
 
 ### 3.2. Zarządzanie wydatkami
-- F-008: Użytkownicy mogą dodawać wydatki za pomocą formularza manualnego, podając opis, kwotę, datę, oraz określając, kto zapłacił i kto uczestniczył w wydatku.
-- F-009: Użytkownicy mogą dodawać wydatki za pomocą interfejsu głosowego. Nagranie jest przetwarzane asynchronicznie, a dane wypełniają automatycznie formularz wydatku.
+- F-008: Użytkownicy mogą dodawać wydatki za pomocą formularza manualnego, podając opis, kwotę, datę, walutę oraz określając, kto zapłacił i kto uczestniczył w wydatku.
+- F-009: Użytkownicy mogą dodawać wydatki za pomocą interfejsu głosowego. Nagranie jest przetwarzane asynchronicznie, a dane wypełniają automatycznie formularz wydatku. System potrafi rozpoznać walutę z polecenia, a w przypadku jej braku, używa waluty bazowej grupy.
 - F-010: Każdy wydatek dodany za pomocą głosu musi zostać zweryfikowany i zatwierdzony przez użytkownika przed zapisaniem. Użytkownik ma możliwość edycji pól wypełnionych przez AI.
 - F-011: Aplikacja obsługuje dwa sposoby podziału wydatku: "po równo" oraz "każdy ma swoją kwotę".
 - F-012: System zapewnia, że suma podziałów wydatku zawsze odpowiada jego całkowitej kwocie. Walidacja odbywa się w czasie rzeczywistym w formularzu, uniemożliwiając zapis, gdy sumy się nie zgadzają.
 - F-013: Tylko twórca wydatku ma uprawnienia do jego edycji lub usunięcia.
 
 ### 3.3. System sald i rozliczeń
-- F-014: Aplikacja automatycznie oblicza i aktualizuje salda wewnątrz każdej grupy po każdej operacji (dodanie wydatku, rozliczenie).
-- F-015: Interfejs użytkownika w czytelny sposób prezentuje podsumowanie, kto komu jest winien pieniądze w ramach grupy.
-- F-016: Funkcja "Rozlicz się" ("Settle up") pozwala użytkownikom rejestrować spłaty długów.
+- F-014: Aplikacja automatycznie oblicza i aktualizuje salda wewnątrz każdej grupy po każdej operacji (dodanie wydatku, rozliczenie). Wszystkie wydatki w walutach obcych są przeliczane na walutę bazową grupy według zdefiniowanego w niej kursu.
+- F-015: Interfejs użytkownika w czytelny sposób prezentuje podsumowanie, kto komu jest winien pieniądze w ramach grupy, zawsze w walucie bazowej grupy.
+- F-016: Funkcja "Rozlicz się" ("Settle up") pozwala użytkownikom rejestrować spłaty długów w walucie bazowej grupy.
 - F-017: Rozliczenie może dotyczyć pełnej lub częściowej kwoty długu i jest zapisywane jako oddzielna, niezmienna transakcja w historii grupy.
+
+### 3.4. Zarządzanie walutami w grupie
+- F-018: Użytkownik tworzący grupę definiuje dla niej jedną walutę bazową (np. PLN).
+- F-019: W ustawieniach grupy można dodawać kolejne waluty (np. EUR, USD) i definiować dla nich stały, ręcznie wprowadzany przelicznik na walutę bazową (np. 1 EUR = 4,50 PLN).
+- F-020: Wszystkie salda i podsumowania w grupie są zawsze prezentowane w walucie bazowej.
 
 ## 4. Granice produktu
 
 Następujące funkcje i cechy są świadomie wyłączone z zakresu wersji MVP (Minimum Viable Product), aby zapewnić szybkie wdrożenie i skupić się na kluczowej wartości produktu:
 - Brak uwierzytelniania za pomocą e-maila i hasła.
-- Brak obsługi wielu walut. Aplikacja będzie operować na jednej, domyślnej walucie (PLN), z zachowaniem możliwości rozbudowy tej funkcji w przyszłości.
+- Ograniczona obsługa wielu walut: Aplikacja pozwala na ręczne zdefiniowanie stałych kursów wymiany w ramach grupy. Brak automatycznego pobierania kursów z zewnętrznych serwisów (np. NBP, EBC). Wszystkie salda prowadzone są w jednej, bazowej walucie grupy.
 - Brak skomplikowanych ról i uprawnień w grupach (poza zasadą, że tylko autor może edytować/usuwać swój wydatek).
 - Brak powiadomień push o nowych wydatkach czy zmianach salda.
 - Brak funkcji eksportu danych.
@@ -95,9 +100,9 @@ Następujące funkcje i cechy są świadomie wyłączone z zakresu wersji MVP (M
 ### Zarządzanie wydatkami
 - ID: US-005
 - Tytuł: Ręczne dodawanie wydatku z podziałem "po równo"
-- Opis: Jako członek grupy, chcę ręcznie dodać wydatek, podając kwotę, opis i uczestników, z podziałem "po równo", aby szybko zarejestrować wspólny koszt.
+- Opis: Jako członek grupy, chcę ręcznie dodać wydatek, podając kwotę, opis, walutę i uczestników, z podziałem "po równo", aby szybko zarejestrować wspólny koszt.
 - Kryteria akceptacji:
-  - Formularz dodawania wydatku pozwala na wpisanie opisu, kwoty i daty.
+  - Formularz dodawania wydatku pozwala na wpisanie opisu, kwoty, daty i wybranie waluty z listy zdefiniowanej dla grupy.
   - Użytkownik może wybrać, kto zapłacił za wydatek (domyślnie on sam).
   - Użytkownik może wybrać z listy członków grupy, kto uczestniczył w wydatku.
   - Po wybraniu opcji "po równo", kwota jest automatycznie dzielona na wybranych uczestników.
@@ -115,13 +120,13 @@ Następujące funkcje i cechy są świadomie wyłączone z zakresu wersji MVP (M
 
 - ID: US-007
 - Tytuł: Dodawanie wydatku za pomocą głosu
-- Opis: Będąc w pośpiechu, chcę powiedzieć do aplikacji np. "Ja zapłaciłem 120 zł za lunch dla mnie i Ani", aby szybko dodać wydatek bez ręcznego wypełniania formularza.
+- Opis: Będąc w pośpiechu, chcę powiedzieć do aplikacji np. "Ja zapłaciłem 50 euro za lunch dla mnie i Ani", aby system automatycznie przeliczył to na walutę bazową grupy i dodał wydatek bez ręcznego wypełniania formularza.
 - Kryteria akceptacji:
   - Aplikacja posiada interfejs do nagrywania polecenia głosowego.
   - W trakcie przetwarzania polecenia, użytkownik widzi wskaźnik ładowania.
-  - Po przetworzeniu, formularz wydatku jest automatycznie wypełniony danymi: kwota (120), płacący (ja), uczestnicy (ja, Ania), opis (lunch).
+  - Po przetworzeniu, formularz wydatku jest automatycznie wypełniony danymi: kwota (50), waluta (EUR), płacący (ja), uczestnicy (ja, Ania), opis (lunch).
   - Użytkownik może poprawić każde z pól przed zatwierdzeniem.
-  - Po zatwierdzeniu, wydatek jest dodawany, a salda aktualizowane.
+  - Po zatwierdzeniu, wydatek jest dodawany, a salda (wyrażone w walucie bazowej grupy) są poprawnie aktualizowane.
 
 - ID: US-008
 - Tytuł: Edycja własnego wydatku
@@ -145,7 +150,7 @@ Następujące funkcje i cechy są świadomie wyłączone z zakresu wersji MVP (M
 - Tytuł: Przeglądanie sald w grupie
 - Opis: Jako członek grupy, chcę w każdej chwili widzieć proste podsumowanie, kto komu jest winien pieniądze, aby mieć kontrolę nad finansami.
 - Kryteria akceptacji:
-  - W widoku grupy znajduje się sekcja podsumowująca salda.
+  - W widoku grupy znajduje się sekcja podsumowująca salda, wyświetlana w walucie bazowej grupy.
   - Podsumowanie jasno pokazuje, którzy użytkownicy mają długi i wobec kogo.
   - Podsumowanie jasno pokazuje, którym użytkownikom inni są winni pieniądze.
   - Użytkownik może zobaczyć swoje całkowite saldo w ramach grupy (ile jest "na plusie" lub "na minusie").
@@ -156,15 +161,25 @@ Następujące funkcje i cechy są świadomie wyłączone z zakresu wersji MVP (M
 - Kryteria akceptacji:
   - Aplikacja udostępnia funkcję "Rozlicz się".
   - Użytkownik może wybrać osobę, z którą się rozlicza.
-  - Użytkownik wpisuje kwotę spłaty (może być to kwota częściowa lub całkowita).
+  - Użytkownik wpisuje kwotę spłaty w walucie bazowej grupy (może być to kwota częściowa lub całkowita).
   - Po zatwierdzeniu, w historii grupy pojawia się nowa transakcja typu "rozliczenie".
   - Salda obu użytkowników biorących udział w rozliczeniu są poprawnie zaktualizowane.
 
+- ID: US-012
+- Tytuł: Zarządzanie walutami w grupie
+- Opis: Jako administrator grupy, chcę zdefiniować walutę bazową dla grupy oraz dodać inne waluty wraz z ich stałym przelicznikiem, aby umożliwić członkom dodawanie wydatków w różnych walutach.
+- Kryteria akceptacji:
+  - Podczas tworzenia grupy, jej założyciel wybiera walutę bazową.
+  - W ustawieniach grupy istnieje opcja "Zarządzaj walutami".
+  - Użytkownik może dodać nową walutę (np. z predefiniowanej listy) i wpisać dla niej stały kurs wymiany na walutę bazową (np. 1 EUR = 4.50 PLN).
+  - Użytkownik może edytować lub usuwać dodane kursy wymiany.
+  - Waluta bazowa grupy nie może zostać usunięta.
+
 ## 6. Metryki sukcesu
 
-- MS-001: Niezawodność kluczowej pętli: Mierzona poprzez odsetek pomyślnie zakończonych sesji użytkownika obejmujących ścieżkę: utworzenie grupy -> zaproszenie członka -> dodanie wydatku (głosem lub manualnie) -> weryfikacja poprawności sald.
+- MS-001: Niezawodność kluczowej pętli: Mierzona poprzez odsetek pomyślnie zakończonych sesji użytkownika obejmujących ścieżkę: utworzenie grupy -> zaproszenie członka -> dodanie wydatku (głosem lub manualnie, z uwzględnieniem różnych walut) -> weryfikacja poprawności sald.
 - MS-002: Wydajność funkcji głosowej: Średni czas od zakończenia nagrywania polecenia do wyświetlenia wypełnionego formularza. Cel: poniżej 20 sekund.
-- MS-003: Skuteczność AI: Odsetek wydatków dodanych głosem, które wymagały ręcznej korekty kluczowych pól (kwota, płacący, uczestnicy) przez użytkownika przed zatwierdzeniem.
+- MS-003: Skuteczność AI: Odsetek wydatków dodanych głosem, które wymagały ręcznej korekty kluczowych pól (kwota, płacący, uczestnicy, waluta) przez użytkownika przed zatwierdzeniem.
 - MS-004: Zaangażowanie użytkowników: Stosunek liczby wydatków dodanych głosem do liczby wydatków dodanych manualnie.
 - MS-005: Aktywność: Średnia liczba wydatków dodawanych przez aktywnego użytkownika w tygodniu.
 - MS-006: Stabilność: Aplikacja jest na tyle stabilna, że grupa testowa może jej użyć do bezproblemowego rozliczenia realnego scenariusza, np. weekendowego wyjazdu.
