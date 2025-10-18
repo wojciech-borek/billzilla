@@ -98,15 +98,18 @@ Poniżej lista głównych zasobów API wraz z odpowiadającymi im tabelami bazy 
 {
   "data": [
     {
-      "id": "uuid",
-      "name": "Wyjazd do Zakopanego",
-      "base_currency_code": "PLN",
-      "status": "active",
-      "created_at": "2025-01-01T00:00:00Z",
-      "role": "creator",
-      "member_count": 5,
-      "my_balance": -123.45
-    }
+      "id":"28635650-7151-43e6-a95b-f5c70709734d",
+      "name":"Wyjazd w gory",
+      "base_currency_code":"PLN",
+      "status":"active",
+      "created_at":"2025-10-18T11:46:11.229243+00:00",
+      "role":"creator",
+      "member_count":1,
+      "my_balance":0,
+      "members":[
+        {"profile_id":"a814cd69-42a9-4154-b97c-4f2565d05b57","full_name":null,"avatar_url":null,"status":"active"}
+        ]
+        }
   ],
   "total": 10,
   "limit": 50,

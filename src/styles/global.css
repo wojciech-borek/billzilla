@@ -4,73 +4,66 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  /* Billzilla Brand Colors */
+  --radius: 1.5rem; /* rounded-2xl jako standard */
+  
+  /* Primary - Zielony dinozaura #49A067 */
+  --primary: #49A067;
+  --primary-foreground: #ffffff;
+  --primary-dark: #0E2E24;
+  
+  /* Secondary - Jasna zieleń #6DBE83 */
+  --secondary: #6DBE83;
+  --secondary-foreground: #0C2231;
+  
+  /* Accent - Pomarańczowo-różowy język #F49B7A */
+  --accent: #F49B7A;
+  --accent-foreground: #0C2231;
+  
+  /* Background - Jasny kremowy #F9FAF8 */
+  --background: #F9FAF8;
+  --foreground: #0C2231; /* Ciemny granat - główny tekst */
+  
+  /* Card */
+  --card: #ffffff;
+  --card-foreground: #0C2231;
+  
+  /* Popover */
+  --popover: #ffffff;
+  --popover-foreground: #0C2231;
+  
+  /* Muted */
+  --muted: #E8EBE6;
+  --muted-foreground: #5A6C66;
+  
+  /* Destructive */
+  --destructive: #EF4444;
+  --destructive-foreground: #ffffff;
+  
+  /* Border & Input */
+  --border: #D1D5DB;
+  --input: #E5E7EB;
+  --ring: #49A067;
+  
+  /* Charts - odcienie zieleni i akcentu */
+  --chart-1: #49A067;
+  --chart-2: #6DBE83;
+  --chart-3: #F49B7A;
+  --chart-4: #0E2E24;
+  --chart-5: #8DD4A0;
+  
+  /* Sidebar - używa primary color */
+  --sidebar: #ffffff;
+  --sidebar-foreground: #0C2231;
+  --sidebar-primary: #49A067;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #6DBE83;
+  --sidebar-accent-foreground: #0C2231;
+  --sidebar-border: #D1D5DB;
+  --sidebar-ring: #49A067;
 }
 
-.dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
-}
+/* Dark mode nie jest używany w Billzilla - aplikacja ma być jasna i optymistyczna */
 
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);
@@ -116,5 +109,10 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-bold tracking-tight;
   }
 }

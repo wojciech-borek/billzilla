@@ -71,16 +71,28 @@ export type ProfileDTO = Profile;
 // ============================================================================
 
 /**
+ * Lightweight member summary for list views
+ * Used in API responses, but simplified for frontend
+ */
+export type GroupMemberSummaryDTO = {
+  profile_id: string;
+  full_name: string | null;
+  avatar_url: string | null;
+  status: GroupMemberStatus;
+  role: GroupRole;
+};
+
+/**
  * Group list item with computed fields
  * Used in: GET /api/groups (array items)
  */
 export type GroupListItemDTO = Group & {
   /** User's role in this group */
   role: GroupRole;
-  /** Number of active members */
-  member_count: number;
   /** User's balance in base currency (positive = owed to user, negative = user owes) */
   my_balance: number;
+  /** All active members for avatar slider (full list, frontend calculates count from members.length) */
+  members: GroupMemberSummaryDTO[];
 };
 
 /**

@@ -1,14 +1,105 @@
 /**
  * API endpoint for groups
+ * GET /api/groups - List groups for user
  * POST /api/groups - Create a new group
  */
 
 import type { APIRoute } from 'astro';
-import { createGroupSchema } from '../../../lib/schemas/groupSchemas';
-import { createGroup, CurrencyNotFoundError, TransactionError } from '../../../lib/services/groupService';
-import type { CreateGroupCommand, CreateGroupResponseDTO, ErrorResponseDTO } from '../../../types';
+import { createGroupSchema, listGroupsQuerySchema } from '../../../lib/schemas/groupSchemas';
+import { createGroup, listGroups, CurrencyNotFoundError, TransactionError } from '../../../lib/services/groupService';
+import type { CreateGroupCommand, CreateGroupResponseDTO, ErrorResponseDTO, PaginatedResponse, GroupListItemDTO } from '../../../types';
 
 export const prerender = false;
+
+/**
+ * GET /api/groups
+ * Lists groups for the authenticated user with computed fields
+ * 
+ * Query parameters:
+ * - status: "active" | "archived" (optional, default: "active")
+ * - limit: number 1-100 (optional, default: 50)
+ * - offset: number >= 0 (optional, default: 0)
+ * 
+ * Returns:
+ * - 200: Paginated list of groups
+ * - 400: Invalid query parameters
+ * - 401: User not authenticated
+ * - 500: Internal server error
+ */
+export const GET: APIRoute = async ({ url, locals }) => {
+  try {
+    // Check authentication
+    const user = locals.user;
+    if (!user) {
+      const errorResponse: ErrorResponseDTO = {
+        error: {
+          code: 'UNAUTHORIZED',
+          message: 'You must be logged in to view groups'
+        }
+      };
+      return new Response(JSON.stringify(errorResponse), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    // Parse and validate query parameters
+    const queryParams = {
+      status: url.searchParams.get('status') || undefined,
+      limit: url.searchParams.get('limit') || undefined,
+      offset: url.searchParams.get('offset') || undefined
+    };
+
+    const validationResult = listGroupsQuerySchema.safeParse(queryParams);
+    if (!validationResult.success) {
+      const errorResponse: ErrorResponseDTO = {
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'Invalid query parameters',
+          details: validationResult.error.flatten()
+        }
+      };
+      return new Response(JSON.stringify(errorResponse), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    const validatedQuery = validationResult.data;
+
+    // Call service to list groups
+    const supabase = locals.supabase;
+    const result: PaginatedResponse<GroupListItemDTO> = await listGroups(
+      supabase,
+      user.id,
+      {
+        status: validatedQuery.status,
+        limit: validatedQuery.limit,
+        offset: validatedQuery.offset
+      }
+    );
+
+    // Return success response
+    return new Response(JSON.stringify(result), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' }
+    });
+
+  } catch (error) {
+    // Handle unexpected errors
+    console.error('Unexpected error in GET /api/groups:', error);
+    const errorResponse: ErrorResponseDTO = {
+      error: {
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'An unexpected error occurred while fetching groups'
+      }
+    };
+    return new Response(JSON.stringify(errorResponse), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+};
 
 /**
  * POST /api/groups

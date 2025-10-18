@@ -26,6 +26,8 @@ Billzilla adresuje te problemy, oferując proste, zautomatyzowane i scentralizow
 - F-006: Użytkownik może opuścić grupę w dowolnym momencie.
 - F-007: Po opuszczeniu grupy, użytkownik otrzymuje w niej status "Nieaktywny", a jego dane finansowe i salda pozostają w historii grupy w celu umożliwienia końcowych rozliczeń.
 
+- F-021: Po zalogowaniu użytkownik trafia na pulpit z listą jego grup i oczekujących zaproszeń oraz może akceptować/odrzucać zaproszenia i utworzyć nową grupę.
+
 ### 3.2. Zarządzanie wydatkami
 - F-008: Użytkownicy mogą dodawać wydatki za pomocą formularza manualnego, podając opis, kwotę, datę, walutę oraz określając, kto zapłacił i kto uczestniczył w wydatku.
 - F-009: Użytkownicy mogą dodawać wydatki za pomocą interfejsu głosowego. Nagranie jest przetwarzane asynchronicznie, a dane wypełniają automatycznie formularz wydatku. System potrafi rozpoznać walutę z polecenia, a w przypadku jej braku, używa waluty bazowej grupy.
@@ -99,6 +101,20 @@ Następujące funkcje i cechy są świadomie wyłączone z zakresu wersji MVP (M
   - W widoku grupy dla pozostałych członków, użytkownik, który ją opuścił, ma status "Nieaktywny".
   - Salda związane z nieaktywnym użytkownikiem pozostają niezmienione i wciąż można się z nim rozliczyć.
 
+- ID: US-013
+- Tytuł: Pulpit po zalogowaniu: lista grup i zaproszeń
+- Opis: Jako zalogowany użytkownik, chcę na pulpicie widzieć listę moich grup oraz oczekujących zaproszeń.
+- Kryteria akceptacji:
+  - Po zalogowaniu użytkownik trafia na pulpit pod ścieżką "/dashboard".
+  - Widok zawiera dwie sekcje: "Zaproszenia" oraz "Twoje grupy".
+  - W sekcji "Zaproszenia" widoczne są karty z nazwą grupy, informacją o zapraszającym oraz przyciskami "Akceptuj" i "Odrzuć".
+  - Po akceptacji zaproszenia użytkownik zostaje dodany do grupy; karta znika z sekcji zaproszeń, a nowa karta pojawia się w sekcji "Twoje grupy".
+  - Po odrzuceniu zaproszenia karta znika z sekcji zaproszeń.
+  - W sekcji "Twoje grupy" widoczne są karty grup z nazwą, saldem użytkownika w walucie bazowej grupy oraz skrótem listy uczestników; kliknięcie karty otwiera widok grupy.
+  - Gdy użytkownik nie ma żadnych grup ani zaproszeń, wyświetlany jest stan pusty z możliwością utworzenia pierwszej grupy.
+  - Dane sekcji ładowane są niezależnie; widoczne są wyłącznie grupy i zaproszenia powiązane z aktualnie zalogowanym użytkownikiem.
+  - Z poziomu pulpitu dostępna jest szybka akcja utworzenia nowej grupy.
+
 ### Zarządzanie wydatkami
 - ID: US-005
 - Tytuł: Ręczne dodawanie wydatku z podziałem "po równo"
@@ -106,7 +122,7 @@ Następujące funkcje i cechy są świadomie wyłączone z zakresu wersji MVP (M
 - Kryteria akceptacji:
   - Formularz dodawania wydatku pozwala na wpisanie opisu, kwoty, daty i wybranie waluty z listy zdefiniowanej dla grupy.
   - Użytkownik może wybrać, kto zapłacił za wydatek (domyślnie on sam).
-  - Użytkownik może wybrać z listy członków grupy, kto uczestniczył w wydatku.
+  - Użytkownik może wybrać z listy uczestników grupy, kto uczestniczył w wydatku.
   - Po wybraniu opcji "po równo", kwota jest automatycznie dzielona na wybranych uczestników.
   - Po zapisaniu, salda wszystkich uczestników są poprawnie aktualizowane.
 
