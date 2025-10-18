@@ -1,0 +1,76 @@
+### Test POST /api/groups - Create group without invitations
+POST http://localhost:4321/api/groups
+Content-Type: application/json
+
+{
+  "name": "Wyjazd w góry",
+  "base_currency_code": "PLN"
+}
+
+### Test POST /api/groups - Create group with invitations (existing users)
+POST http://localhost:4321/api/groups
+Content-Type: application/json
+
+{
+  "name": "Wspólne zakupy",
+  "base_currency_code": "EUR",
+  "invite_emails": ["user1@example.com", "user2@example.com"]
+}
+
+### Test POST /api/groups - Create group with mixed invitations
+POST http://localhost:4321/api/groups
+Content-Type: application/json
+
+{
+  "name": "Urodziny",
+  "base_currency_code": "USD",
+  "invite_emails": [
+    "user1@example.com",
+    "newuser@example.com",
+    "another@example.com"
+  ]
+}
+
+### Test POST /api/groups - Invalid currency code (should return 422)
+POST http://localhost:4321/api/groups
+Content-Type: application/json
+
+{
+  "name": "Test Group",
+  "base_currency_code": "XXX"
+}
+
+### Test POST /api/groups - Validation error (name too long, should return 400)
+POST http://localhost:4321/api/groups
+Content-Type: application/json
+
+{
+  "name": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam.",
+  "base_currency_code": "PLN"
+}
+
+### Test POST /api/groups - Validation error (invalid email, should return 400)
+POST http://localhost:4321/api/groups
+Content-Type: application/json
+
+{
+  "name": "Test Group",
+  "base_currency_code": "PLN",
+  "invite_emails": ["invalid-email", "valid@example.com"]
+}
+
+### Test POST /api/groups - Edge case: duplicate emails and own email
+POST http://localhost:4321/api/groups
+Content-Type: application/json
+
+{
+  "name": "Edge Case Test",
+  "base_currency_code": "PLN",
+  "invite_emails": [
+    "user1@example.com",
+    "user1@example.com",
+    "test@example.com",
+    "USER1@EXAMPLE.COM"
+  ]
+}
+
