@@ -12,11 +12,12 @@
 
 ### Backend - Supabase jako kompleksowe rozwiązanie backendowe:
 
--   **Baza danych PostgreSQL z Row-Level Security (RLS):** To kluczowy element bezpieczeństwa. RLS pozwoli nam zdefiniować precycyjne reguły dostępu na poziomie wiersza w bazie danych, gwarantując, że użytkownicy będą mieli dostęp wyłącznie do danych swoich grup. Umożliwi to realizację wymagań takich jak F-013 (tylko autor może edytować/usuwać wydatek).
--   **SDK (supabase-js):** Umożliwi bezpośrednią i bezpieczną komunikację z bazą danych i systemem autentykacji z poziomu frontendu, co eliminuje potrzebę tworzenia tradycyjnego serwera API.
+-   **Baza danych PostgreSQL z Row-Level Security (RLS):** To kluczowy element bezpieczeństwa. RLS pozwoli nam zdefiniować precyzyjne reguły dostępu na poziomie wiersza w bazie danych, gwarantując, że użytkownicy będą mieli dostęp wyłącznie do danych swoich grup. Umożliwi to realizację wymagań takich jak F-013 (tylko autor może edytować/usuwać wydatek).
+-   **SDK (supabase-js) i Logika Backendowa:** SDK umożliwi bezpośrednią i bezpieczną komunikację z bazą danych z poziomu frontendu. Jednak kluczowe, wrażliwe operacje (np. walidacja i zapis wydatków w ramach transakcji) będą obsługiwane przez logikę po stronie serwera (Astro API Routes lub Edge Functions), aby zapewnić integralność danych i dodatkowe bezpieczeństwo.
 -   **Autentykacja:** Wbudowany moduł Auth, skonfigurowany do obsługi **wyłącznie logowania przez Google (OAuth)**, co jest podstawowym wymaganiem funkcjonalnym (F-001).
 -   **Realtime Subscriptions:** Wykorzystamy tę funkcję do natychmiastowej aktualizacji interfejsu dla wszystkich członków grupy po dodaniu lub modyfikacji wydatku. Gdy jeden użytkownik zapisze zmianę, salda i lista transakcji zaktualizują się u pozostałych bez potrzeby odświeżania strony (kluczowe dla F-014).
--   **Edge Functions:** Bezserwerowe funkcje (napisane w TypeScript) będą pełniły rolę bezpiecznego pośrednika w komunikacji z usługami zewnętrznymi. **Klucz API do Openrouter.ai będzie przechowywany i używany wyłącznie w Edge Function**, dzięki czemu nigdy nie zostanie on ujawniony w kodzie po stronie klienta.
+-   **Edge Functions:** Bezserwerowe funkcje (napisane w TypeScript) będą pełniły rolę bezpiecznego pośrednika w komunikacji z usługami zewnętrznymi (np. Openrouter.ai) oraz do obsługi złożonej logiki biznesowej, która wymaga środowiska serwerowego. 
+-   **Klucz API do Openrouter.ai będzie przechowywany i używany wyłącznie w Edge Function**, dzięki czemu nigdy nie zostanie on ujawniony w kodzie po stronie klienta.
 
 ### AI - Komunikacja z modelami przez usługę Openrouter.ai:
 
