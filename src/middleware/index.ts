@@ -5,7 +5,7 @@ import { supabaseClient } from '../db/supabase.client.ts';
 // TODO: Remove this mock user once authentication is implemented
 const MOCK_USER_ENABLED = true;
 const MOCK_USER = {
-  id: '232d7f93-8f3b-419d-b69d-00eff6a548da',
+  id: 'a03a4995-0dec-4213-8a61-2f1c81b3133f',
   email: 'wojbor90@gmail.com'
 };
 

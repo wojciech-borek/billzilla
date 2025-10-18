@@ -43,12 +43,14 @@ export class TransactionError extends Error {
  * @param supabase - Supabase client instance
  * @param groupId - ID of the group to invite members to
  * @param emails - Array of email addresses to process
+ * @param creatorId - ID of the group creator (to avoid adding them again)
  * @returns Results of invitation processing (added members and created invitations)
  */
 async function handleInvitations(
   supabase: SupabaseClient,
   groupId: string,
-  emails: string[]
+  emails: string[],
+  creatorId: string
 ): Promise<InvitationResultDTO> {
   const result: InvitationResultDTO = {
     added_members: [],
@@ -60,45 +62,50 @@ async function handleInvitations(
   }
 
   try {
-    // Step 1: Find existing users by email
+    // Step 1: Find existing users by email using RPC function to bypass RLS
+    // This is necessary because RLS policy only allows reading profiles of users
+    // in the same group, but invitees are not yet in the group
     const { data: existingProfiles, error: profilesError } = await supabase
-      .from('profiles')
-      .select('id, email, full_name')
-      .in('email', emails);
+      .rpc('find_profiles_by_emails', { email_list: emails });
 
     if (profilesError) {
       console.error('Error fetching profiles for invitations:', profilesError);
       return result;
     }
 
-    // Step 2: Add existing users to the group
+    // Step 2: Add existing users to the group (excluding the creator)
     if (existingProfiles && existingProfiles.length > 0) {
-      const membersToAdd = existingProfiles.map(profile => ({
-        group_id: groupId,
-        profile_id: profile.id,
-        role: 'member' as GroupRole,
-        status: 'active' as const
-      }));
+      // Filter out the creator - they're already added to the group
+      const profilesToAdd = existingProfiles.filter(profile => profile.id !== creatorId);
+      
+      if (profilesToAdd.length > 0) {
+        const membersToAdd = profilesToAdd.map(profile => ({
+          group_id: groupId,
+          profile_id: profile.id,
+          role: 'member' as GroupRole,
+          status: 'active' as const
+        }));
 
-      const { data: addedMembers, error: membersError } = await supabase
-        .from('group_members')
-        .insert(membersToAdd)
-        .select('profile_id, status')
-        .returns<Array<{ profile_id: string; status: 'active' | 'inactive' }>>();
+        const { data: addedMembers, error: membersError } = await supabase
+          .from('group_members')
+          .insert(membersToAdd)
+          .select('profile_id, status')
+          .returns<Array<{ profile_id: string; status: 'active' | 'inactive' }>>();
 
-      if (!membersError && addedMembers) {
-        // Map the added members with their profile information
-        result.added_members = addedMembers.map(member => {
-          const profile = existingProfiles.find(p => p.id === member.profile_id);
-          return {
-            profile_id: member.profile_id,
-            email: profile?.email || '',
-            full_name: profile?.full_name || null,
-            status: member.status
-          };
-        });
-      } else if (membersError) {
-        console.error('Error adding members to group:', membersError);
+        if (!membersError && addedMembers) {
+          // Map the added members with their profile information
+          result.added_members = addedMembers.map(member => {
+            const profile = existingProfiles.find(p => p.id === member.profile_id);
+            return {
+              profile_id: member.profile_id,
+              email: profile?.email || '',
+              full_name: profile?.full_name || null,
+              status: member.status
+            };
+          });
+        } else if (membersError) {
+          console.error('Error adding members to group:', membersError);
+        }
       }
     }
 
@@ -250,7 +257,8 @@ export async function createGroup(
     invitationResults = await handleInvitations(
       supabase,
       newGroup.id,
-      command.invite_emails
+      command.invite_emails,
+      userId
     );
   }
 

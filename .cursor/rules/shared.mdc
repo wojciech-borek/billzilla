@@ -27,8 +27,15 @@ When introducing changes to the project, always follow the directory structure b
 - `./src/db` - Supabase clients and types
 - `./src/types.ts` - Shared types for backend and frontend (Entities, DTOs)
 - `./src/components` - Client-side components written in Astro (static) and React (dynamic)
-- `./src/components/ui` - Client-side components from Shadcn/ui
-- `./src/lib` - Services and helpers 
+  - `./src/components/ui` - Shadcn/ui components
+  - `./src/components/group` - Group-related components (create, edit, etc.)
+  - `./src/components/dashboard` - Dashboard-specific components
+  - `./src/components/[feature]` - Feature-specific components
+- `./src/lib` - Services, helpers, hooks, and schemas
+  - `./src/lib/services` - Business logic services
+  - `./src/lib/schemas` - Zod validation schemas (backend + frontend)
+  - `./src/lib/hooks` - Shared React hooks
+  - `./src/lib/utils.ts` - Utility functions
 - `./src/assets` - static internal assets
 - `./public` - public assets
 
