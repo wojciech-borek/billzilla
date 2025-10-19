@@ -1,0 +1,24 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import CreateGroupModal from "@/components/group/CreateGroupModal.tsx";
+
+// Middleware ensures user is authenticated
+const user = Astro.locals.user;
+if (!user) {
+  return Astro.redirect("/login");
+}
+---
+
+<Layout title="Utwórz grupę | Billzilla">
+  <div class="min-h-screen bg-background">
+    <CreateGroupModal
+      open={true}
+      onOpenChange={() => (window.location.href = "/")}
+      onSuccess={() => {
+        // For dedicated page, redirect immediately without closing modal
+        window.location.href = "/?success=group-created";
+      }}
+      client:load
+    />
+  </div>
+</Layout>

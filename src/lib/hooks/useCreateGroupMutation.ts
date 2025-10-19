@@ -1,12 +1,12 @@
-import { useState, useCallback } from 'react';
-import type { CreateGroupCommand, CreateGroupResponseDTO } from '../../types';
-import type { CreateGroupFormValues } from '../schemas/groupSchemas';
+import { useState, useCallback } from "react";
+import type { CreateGroupCommand, CreateGroupResponseDTO } from "../../types";
+import type { CreateGroupFormValues } from "../schemas/groupSchemas";
 
-type MutationState = {
+interface MutationState {
   isLoading: boolean;
   error: Error | null;
   fieldErrors: Record<string, string> | null;
-};
+}
 
 type UseCreateGroupMutationResult = MutationState & {
   createGroup: (values: CreateGroupFormValues) => Promise<CreateGroupResponseDTO>;
@@ -32,15 +32,16 @@ export function useCreateGroupMutation(): UseCreateGroupMutationResult {
       const command: CreateGroupCommand = {
         name: values.name.trim(),
         base_currency_code: values.base_currency_code,
-        invite_emails: values.invite_emails && values.invite_emails.length > 0 
-          ? values.invite_emails.map(email => email.trim().toLowerCase())
-          : undefined,
+        invite_emails:
+          values.invite_emails && values.invite_emails.length > 0
+            ? values.invite_emails.map((email) => email.trim().toLowerCase())
+            : undefined,
       };
 
-      const response = await fetch('/api/groups', {
-        method: 'POST',
+      const response = await fetch("/api/groups", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(command),
       });
@@ -48,46 +49,46 @@ export function useCreateGroupMutation(): UseCreateGroupMutationResult {
       if (!response.ok) {
         // Handle different error status codes
         if (response.status === 401) {
-          throw new Error('Nie jesteś zalogowany. Zaloguj się ponownie.');
+          throw new Error("Nie jesteś zalogowany. Zaloguj się ponownie.");
         }
 
         if (response.status === 400 || response.status === 422) {
           const errorData = await response.json();
-          
+
           // Map field errors from API response
           if (errorData.error?.details) {
-            setState({ 
-              isLoading: false, 
-              error: new Error(errorData.error.message || 'Błąd walidacji'),
-              fieldErrors: errorData.error.details 
+            setState({
+              isLoading: false,
+              error: new Error(errorData.error.message || "Błąd walidacji"),
+              fieldErrors: errorData.error.details,
             });
-            throw new Error(errorData.error.message || 'Błąd walidacji');
+            throw new Error(errorData.error.message || "Błąd walidacji");
           }
-          
-          throw new Error(errorData.error?.message || 'Nieprawidłowe dane formularza');
+
+          throw new Error(errorData.error?.message || "Nieprawidłowe dane formularza");
         }
 
         if (response.status === 500) {
-          throw new Error('Wystąpił błąd serwera. Spróbuj ponownie później.');
+          throw new Error("Wystąpił błąd serwera. Spróbuj ponownie później.");
         }
 
-        throw new Error('Nie udało się utworzyć grupy');
+        throw new Error("Nie udało się utworzyć grupy");
       }
 
       const data: CreateGroupResponseDTO = await response.json();
-      
+
       setState({ isLoading: false, error: null, fieldErrors: null });
-      
+
       return data;
     } catch (err) {
-      const error = err instanceof Error ? err : new Error('Nieznany błąd');
-      
-      setState(prev => ({ 
+      const error = err instanceof Error ? err : new Error("Nieznany błąd");
+
+      setState((prev) => ({
         ...prev,
-        isLoading: false, 
-        error 
+        isLoading: false,
+        error,
       }));
-      
+
       throw error;
     }
   }, []);
@@ -102,4 +103,3 @@ export function useCreateGroupMutation(): UseCreateGroupMutationResult {
     reset,
   };
 }
-

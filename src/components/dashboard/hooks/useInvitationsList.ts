@@ -1,11 +1,11 @@
-import { useState, useEffect, useCallback } from 'react';
-import type { InvitationDTO, AcceptInvitationResponseDTO, DeclineInvitationResponseDTO } from '@/types';
-import type { InvitationCardVM, InvitationsQueryState } from '../types';
+import { useState, useEffect, useCallback } from "react";
+import type { InvitationDTO, AcceptInvitationResponseDTO, DeclineInvitationResponseDTO } from "@/types";
+import type { InvitationCardVM, InvitationsQueryState } from "../types";
 
-type InvitationActionResult = {
+interface InvitationActionResult {
   success: boolean;
   error?: string;
-};
+}
 
 /**
  * Hook for fetching and managing invitations list
@@ -26,24 +26,22 @@ export function useInvitationsList(): InvitationsQueryState & {
     setState((prev) => ({ ...prev, loading: true, error: null }));
 
     try {
-      const response = await fetch('/api/invitations', {
-        method: 'GET',
+      const response = await fetch("/api/invitations", {
+        method: "GET",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
       });
 
       if (response.status === 401) {
         // Unauthorized - redirect to login
-        window.location.href = '/login';
+        window.location.href = "/login";
         return;
       }
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(
-          errorData.error?.message || `Failed to fetch invitations: ${response.status}`
-        );
+        throw new Error(errorData.error?.message || `Failed to fetch invitations: ${response.status}`);
       }
 
       const invitations: InvitationDTO[] = await response.json();
@@ -62,11 +60,11 @@ export function useInvitationsList(): InvitationsQueryState & {
         error: null,
       });
     } catch (error) {
-      console.error('Error fetching invitations:', error);
+      console.error("Error fetching invitations:", error);
       setState((prev) => ({
         ...prev,
         loading: false,
-        error: error instanceof Error ? error.message : 'Unknown error occurred',
+        error: error instanceof Error ? error.message : "Unknown error occurred",
       }));
     }
   }, []);
@@ -74,22 +72,20 @@ export function useInvitationsList(): InvitationsQueryState & {
   const accept = useCallback(async (id: string): Promise<InvitationActionResult> => {
     try {
       const response = await fetch(`/api/invitations/${id}/accept`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
       });
 
       if (response.status === 401) {
-        window.location.href = '/login';
-        return { success: false, error: 'Unauthorized' };
+        window.location.href = "/login";
+        return { success: false, error: "Unauthorized" };
       }
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(
-          errorData.error?.message || `Failed to accept invitation: ${response.status}`
-        );
+        throw new Error(errorData.error?.message || `Failed to accept invitation: ${response.status}`);
       }
 
       const result: AcceptInvitationResponseDTO = await response.json();
@@ -102,10 +98,10 @@ export function useInvitationsList(): InvitationsQueryState & {
 
       return { success: true };
     } catch (error) {
-      console.error('Error accepting invitation:', error);
+      console.error("Error accepting invitation:", error);
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Unknown error occurred',
+        error: error instanceof Error ? error.message : "Unknown error occurred",
       };
     }
   }, []);
@@ -113,22 +109,20 @@ export function useInvitationsList(): InvitationsQueryState & {
   const decline = useCallback(async (id: string): Promise<InvitationActionResult> => {
     try {
       const response = await fetch(`/api/invitations/${id}/decline`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
       });
 
       if (response.status === 401) {
-        window.location.href = '/login';
-        return { success: false, error: 'Unauthorized' };
+        window.location.href = "/login";
+        return { success: false, error: "Unauthorized" };
       }
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(
-          errorData.error?.message || `Failed to decline invitation: ${response.status}`
-        );
+        throw new Error(errorData.error?.message || `Failed to decline invitation: ${response.status}`);
       }
 
       const result: DeclineInvitationResponseDTO = await response.json();
@@ -141,10 +135,10 @@ export function useInvitationsList(): InvitationsQueryState & {
 
       return { success: true };
     } catch (error) {
-      console.error('Error declining invitation:', error);
+      console.error("Error declining invitation:", error);
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Unknown error occurred',
+        error: error instanceof Error ? error.message : "Unknown error occurred",
       };
     }
   }, []);
@@ -160,4 +154,3 @@ export function useInvitationsList(): InvitationsQueryState & {
     decline,
   };
 }
-

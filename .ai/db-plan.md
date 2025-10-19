@@ -226,12 +226,13 @@ CREATE POLICY "Users can view expenses in their groups"
 CREATE POLICY "Users can create expenses in their groups"
   ON expenses FOR INSERT
   WITH CHECK (is_group_member(group_id, auth.uid()));
-CREATE POLICY "Users can update their own expenses"
+CREATE POLICY "Users can update expenses they created or paid for"
   ON expenses FOR UPDATE
-  USING (created_by = auth.uid());
-CREATE POLICY "Users can delete their own expenses"
+  USING (created_by = auth.uid() OR payer_id = auth.uid());
+
+CREATE POLICY "Users can delete expenses they created or paid for"
   ON expenses FOR DELETE
-  USING (created_by = auth.uid());
+  USING (created_by = auth.uid() OR payer_id = auth.uid());
 
 -- Pozostałe tabele (expense_splits, settlements, etc.)
 -- Analogiczne zasady powinny być zastosowane do pozostałych tabel, ograniczając dostęp do danych w ramach grup użytkownika.

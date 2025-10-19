@@ -1,11 +1,11 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from "react";
 
-type UsePullToRefreshOptions = {
+interface UsePullToRefreshOptions {
   onRefresh: () => Promise<void>;
   threshold?: number;
   resistance?: number;
   enabled?: boolean;
-};
+}
 
 /**
  * Hook for pull-to-refresh functionality
@@ -72,14 +72,14 @@ export function usePullToRefresh({
       }
     };
 
-    document.addEventListener('touchstart', handleTouchStart, { passive: true });
-    document.addEventListener('touchmove', handleTouchMove, { passive: false });
-    document.addEventListener('touchend', handleTouchEnd, { passive: true });
+    document.addEventListener("touchstart", handleTouchStart, { passive: true });
+    document.addEventListener("touchmove", handleTouchMove, { passive: false });
+    document.addEventListener("touchend", handleTouchEnd, { passive: true });
 
     return () => {
-      document.removeEventListener('touchstart', handleTouchStart);
-      document.removeEventListener('touchmove', handleTouchMove);
-      document.removeEventListener('touchend', handleTouchEnd);
+      document.removeEventListener("touchstart", handleTouchStart);
+      document.removeEventListener("touchmove", handleTouchMove);
+      document.removeEventListener("touchend", handleTouchEnd);
     };
   }, [enabled, isRefreshing, onRefresh, pullDistance, threshold, resistance]);
 
@@ -89,4 +89,3 @@ export function usePullToRefresh({
     isPulling: isPulling.current && pullDistance > 0,
   };
 }
-

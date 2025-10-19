@@ -1,20 +1,20 @@
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useEffect, useRef } from 'react';
-import { Button } from '../ui/button';
-import { Alert, AlertDescription } from '../ui/alert';
-import { AlertCircle, Loader2 } from 'lucide-react';
-import { createGroupFormSchema } from '../../lib/schemas/groupSchemas';
-import type { CreateGroupFormValues, CreateGroupSuccessResult } from '../../lib/schemas/groupSchemas';
-import { useCreateGroupMutation } from '../../lib/hooks/useCreateGroupMutation';
-import NameField from './NameField';
-import BaseCurrencySelect from './BaseCurrencySelect';
-import InviteEmailsInput from './InviteEmailsInput';
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useEffect, useRef } from "react";
+import { Button } from "../ui/button";
+import { Alert, AlertDescription } from "../ui/alert";
+import { AlertCircle, Loader2 } from "lucide-react";
+import { createGroupFormSchema } from "../../lib/schemas/groupSchemas";
+import type { CreateGroupFormValues, CreateGroupSuccessResult } from "../../lib/schemas/groupSchemas";
+import { useCreateGroupMutation } from "../../lib/hooks/useCreateGroupMutation";
+import NameField from "./NameField";
+import BaseCurrencySelect from "./BaseCurrencySelect";
+import InviteEmailsInput from "./InviteEmailsInput";
 
-type CreateGroupFormProps = {
+interface CreateGroupFormProps {
   onCancel: () => void;
   onSuccess: (result: CreateGroupSuccessResult) => void;
-};
+}
 
 /**
  * Form component for creating a new group
@@ -33,8 +33,8 @@ export default function CreateGroupForm({ onCancel, onSuccess }: CreateGroupForm
   } = useForm<CreateGroupFormValues>({
     resolver: zodResolver(createGroupFormSchema),
     defaultValues: {
-      name: '',
-      base_currency_code: 'PLN',
+      name: "",
+      base_currency_code: "PLN",
       invite_emails: [],
     },
   });
@@ -56,7 +56,7 @@ export default function CreateGroupForm({ onCancel, onSuccess }: CreateGroupForm
   const onSubmit = async (values: CreateGroupFormValues) => {
     try {
       const response = await createGroup(values);
-      
+
       // Transform response to success result
       const result: CreateGroupSuccessResult = {
         groupId: response.id,
@@ -64,7 +64,7 @@ export default function CreateGroupForm({ onCancel, onSuccess }: CreateGroupForm
         baseCurrency: response.base_currency_code,
         invitations: response.invitations,
       };
-      
+
       onSuccess(result);
     } catch (err) {
       // Field errors are already handled by the mutation hook
@@ -72,7 +72,7 @@ export default function CreateGroupForm({ onCancel, onSuccess }: CreateGroupForm
       if (fieldErrors) {
         Object.entries(fieldErrors).forEach(([field, message]) => {
           setError(field as keyof CreateGroupFormValues, {
-            type: 'manual',
+            type: "manual",
             message: message as string,
           });
         });
@@ -81,9 +81,9 @@ export default function CreateGroupForm({ onCancel, onSuccess }: CreateGroupForm
   };
 
   return (
-    <form 
+    <form
       ref={formRef}
-      onSubmit={handleSubmit(onSubmit)} 
+      onSubmit={handleSubmit(onSubmit)}
       className="space-y-6"
       noValidate
       aria-label="Formularz tworzenia nowej grupy"
@@ -98,20 +98,14 @@ export default function CreateGroupForm({ onCancel, onSuccess }: CreateGroupForm
 
       {/* Form fields */}
       <NameField register={register} errors={errors} />
-      
+
       <BaseCurrencySelect control={control} errors={errors} />
-      
+
       <InviteEmailsInput control={control} errors={errors} />
 
       {/* Action buttons */}
       <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-4">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={onCancel}
-          disabled={isSubmitting}
-          className="w-full sm:w-auto"
-        >
+        <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting} className="w-full sm:w-auto">
           Anuluj
         </Button>
         <Button
@@ -125,11 +119,10 @@ export default function CreateGroupForm({ onCancel, onSuccess }: CreateGroupForm
               Tworzenie...
             </>
           ) : (
-            'Utwórz grupę'
+            "Utwórz grupę"
           )}
         </Button>
       </div>
     </form>
   );
 }
-

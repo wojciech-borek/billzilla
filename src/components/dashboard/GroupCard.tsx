@@ -1,34 +1,34 @@
-import { Button } from '@/components/ui/button';
-import { formatCurrency, getBalanceColor } from '@/lib/utils';
-import AvatarList from './AvatarList';
-import type { GroupCardVM } from './types';
+import { Button } from "@/components/ui/button";
+import { formatCurrency, getBalanceColor } from "@/lib/utils";
+import AvatarList from "./AvatarList";
+import type { GroupCardVM } from "./types";
 
-type GroupCardProps = {
+interface GroupCardProps {
   group: GroupCardVM;
   onOpen?: (id: string) => void;
-  onQuickAddExpense?: (id: string) => void;
-};
+  onAddExpense?: (id: string) => void;
+}
 
 /**
  * Group card component
  * Displays group information with balance, members, and quick actions
  * Prefetches group data on hover for faster navigation
  */
-export default function GroupCard({ group, onOpen, onQuickAddExpense }: GroupCardProps) {
+export default function GroupCard({ group, onOpen, onAddExpense }: GroupCardProps) {
   const handleCardClick = () => {
-    onOpen?.(group.id);
+    window.location.href = `/groups/${group.id}`;
   };
 
-  const handleQuickAddExpense = (e: React.MouseEvent) => {
+  const handleAddExpense = (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent card click
-    onQuickAddExpense?.(group.id);
+    onAddExpense?.(group.id);
   };
 
   const handleMouseEnter = () => {
     // Prefetch group detail page data
     fetch(`/api/groups/${group.id}`, {
-      method: 'GET',
-      headers: { 'Content-Type': 'application/json' },
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
     }).catch(() => {
       // Silently fail - prefetch is optional optimization
     });
@@ -42,7 +42,7 @@ export default function GroupCard({ group, onOpen, onQuickAddExpense }: GroupCar
       onClick={handleCardClick}
       onMouseEnter={handleMouseEnter}
       onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
+        if (e.key === "Enter" || e.key === " ") {
           e.preventDefault();
           handleCardClick();
         }
@@ -54,9 +54,7 @@ export default function GroupCard({ group, onOpen, onQuickAddExpense }: GroupCar
       {/* Header */}
       <div className="mb-4 flex items-start justify-between">
         <div className="flex-1 min-w-0">
-          <h3 className="truncate text-lg font-bold tracking-tight text-foreground">
-            {group.name}
-          </h3>
+          <h3 className="truncate text-lg font-bold tracking-tight text-foreground">{group.name}</h3>
         </div>
       </div>
 
@@ -76,25 +74,14 @@ export default function GroupCard({ group, onOpen, onQuickAddExpense }: GroupCar
       {/* Quick action button */}
       <div className="mt-auto pt-2">
         <Button
-          onClick={handleQuickAddExpense}
+          onClick={handleAddExpense}
           variant="outline"
           size="sm"
           className="w-full"
           aria-label={`Dodaj wydatek do grupy ${group.name}`}
         >
-          <svg
-            className="h-4 w-4"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            aria-hidden="true"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M12 4v16m8-8H4"
-            />
+          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
           </svg>
           Dodaj wydatek
         </Button>
@@ -102,4 +89,3 @@ export default function GroupCard({ group, onOpen, onQuickAddExpense }: GroupCar
     </article>
   );
 }
-

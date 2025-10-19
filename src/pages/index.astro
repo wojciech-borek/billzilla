@@ -1,15 +1,15 @@
 ---
-import Layout from '@/layouts/Layout.astro';
-import DashboardView from '@/components/dashboard/DashboardView';
+import Layout from "@/layouts/Layout.astro";
+import DashboardView from "@/components/dashboard/DashboardView";
 
 // Middleware ensures user is authenticated
 const user = Astro.locals.user;
 
 if (!user) {
-  return Astro.redirect('/login');
+  return Astro.redirect("/login");
 }
 ---
 
 <Layout title="Dashboard | Billzilla">
-  <DashboardView client:load />
+  <DashboardView currentUserId={user.id} client:load />
 </Layout>

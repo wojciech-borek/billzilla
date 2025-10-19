@@ -1,16 +1,13 @@
-type PullToRefreshIndicatorProps = {
+interface PullToRefreshIndicatorProps {
   pullDistance: number;
   isRefreshing: boolean;
-};
+}
 
 /**
  * Visual indicator for pull-to-refresh gesture
  * Shows spinner when pulling or refreshing
  */
-export default function PullToRefreshIndicator({
-  pullDistance,
-  isRefreshing,
-}: PullToRefreshIndicatorProps) {
+export default function PullToRefreshIndicator({ pullDistance, isRefreshing }: PullToRefreshIndicatorProps) {
   const isVisible = pullDistance > 0 || isRefreshing;
   const opacity = Math.min(pullDistance / 80, 1);
   const rotation = (pullDistance / 80) * 360;
@@ -27,7 +24,7 @@ export default function PullToRefreshIndicator({
     >
       <div className="rounded-full bg-card p-3 shadow-lg shadow-green-200 border border-gray-100">
         <svg
-          className={`h-6 w-6 text-primary ${isRefreshing ? 'animate-spin' : ''}`}
+          className={`h-6 w-6 text-primary ${isRefreshing ? "animate-spin" : ""}`}
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -38,14 +35,7 @@ export default function PullToRefreshIndicator({
         >
           {isRefreshing ? (
             <>
-              <circle
-                className="opacity-25"
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                strokeWidth="4"
-              />
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
               <path
                 className="opacity-75"
                 fill="currentColor"
@@ -65,4 +55,3 @@ export default function PullToRefreshIndicator({
     </div>
   );
 }
-

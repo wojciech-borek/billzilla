@@ -1,17 +1,17 @@
-import { defineMiddleware } from 'astro:middleware';
+import { defineMiddleware } from "astro:middleware";
 
-import { supabaseClient } from '../db/supabase.client.ts';
+import { supabaseClient } from "../db/supabase.client.ts";
 
 // TODO: Remove this mock user once authentication is implemented
 const MOCK_USER_ENABLED = true;
 const MOCK_USER = {
-  id: 'a03a4995-0dec-4213-8a61-2f1c81b3133f',
-  email: 'wojbor90@gmail.com'
+  id: "0d1dd762-53a4-45dd-84b6-9de0bf109f44",
+  email: "john.doe@example.com",
 };
 
 export const onRequest = defineMiddleware(async (context, next) => {
   context.locals.supabase = supabaseClient;
-  
+
   // Mock user for development (remove when auth is ready)
   if (MOCK_USER_ENABLED) {
     context.locals.user = MOCK_USER;
@@ -22,6 +22,6 @@ export const onRequest = defineMiddleware(async (context, next) => {
     // context.locals.user = session?.user ? { id: session.user.id, email: session.user.email } : null;
     context.locals.user = null;
   }
-  
+
   return next();
 });

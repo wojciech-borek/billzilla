@@ -1,22 +1,24 @@
-import type { GroupsQueryState } from './types';
-import GroupCard from './GroupCard';
-import SectionEmptyState from './SectionEmptyState';
-import { useInfiniteScroll } from './hooks/useInfiniteScroll';
+import type { GroupsQueryState } from "./types";
+import GroupCard from "./GroupCard";
+import SectionEmptyState from "./SectionEmptyState";
+import { useInfiniteScroll } from "./hooks/useInfiniteScroll";
 
-type GroupsSectionProps = {
-  query: GroupsQueryState & { 
+interface GroupsSectionProps {
+  query: GroupsQueryState & {
     refetch: () => Promise<void>;
     loadMore: () => Promise<void>;
     hasMore: boolean;
   };
   onChanged?: () => void;
-};
+  onAddExpense?: (groupId: string) => void;
+  onCreateGroup?: () => void;
+}
 
 /**
  * Groups section component
  * Displays user's groups in a grid with loading, error states and infinite scroll
  */
-export default function GroupsSection({ query, onChanged }: GroupsSectionProps) {
+export default function GroupsSection({ query, onChanged, onAddExpense, onCreateGroup }: GroupsSectionProps) {
   const { observerTarget } = useInfiniteScroll({
     onLoadMore: query.loadMore,
     hasMore: query.hasMore,
@@ -27,10 +29,6 @@ export default function GroupsSection({ query, onChanged }: GroupsSectionProps) 
     window.location.href = `/groups/${id}`;
   };
 
-  const handleQuickAddExpense = (id: string) => {
-    window.location.href = `/groups/${id}/expenses/new`;
-  };
-
   const handleRetry = () => {
     query.refetch();
   };
@@ -39,19 +37,12 @@ export default function GroupsSection({ query, onChanged }: GroupsSectionProps) 
   if (query.loading && query.data.length === 0) {
     return (
       <section aria-labelledby="groups-heading">
-        <h2
-          id="groups-heading"
-          className="mb-6 text-2xl font-bold tracking-tight text-foreground"
-        >
+        <h2 id="groups-heading" className="mb-6 text-2xl font-bold tracking-tight text-foreground">
           Twoje grupy
         </h2>
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {[...Array(3)].map((_, i) => (
-            <div
-              key={i}
-              className="h-64 animate-pulse rounded-2xl bg-muted/50"
-              aria-hidden="true"
-            />
+            <div key={i} className="h-64 animate-pulse rounded-2xl bg-muted/50" aria-hidden="true" />
           ))}
         </div>
       </section>
@@ -62,10 +53,7 @@ export default function GroupsSection({ query, onChanged }: GroupsSectionProps) 
   if (query.error) {
     return (
       <section aria-labelledby="groups-heading">
-        <h2
-          id="groups-heading"
-          className="mb-6 text-2xl font-bold tracking-tight text-foreground"
-        >
+        <h2 id="groups-heading" className="mb-6 text-2xl font-bold tracking-tight text-foreground">
           Twoje grupy
         </h2>
         <div className="rounded-2xl border border-destructive/20 bg-destructive/10 p-6">
@@ -85,12 +73,8 @@ export default function GroupsSection({ query, onChanged }: GroupsSectionProps) 
               />
             </svg>
             <div className="flex-1">
-              <h3 className="text-base font-bold text-destructive">
-                Błąd podczas ładowania grup
-              </h3>
-              <p className="mt-2 text-sm text-destructive/80">
-                {query.error}
-              </p>
+              <h3 className="text-base font-bold text-destructive">Błąd podczas ładowania grup</h3>
+              <p className="mt-2 text-sm text-destructive/80">{query.error}</p>
               <button
                 onClick={handleRetry}
                 className="mt-4 text-sm font-medium text-destructive underline hover:text-destructive/80 transition-colors"
@@ -108,10 +92,7 @@ export default function GroupsSection({ query, onChanged }: GroupsSectionProps) 
   if (query.data.length === 0) {
     return (
       <section aria-labelledby="groups-heading">
-        <h2
-          id="groups-heading"
-          className="mb-6 text-2xl font-bold tracking-tight text-foreground"
-        >
+        <h2 id="groups-heading" className="mb-6 text-2xl font-bold tracking-tight text-foreground">
           Twoje grupy
         </h2>
         <SectionEmptyState
@@ -125,25 +106,12 @@ export default function GroupsSection({ query, onChanged }: GroupsSectionProps) 
   // Success state with data
   return (
     <section aria-labelledby="groups-heading">
-      <div className="mb-6 flex items-center justify-between">
-        <h2
-          id="groups-heading"
-          className="text-2xl font-bold tracking-tight text-foreground"
-        >
-          Twoje grupy
-        </h2>
-        <span className="text-sm text-muted-foreground font-medium">
-          {query.total} {query.total === 1 ? 'grupa' : query.total < 5 ? 'grupy' : 'grup'}
-        </span>
-      </div>
+      <h2 id="groups-heading" className="mb-6 text-2xl font-bold tracking-tight text-foreground">
+        Twoje grupy
+      </h2>
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {query.data.map((group) => (
-          <GroupCard
-            key={group.id}
-            group={group}
-            onOpen={handleOpenGroup}
-            onQuickAddExpense={handleQuickAddExpense}
-          />
+          <GroupCard key={group.id} group={group} onOpen={handleOpenGroup} onAddExpense={onAddExpense} />
         ))}
       </div>
 
@@ -152,20 +120,8 @@ export default function GroupsSection({ query, onChanged }: GroupsSectionProps) 
         <div ref={observerTarget} className="mt-6 flex justify-center py-4">
           {query.loading && (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <svg
-                className="h-5 w-5 animate-spin"
-                fill="none"
-                viewBox="0 0 24 24"
-                aria-hidden="true"
-              >
-                <circle
-                  className="opacity-25"
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="currentColor"
-                  strokeWidth="4"
-                />
+              <svg className="h-5 w-5 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                 <path
                   className="opacity-75"
                   fill="currentColor"
@@ -180,4 +136,3 @@ export default function GroupsSection({ query, onChanged }: GroupsSectionProps) 
     </section>
   );
 }
-

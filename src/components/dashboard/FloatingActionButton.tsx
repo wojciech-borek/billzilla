@@ -1,8 +1,8 @@
-import { Button } from '@/components/ui/button';
+import { Button } from "@/components/ui/button";
 
-type FloatingActionButtonProps = {
+interface FloatingActionButtonProps {
   onClick: () => void;
-};
+}
 
 /**
  * Floating Action Button for creating a new group
@@ -18,21 +18,9 @@ export default function FloatingActionButton({ onClick }: FloatingActionButtonPr
       title="Utwórz nową grupę"
     >
       {/* Plus icon */}
-      <svg
-        className="h-7 w-7"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-        aria-hidden="true"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2.5}
-          d="M12 4v16m8-8H4"
-        />
+      <svg className="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
       </svg>
     </Button>
   );
 }
-

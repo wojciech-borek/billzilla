@@ -1,16 +1,16 @@
-import { useState } from 'react';
-import type { InvitationsQueryState } from './types';
-import InvitationCard from './InvitationCard';
-import SectionEmptyState from './SectionEmptyState';
+import { useState } from "react";
+import type { InvitationsQueryState } from "./types";
+import InvitationCard from "./InvitationCard";
+import SectionEmptyState from "./SectionEmptyState";
 
-type InvitationsSectionProps = {
+interface InvitationsSectionProps {
   query: InvitationsQueryState & {
     refetch: () => Promise<void>;
     accept: (id: string) => Promise<{ success: boolean; error?: string }>;
     decline: (id: string) => Promise<{ success: boolean; error?: string }>;
   };
   onChanged?: () => void;
-};
+}
 
 /**
  * Invitations section component
@@ -33,12 +33,12 @@ export default function InvitationsSection({ query, onChanged }: InvitationsSect
 
     if (result.success) {
       // Show success toast (optional - could use a toast library)
-      console.log('Zaproszenie zaakceptowane');
+      console.log("Zaproszenie zaakceptowane");
       // Notify parent to refetch groups
       onChanged?.();
     } else {
       // Show error on the card
-      setErrors((prev) => new Map(prev).set(id, result.error || 'Nieznany błąd'));
+      setErrors((prev) => new Map(prev).set(id, result.error || "Nieznany błąd"));
       setProcessingIds((prev) => {
         const newSet = new Set(prev);
         newSet.delete(id);
@@ -60,10 +60,10 @@ export default function InvitationsSection({ query, onChanged }: InvitationsSect
 
     if (result.success) {
       // Show success toast (optional)
-      console.log('Zaproszenie odrzucone');
+      console.log("Zaproszenie odrzucone");
     } else {
       // Show error on the card
-      setErrors((prev) => new Map(prev).set(id, result.error || 'Nieznany błąd'));
+      setErrors((prev) => new Map(prev).set(id, result.error || "Nieznany błąd"));
       setProcessingIds((prev) => {
         const newSet = new Set(prev);
         newSet.delete(id);
@@ -80,19 +80,12 @@ export default function InvitationsSection({ query, onChanged }: InvitationsSect
   if (query.loading && query.data.length === 0) {
     return (
       <section aria-labelledby="invitations-heading">
-        <h2
-          id="invitations-heading"
-          className="mb-6 text-2xl font-bold tracking-tight text-foreground"
-        >
+        <h2 id="invitations-heading" className="mb-6 text-2xl font-bold tracking-tight text-foreground">
           Zaproszenia
         </h2>
         <div className="space-y-4">
           {[...Array(2)].map((_, i) => (
-            <div
-              key={i}
-              className="h-24 animate-pulse rounded-2xl bg-muted/50"
-              aria-hidden="true"
-            />
+            <div key={i} className="h-24 animate-pulse rounded-2xl bg-muted/50" aria-hidden="true" />
           ))}
         </div>
       </section>
@@ -103,10 +96,7 @@ export default function InvitationsSection({ query, onChanged }: InvitationsSect
   if (query.error) {
     return (
       <section aria-labelledby="invitations-heading">
-        <h2
-          id="invitations-heading"
-          className="mb-6 text-2xl font-bold tracking-tight text-foreground"
-        >
+        <h2 id="invitations-heading" className="mb-6 text-2xl font-bold tracking-tight text-foreground">
           Zaproszenia
         </h2>
         <div className="rounded-2xl border border-destructive/20 bg-destructive/10 p-6">
@@ -126,12 +116,8 @@ export default function InvitationsSection({ query, onChanged }: InvitationsSect
               />
             </svg>
             <div className="flex-1">
-              <h3 className="text-base font-bold text-destructive">
-                Błąd podczas ładowania zaproszeń
-              </h3>
-              <p className="mt-2 text-sm text-destructive/80">
-                {query.error}
-              </p>
+              <h3 className="text-base font-bold text-destructive">Błąd podczas ładowania zaproszeń</h3>
+              <p className="mt-2 text-sm text-destructive/80">{query.error}</p>
               <button
                 onClick={handleRetry}
                 className="mt-4 text-sm font-medium text-destructive underline hover:text-destructive/80 transition-colors"
@@ -149,16 +135,10 @@ export default function InvitationsSection({ query, onChanged }: InvitationsSect
   if (query.data.length === 0) {
     return (
       <section aria-labelledby="invitations-heading">
-        <h2
-          id="invitations-heading"
-          className="mb-6 text-2xl font-bold tracking-tight text-foreground"
-        >
+        <h2 id="invitations-heading" className="mb-6 text-2xl font-bold tracking-tight text-foreground">
           Zaproszenia
         </h2>
-        <SectionEmptyState
-          title="Brak zaproszeń"
-          description="Nie masz żadnych oczekujących zaproszeń do grup."
-        />
+        <SectionEmptyState title="Brak zaproszeń" description="Nie masz żadnych oczekujących zaproszeń do grup." />
       </section>
     );
   }
@@ -166,18 +146,10 @@ export default function InvitationsSection({ query, onChanged }: InvitationsSect
   // Success state with data
   return (
     <section aria-labelledby="invitations-heading">
-      <div className="mb-6 flex items-center justify-between">
-        <h2
-          id="invitations-heading"
-          className="text-2xl font-bold tracking-tight text-foreground"
-        >
-          Zaproszenia
-        </h2>
-        <span className="inline-flex items-center rounded-full bg-accent px-3 py-1 text-xs font-bold text-accent-foreground shadow-sm">
-          {query.data.length}
-        </span>
-      </div>
-      <div className="space-y-4">
+      <h2 id="invitations-heading" className="mb-6 text-2xl font-bold tracking-tight text-foreground">
+        Zaproszenia
+      </h2>
+      <div className="space-y-2">
         {query.data.map((invitation) => (
           <InvitationCard
             key={invitation.id}
@@ -192,4 +164,3 @@ export default function InvitationsSection({ query, onChanged }: InvitationsSect
     </section>
   );
 }
-

@@ -1,8 +1,8 @@
-import { clsx, type ClassValue } from "clsx"
-import { twMerge } from "tailwind-merge"
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs))
+  return twMerge(clsx(inputs));
 }
 
 /**
@@ -13,8 +13,8 @@ export function cn(...inputs: ClassValue[]) {
  */
 export function formatCurrency(amount: number, currencyCode: string): string {
   try {
-    return new Intl.NumberFormat('pl-PL', {
-      style: 'currency',
+    return new Intl.NumberFormat("pl-PL", {
+      style: "currency",
       currency: currencyCode,
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
@@ -31,9 +31,9 @@ export function formatCurrency(amount: number, currencyCode: string): string {
  * @returns Tailwind color class
  */
 export function getBalanceColor(balance: number): string {
-  if (balance > 0) return 'text-green-600 dark:text-green-400';
-  if (balance < 0) return 'text-red-600 dark:text-red-400';
-  return 'text-gray-600 dark:text-gray-400';
+  if (balance > 0) return "text-green-600 dark:text-green-400";
+  if (balance < 0) return "text-red-600 dark:text-red-400";
+  return "text-gray-600 dark:text-gray-400";
 }
 
 /**
@@ -42,12 +42,12 @@ export function getBalanceColor(balance: number): string {
  * @returns Initials (max 2 characters)
  */
 export function getInitials(fullName: string | null): string {
-  if (!fullName) return '?';
-  
+  if (!fullName) return "?";
+
   const parts = fullName.trim().split(/\s+/);
   if (parts.length === 1) {
     return parts[0].charAt(0).toUpperCase();
   }
-  
+
   return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
 }

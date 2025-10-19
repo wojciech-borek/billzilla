@@ -1,12 +1,12 @@
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback } from "react";
 
-type UseInfiniteScrollOptions = {
+interface UseInfiniteScrollOptions {
   onLoadMore: () => Promise<void>;
   hasMore: boolean;
   isLoading: boolean;
   threshold?: number;
   enabled?: boolean;
-};
+}
 
 /**
  * Hook for infinite scroll functionality
@@ -31,12 +31,7 @@ export function useInfiniteScroll({
     (entries: IntersectionObserverEntry[]) => {
       const [entry] = entries;
 
-      if (
-        entry.isIntersecting &&
-        hasMore &&
-        !isLoadingRef.current &&
-        enabled
-      ) {
+      if (entry.isIntersecting && hasMore && !isLoadingRef.current && enabled) {
         onLoadMore();
       }
     },
@@ -66,4 +61,3 @@ export function useInfiniteScroll({
 
   return { observerTarget };
 }
-

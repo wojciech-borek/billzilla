@@ -1,12 +1,12 @@
-import { useState, useEffect } from 'react';
-import { supabaseClient } from '../../db/supabase.client';
-import type { CurrencyOption } from '../schemas/groupSchemas';
+import { useState, useEffect } from "react";
+import { supabaseClient } from "../../db/supabase.client";
+import type { CurrencyOption } from "../schemas/groupSchemas";
 
-type UseCurrenciesListResult = {
+interface UseCurrenciesListResult {
   currencies: CurrencyOption[];
   loading: boolean;
   error: Error | null;
-};
+}
 
 /**
  * Hook to fetch and sort currencies list
@@ -26,9 +26,9 @@ export function useCurrenciesList(): UseCurrenciesListResult {
         setError(null);
 
         const { data, error: fetchError } = await supabaseClient
-          .from('currencies')
-          .select('code, name')
-          .order('code', { ascending: true });
+          .from("currencies")
+          .select("code, name")
+          .order("code", { ascending: true });
 
         if (fetchError) {
           throw new Error(fetchError.message);
@@ -44,15 +44,15 @@ export function useCurrenciesList(): UseCurrenciesListResult {
 
         // Sort: PLN first, then alphabetically by code
         const sortedOptions = options.sort((a, b) => {
-          if (a.code === 'PLN') return -1;
-          if (b.code === 'PLN') return 1;
+          if (a.code === "PLN") return -1;
+          if (b.code === "PLN") return 1;
           return a.code.localeCompare(b.code);
         });
 
         setCurrencies(sortedOptions);
       } catch (err) {
         if (!isMounted) return;
-        setError(err instanceof Error ? err : new Error('Failed to fetch currencies'));
+        setError(err instanceof Error ? err : new Error("Failed to fetch currencies"));
       } finally {
         if (isMounted) {
           setLoading(false);
@@ -69,4 +69,3 @@ export function useCurrenciesList(): UseCurrenciesListResult {
 
   return { currencies, loading, error };
 }
-

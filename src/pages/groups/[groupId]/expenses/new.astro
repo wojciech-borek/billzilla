@@ -1,0 +1,62 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import { AddExpenseModal } from "@/components/group/expenses/AddExpenseModal.tsx";
+
+// Middleware ensures user is authenticated
+const user = Astro.locals.user;
+if (!user) {
+  return Astro.redirect("/login");
+}
+
+// Get group ID from URL params
+const { groupId } = Astro.params;
+if (!groupId) {
+  return Astro.redirect("/?error=invalid-group");
+}
+
+// Load group data server-side
+let groupMembers = [];
+let groupCurrencies = [];
+let loadError = null;
+
+try {
+  const response = await fetch(`${Astro.url.origin}/api/groups/${groupId}`, {
+    headers: {
+      Cookie: Astro.request.headers.get("cookie") || "",
+    },
+  });
+
+  if (response.ok) {
+    const groupData = await response.json();
+    groupMembers = groupData.members || [];
+    groupCurrencies = groupData.group_currencies || [];
+  } else {
+    loadError = "Nie udało się załadować danych grupy";
+  }
+} catch (error) {
+  console.error("Error loading group data:", error);
+  loadError = "Wystąpił błąd podczas ładowania danych grupy";
+}
+
+// Handle success redirect (would go to group page, but for now go to dashboard)
+const handleExpenseCreated = () => {
+  return Astro.redirect("/?success=expense-created");
+};
+---
+
+<Layout title="Dodaj wydatek | Billzilla">
+  <div class="min-h-screen bg-background">
+    <AddExpenseModal
+      groupId={groupId}
+      groupMembers={groupMembers}
+      groupCurrencies={groupCurrencies}
+      currentUserId={user.id}
+      isOpen={true}
+      onClose={() => (window.location.href = "/")}
+      onExpenseCreated={handleExpenseCreated}
+      isLoading={false}
+      error={loadError}
+      client:load
+    />
+  </div>
+</Layout>

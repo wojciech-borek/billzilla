@@ -1,30 +1,30 @@
 /**
  * Shared types for backend and frontend (Entities, DTOs, Commands)
- * 
+ *
  * This file contains all Data Transfer Objects (DTOs) and Command Models
  * derived from the database schema and API specifications.
  */
 
-import type { Tables, TablesInsert, Enums } from './db/database.types';
+import type { Tables, TablesInsert, Enums } from "./db/database.types";
 
 // ============================================================================
 // Base Entity Types (from database)
 // ============================================================================
 
-export type Profile = Tables<'profiles'>;
-export type Group = Tables<'groups'>;
-export type GroupMember = Tables<'group_members'>;
-export type Currency = Tables<'currencies'>;
-export type GroupCurrency = Tables<'group_currencies'>;
-export type Invitation = Tables<'invitations'>;
-export type Expense = Tables<'expenses'>;
-export type ExpenseSplit = Tables<'expense_splits'>;
-export type Settlement = Tables<'settlements'>;
+export type Profile = Tables<"profiles">;
+export type Group = Tables<"groups">;
+export type GroupMember = Tables<"group_members">;
+export type Currency = Tables<"currencies">;
+export type GroupCurrency = Tables<"group_currencies">;
+export type Invitation = Tables<"invitations">;
+export type Expense = Tables<"expenses">;
+export type ExpenseSplit = Tables<"expense_splits">;
+export type Settlement = Tables<"settlements">;
 
-export type GroupRole = Enums<'group_role'>;
-export type GroupMemberStatus = Enums<'group_member_status'>;
-export type GroupStatus = Enums<'group_status'>;
-export type InvitationStatus = Enums<'invitation_status'>;
+export type GroupRole = Enums<"group_role">;
+export type GroupMemberStatus = Enums<"group_member_status">;
+export type GroupStatus = Enums<"group_status">;
+export type InvitationStatus = Enums<"invitation_status">;
 
 // ============================================================================
 // Common Utility Types
@@ -33,21 +33,21 @@ export type InvitationStatus = Enums<'invitation_status'>;
 /**
  * Generic paginated response wrapper
  */
-export type PaginatedResponse<T> = {
+export interface PaginatedResponse<T> {
   data: T[];
   total: number;
   limit: number;
   offset: number;
-};
+}
 
 /**
  * Minimal user information used across various DTOs
  */
-export type UserInfoDTO = {
+export interface UserInfoDTO {
   id: string;
   full_name: string;
   avatar_url: string | null;
-};
+}
 
 /**
  * User information with email
@@ -74,13 +74,13 @@ export type ProfileDTO = Profile;
  * Lightweight member summary for list views
  * Used in API responses, but simplified for frontend
  */
-export type GroupMemberSummaryDTO = {
+export interface GroupMemberSummaryDTO {
   profile_id: string;
   full_name: string | null;
   avatar_url: string | null;
   status: GroupMemberStatus;
   role: GroupRole;
-};
+}
 
 /**
  * Group list item with computed fields
@@ -99,7 +99,7 @@ export type GroupListItemDTO = Group & {
  * Create group command
  * Used in: POST /api/groups (request body)
  */
-export type CreateGroupCommand = Pick<TablesInsert<'groups'>, 'name' | 'base_currency_code'> & {
+export type CreateGroupCommand = Pick<TablesInsert<"groups">, "name" | "base_currency_code"> & {
   /** Optional array of email addresses to invite (max 20) */
   invite_emails?: string[];
 };
@@ -107,29 +107,29 @@ export type CreateGroupCommand = Pick<TablesInsert<'groups'>, 'name' | 'base_cur
 /**
  * Member info for invitation results
  */
-export type AddedMemberDTO = {
+export interface AddedMemberDTO {
   profile_id: string;
   email: string;
   full_name: string | null;
   status: GroupMemberStatus;
-};
+}
 
 /**
  * Created invitation info
  */
-export type CreatedInvitationDTO = {
+export interface CreatedInvitationDTO {
   id: string;
   email: string;
   status: InvitationStatus;
-};
+}
 
 /**
  * Invitation processing results
  */
-export type InvitationResultDTO = {
+export interface InvitationResultDTO {
   added_members: AddedMemberDTO[];
   created_invitations: CreatedInvitationDTO[];
-};
+}
 
 /**
  * Create group response
@@ -144,7 +144,7 @@ export type CreateGroupResponseDTO = Group & {
  * Group member with profile information
  * Used in: GET /api/groups/:id
  */
-export type GroupMemberDTO = {
+export interface GroupMemberDTO {
   profile_id: string;
   full_name: string | null;
   email: string;
@@ -152,13 +152,13 @@ export type GroupMemberDTO = {
   role: GroupRole;
   status: GroupMemberStatus;
   joined_at: string;
-};
+}
 
 /**
  * Pending invitation information
  * Used in: GET /api/groups/:id
  */
-export type PendingInvitationDTO = Pick<Invitation, 'id' | 'email' | 'status' | 'created_at'>;
+export type PendingInvitationDTO = Pick<Invitation, "id" | "email" | "status" | "created_at">;
 
 /**
  * Detailed group information with members
@@ -167,6 +167,7 @@ export type PendingInvitationDTO = Pick<Invitation, 'id' | 'email' | 'status' | 
 export type GroupDetailDTO = Group & {
   my_role: GroupRole;
   members: GroupMemberDTO[];
+  group_currencies: GroupCurrencyDTO[];
   pending_invitations: PendingInvitationDTO[];
 };
 
@@ -174,18 +175,18 @@ export type GroupDetailDTO = Group & {
  * Update group command
  * Used in: PATCH /api/groups/:id
  */
-export type UpdateGroupCommand = {
+export interface UpdateGroupCommand {
   name: string;
-};
+}
 
 /**
  * Invite members command
  * Used in: POST /api/groups/:groupId/members/invite
  */
-export type InviteMembersCommand = {
+export interface InviteMembersCommand {
   /** Array of email addresses (min 1, max 20) */
   emails: string[];
-};
+}
 
 /**
  * Invite members response
@@ -215,16 +216,16 @@ export type GroupCurrencyDTO = Currency & {
  * Group currencies response
  * Used in: GET /api/groups/:groupId/currencies
  */
-export type GroupCurrenciesDTO = {
+export interface GroupCurrenciesDTO {
   base_currency: GroupCurrencyDTO;
   additional_currencies: GroupCurrencyDTO[];
-};
+}
 
 /**
  * Add currency to group command
  * Used in: POST /api/groups/:groupId/currencies
  */
-export type AddCurrencyCommand = Pick<TablesInsert<'group_currencies'>, 'exchange_rate'> & {
+export type AddCurrencyCommand = Pick<TablesInsert<"group_currencies">, "exchange_rate"> & {
   currency_code: string;
 };
 
@@ -232,9 +233,9 @@ export type AddCurrencyCommand = Pick<TablesInsert<'group_currencies'>, 'exchang
  * Update currency exchange rate command
  * Used in: PATCH /api/groups/:groupId/currencies/:code
  */
-export type UpdateCurrencyCommand = {
+export interface UpdateCurrencyCommand {
   exchange_rate: number;
-};
+}
 
 // ============================================================================
 // Expense DTOs and Commands
@@ -244,33 +245,33 @@ export type UpdateCurrencyCommand = {
  * Expense split for command (without expense_id)
  * Used in: POST /api/groups/:groupId/expenses, PATCH /api/expenses/:id
  */
-export type ExpenseSplitCommand = {
+export interface ExpenseSplitCommand {
   profile_id: string;
   amount: number;
-};
+}
 
 /**
  * Expense split with participant information
  * Used in expense DTOs
  */
-export type ExpenseSplitDTO = {
+export interface ExpenseSplitDTO {
   profile_id: string;
   full_name: string | null;
   amount: number;
-};
+}
 
 /**
  * Create expense command
  * Used in: POST /api/groups/:groupId/expenses
  */
-export type CreateExpenseCommand = {
+export interface CreateExpenseCommand {
   description: string;
   amount: number;
   currency_code: string;
   expense_date: string;
   payer_id: string;
   splits: ExpenseSplitCommand[];
-};
+}
 
 /**
  * Update expense command
@@ -282,7 +283,7 @@ export type UpdateExpenseCommand = CreateExpenseCommand;
  * Expense data transfer object
  * Used in: POST /api/groups/:groupId/expenses, GET /api/groups/:groupId/expenses
  */
-export type ExpenseDTO = Omit<Expense, 'created_by'> & {
+export type ExpenseDTO = Omit<Expense, "created_by"> & {
   /** Amount converted to group's base currency */
   amount_in_base_currency: number;
   /** Expense creator information */
@@ -311,38 +312,38 @@ export type ExpenseDetailDTO = ExpenseDTO & {
 /**
  * Transcription result from AI
  */
-export type TranscriptionResultDTO = {
+export interface TranscriptionResultDTO {
   transcription: string;
   expense_data: CreateExpenseCommand;
   confidence: number;
-};
+}
 
 /**
  * Transcription error details
  */
-export type TranscriptionErrorDTO = {
+export interface TranscriptionErrorDTO {
   code: string;
   message: string;
-};
+}
 
 /**
  * Transcription task status
  * Used in: GET /api/expenses/transcribe/:taskId
  */
-export type TranscribeTaskStatusDTO = {
+export interface TranscribeTaskStatusDTO {
   task_id: string;
-  status: 'processing' | 'completed' | 'failed';
+  status: "processing" | "completed" | "failed";
   created_at: string;
   completed_at?: string;
   result?: TranscriptionResultDTO;
   error?: TranscriptionErrorDTO;
-};
+}
 
 /**
  * Transcribe audio task response
  * Used in: POST /api/expenses/transcribe
  */
-export type TranscribeTaskResponseDTO = Pick<TranscribeTaskStatusDTO, 'task_id' | 'status' | 'created_at'>;
+export type TranscribeTaskResponseDTO = Pick<TranscribeTaskStatusDTO, "task_id" | "status" | "created_at">;
 
 // ============================================================================
 // Settlement DTOs and Commands
@@ -357,7 +358,7 @@ export type SettlementUserDTO = UserInfoDTO;
  * Settlement data transfer object
  * Used in: GET /api/groups/:groupId/settlements, POST /api/groups/:groupId/settlements
  */
-export type SettlementDTO = Omit<Settlement, 'payer_id' | 'payee_id'> & {
+export type SettlementDTO = Omit<Settlement, "payer_id" | "payee_id"> & {
   payer: SettlementUserDTO;
   payee: SettlementUserDTO;
 };
@@ -366,7 +367,7 @@ export type SettlementDTO = Omit<Settlement, 'payer_id' | 'payee_id'> & {
  * Create settlement command
  * Used in: POST /api/groups/:groupId/settlements
  */
-export type CreateSettlementCommand = Pick<TablesInsert<'settlements'>, 'payer_id' | 'payee_id' | 'amount'>;
+export type CreateSettlementCommand = Pick<TablesInsert<"settlements">, "payer_id" | "payee_id" | "amount">;
 
 // ============================================================================
 // Balance DTOs
@@ -376,19 +377,19 @@ export type CreateSettlementCommand = Pick<TablesInsert<'settlements'>, 'payer_i
  * Member balance information
  * Used in: GET /api/groups/:groupId/balances
  */
-export type MemberBalanceDTO = {
+export interface MemberBalanceDTO {
   profile_id: string;
   full_name: string | null;
   avatar_url: string | null;
   balance: number;
   status: GroupMemberStatus;
-};
+}
 
 /**
  * Suggested settlement to minimize transactions
  * Used in: GET /api/groups/:groupId/balances
  */
-export type SuggestedSettlementDTO = {
+export interface SuggestedSettlementDTO {
   from: {
     profile_id: string;
     full_name: string | null;
@@ -398,19 +399,19 @@ export type SuggestedSettlementDTO = {
     full_name: string | null;
   };
   amount: number;
-};
+}
 
 /**
  * Group balances with settlement suggestions
  * Used in: GET /api/groups/:groupId/balances
  */
-export type BalancesDTO = {
+export interface BalancesDTO {
   group_id: string;
   base_currency_code: string;
   calculated_at: string;
   member_balances: MemberBalanceDTO[];
   suggested_settlements: SuggestedSettlementDTO[];
-};
+}
 
 // ============================================================================
 // Invitation DTOs
@@ -420,7 +421,7 @@ export type BalancesDTO = {
  * Invitation with group information
  * Used in: GET /api/invitations
  */
-export type InvitationDTO = Omit<Invitation, 'group_id'> & {
+export type InvitationDTO = Omit<Invitation, "group_id"> & {
   group: {
     id: string;
     name: string;
@@ -431,21 +432,21 @@ export type InvitationDTO = Omit<Invitation, 'group_id'> & {
  * Accept invitation response
  * Used in: POST /api/invitations/:id/accept
  */
-export type AcceptInvitationResponseDTO = {
+export interface AcceptInvitationResponseDTO {
   message: string;
   invitation_id: string;
   group_id: string;
   group_name: string;
-};
+}
 
 /**
  * Decline invitation response
  * Used in: POST /api/invitations/:id/decline
  */
-export type DeclineInvitationResponseDTO = {
+export interface DeclineInvitationResponseDTO {
   message: string;
   invitation_id: string;
-};
+}
 
 // ============================================================================
 // Common Response Types
@@ -454,18 +455,17 @@ export type DeclineInvitationResponseDTO = {
 /**
  * Generic success message response
  */
-export type MessageResponseDTO = {
+export interface MessageResponseDTO {
   message: string;
-};
+}
 
 /**
  * Error response structure
  */
-export type ErrorResponseDTO = {
+export interface ErrorResponseDTO {
   error: {
     code: string;
     message: string;
     details?: Record<string, unknown>;
   };
-};
-
+}

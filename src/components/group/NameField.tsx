@@ -1,12 +1,12 @@
-import { Label } from '../ui/label';
-import { Input } from '../ui/input';
-import type { UseFormRegister, FieldErrors } from 'react-hook-form';
-import type { CreateGroupFormValues } from '../../lib/schemas/groupSchemas';
+import { Label } from "../ui/label";
+import { Input } from "../ui/input";
+import type { UseFormRegister, FieldErrors } from "react-hook-form";
+import type { CreateGroupFormValues } from "../../lib/schemas/groupSchemas";
 
-type NameFieldProps = {
+interface NameFieldProps {
   register: UseFormRegister<CreateGroupFormValues>;
   errors: FieldErrors<CreateGroupFormValues>;
-};
+}
 
 /**
  * Name field component for group creation form
@@ -22,10 +22,10 @@ export default function NameField({ register, errors }: NameFieldProps) {
         id="name"
         type="text"
         placeholder="np. Wakacje w Hiszpanii, Mieszkanie 2024"
-        className={errors.name ? 'border-destructive focus-visible:ring-destructive' : ''}
-        aria-invalid={errors.name ? 'true' : 'false'}
-        aria-describedby={errors.name ? 'name-error' : undefined}
-        {...register('name')}
+        className={errors.name ? "border-destructive focus-visible:ring-destructive" : ""}
+        aria-invalid={errors.name ? "true" : "false"}
+        aria-describedby={errors.name ? "name-error" : undefined}
+        {...register("name")}
       />
       {errors.name && (
         <p id="name-error" className="text-sm text-destructive" role="alert">
@@ -35,4 +35,3 @@ export default function NameField({ register, errors }: NameFieldProps) {
     </div>
   );
 }
-
