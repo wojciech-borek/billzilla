@@ -9,12 +9,13 @@ interface CurrencySelectorProps {
   onChange: (currencyCode: string) => void;
   error?: string;
   disabled?: boolean;
+  hasLowConfidence?: boolean;
 }
 
 /**
  * Select component for choosing expense currency from available group currencies
  */
-export function CurrencySelector({ currencies, value, onChange, error, disabled = false }: CurrencySelectorProps) {
+export function CurrencySelector({ currencies, value, onChange, error, disabled = false, hasLowConfidence = false }: CurrencySelectorProps) {
   if (currencies.length === 0) {
     return (
       <div className="space-y-2">
@@ -34,7 +35,7 @@ export function CurrencySelector({ currencies, value, onChange, error, disabled 
       <Select value={value} onValueChange={onChange} disabled={disabled}>
         <SelectTrigger
           id="currency_code"
-          className={error ? "border-destructive focus:ring-destructive" : ""}
+          className={`${error ? "border-destructive focus:ring-destructive" : ""} ${hasLowConfidence ? "ring-2 ring-amber-200 border-amber-300" : ""}`}
           aria-invalid={error ? "true" : "false"}
           aria-describedby={error ? "currency-error" : undefined}
         >

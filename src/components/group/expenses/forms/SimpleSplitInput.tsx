@@ -14,6 +14,7 @@ interface SimpleSplitInputProps {
   currencyCode: string;
   splits: ExpenseSplitCommand[];
   onSplitsChange: (splits: ExpenseSplitCommand[]) => void;
+  hasLowConfidence?: boolean;
 }
 
 /**
@@ -26,6 +27,7 @@ export function SimpleSplitInput({
   currencyCode,
   splits,
   onSplitsChange,
+  hasLowConfidence = false,
 }: SimpleSplitInputProps) {
   const [splitAmounts, setSplitAmounts] = useState<Record<string, string>>(() => {
     // Initialize with current splits or empty
@@ -166,7 +168,7 @@ export function SimpleSplitInput({
                     placeholder="0,00"
                     value={currentAmount}
                     onChange={(e) => handleAmountChange(member.profile_id, e.target.value)}
-                    className="text-right"
+                    className={`text-right ${hasLowConfidence ? "ring-2 ring-amber-200 border-amber-300" : ""}`}
                   />
                 </div>
 

@@ -153,8 +153,7 @@ export const createExpenseFormSchema = z
               { message: "Kwota może mieć maksymalnie 2 miejsca po przecinku" }
             ),
         })
-      )
-      .default([]),
+      ),
   })
   // Note: Sum validation and duplicates check are handled in the form hook, not in schema
   .refine(

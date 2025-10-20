@@ -8,7 +8,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CalendarIcon } from "lucide-react";
 
 import { CurrencySelector } from "./CurrencySelector";
-import type { GroupMemberSummaryDTO, GroupCurrencyDTO } from "@/types";
+import { VoiceInputButton } from "../VoiceInputButton";
+import type { GroupMemberSummaryDTO, GroupCurrencyDTO, TranscriptionResultDTO, TranscriptionErrorDTO } from "@/types";
 import type { CreateExpenseFormValues } from "@/lib/schemas/expenseSchemas";
 import type { UseFormReturn } from "react-hook-form";
 
@@ -17,13 +18,28 @@ interface ExpenseBasicInfoProps {
   groupMembers: GroupMemberSummaryDTO[];
   groupCurrencies: GroupCurrencyDTO[];
   currentUserId: string;
+  hasLowConfidence?: boolean;
+  groupId: string;
+  onTranscriptionComplete?: (result: TranscriptionResultDTO) => void;
+  onTranscriptionError?: (error: TranscriptionErrorDTO) => void;
+  isLoading?: boolean;
 }
 
 /**
  * Basic information section of expense form
  * Handles description, amount, currency, date, and payer selection
  */
-export function ExpenseBasicInfo({ form, groupMembers, groupCurrencies, currentUserId }: ExpenseBasicInfoProps) {
+export function ExpenseBasicInfo({
+  form,
+  groupMembers,
+  groupCurrencies,
+  currentUserId,
+  hasLowConfidence = false,
+  groupId,
+  onTranscriptionComplete,
+  onTranscriptionError,
+  isLoading = false
+}: ExpenseBasicInfoProps) {
   const {
     register,
     control,
@@ -33,7 +49,15 @@ export function ExpenseBasicInfo({ form, groupMembers, groupCurrencies, currentU
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-lg">Informacje podstawowe</CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-lg">Informacje podstawowe</CardTitle>
+          <VoiceInputButton
+            groupId={groupId}
+            onTranscriptionComplete={onTranscriptionComplete || (() => {})}
+            onTranscriptionError={onTranscriptionError || (() => {})}
+            disabled={isLoading}
+          />
+        </div>
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Description */}
@@ -44,7 +68,7 @@ export function ExpenseBasicInfo({ form, groupMembers, groupCurrencies, currentU
           <Textarea
             id="description"
             placeholder="np. Obiad w restauracji, paliwo do samochodu..."
-            className={errors.description ? "border-destructive focus:ring-destructive" : ""}
+            className={`${errors.description ? "border-destructive focus:ring-destructive" : ""} ${hasLowConfidence ? "ring-2 ring-amber-200 border-amber-300" : ""}`}
             {...register("description")}
             rows={3}
           />
@@ -67,7 +91,7 @@ export function ExpenseBasicInfo({ form, groupMembers, groupCurrencies, currentU
               step="0.01"
               min="0"
               placeholder="0,00"
-              className={errors.amount ? "border-destructive focus:ring-destructive" : ""}
+              className={`${errors.amount ? "border-destructive focus:ring-destructive" : ""} ${hasLowConfidence ? "ring-2 ring-amber-200 border-amber-300" : ""}`}
               {...register("amount", { valueAsNumber: true })}
               defaultValue=""
             />
@@ -83,6 +107,7 @@ export function ExpenseBasicInfo({ form, groupMembers, groupCurrencies, currentU
             value={form.watch("currency_code") || groupCurrencies[0]?.code || "PLN"}
             onChange={(value) => form.setValue("currency_code", value)}
             error={errors.currency_code?.message}
+            hasLowConfidence={hasLowConfidence}
           />
         </div>
 
@@ -96,7 +121,7 @@ export function ExpenseBasicInfo({ form, groupMembers, groupCurrencies, currentU
               <Input
                 id="expense_date"
                 type="datetime-local"
-                className={errors.expense_date ? "border-destructive focus:ring-destructive" : ""}
+                className={`${errors.expense_date ? "border-destructive focus:ring-destructive" : ""} ${hasLowConfidence ? "ring-2 ring-amber-200 border-amber-300" : ""}`}
                 {...register("expense_date")}
               />
               <CalendarIcon className="absolute right-3 top-3 h-4 w-4 text-muted-foreground pointer-events-none" />
@@ -118,7 +143,7 @@ export function ExpenseBasicInfo({ form, groupMembers, groupCurrencies, currentU
               defaultValue={currentUserId}
               render={({ field }) => (
                 <Select value={field.value} onValueChange={field.onChange}>
-                  <SelectTrigger className={errors.payer_id ? "border-destructive focus:ring-destructive" : ""}>
+                  <SelectTrigger className={`${errors.payer_id ? "border-destructive focus:ring-destructive" : ""} ${hasLowConfidence ? "ring-2 ring-amber-200 border-amber-300" : ""}`}>
                     <SelectValue placeholder="Wybierz płatnika" />
                   </SelectTrigger>
                   <SelectContent>

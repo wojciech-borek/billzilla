@@ -27,6 +27,7 @@ type UseExpenseFormResult = ExpenseFormState & {
     isValid: boolean;
   };
   handleSubmit: (groupId: string) => Promise<ExpenseDTO>;
+  populateFromTranscription: (data: CreateExpenseCommand) => void;
   reset: () => void;
 };
 
@@ -36,11 +37,13 @@ type UseExpenseFormResult = ExpenseFormState & {
  * @param groupMembers - List of active group members
  * @param groupCurrencies - List of available currencies in the group
  * @param defaultPayerId - Default payer ID (usually current user)
+ * @param initialData - Initial data from voice transcription (optional)
  */
 export function useExpenseForm(
   groupMembers: GroupMemberSummaryDTO[],
   groupCurrencies: GroupCurrencyDTO[],
-  defaultPayerId?: string
+  defaultPayerId?: string,
+  initialData?: CreateExpenseCommand
 ): UseExpenseFormResult {
   const [state, setState] = useState<ExpenseFormState>({
     isSubmitting: false,
@@ -52,10 +55,10 @@ export function useExpenseForm(
   const form = useForm<CreateExpenseFormValues>({
     resolver: zodResolver(createExpenseFormSchema),
     mode: "onChange", // Only validate when user interacts
-    defaultValues: {
+    defaultValues: initialData || {
       description: undefined,
       amount: undefined,
-      currency_code: groupCurrencies[0]?.currency_code || "PLN",
+      currency_code: groupCurrencies[0]?.code || "PLN",
       expense_date: new Date().toISOString().slice(0, 16), // Current date/time in datetime-local format
       payer_id: defaultPayerId || undefined,
       splits: [],
@@ -69,12 +72,13 @@ export function useExpenseForm(
   // Split validation calculations - use form splits, not calculated splits
   const splitValidation = useMemo(() => {
     const totalAmount = watchedAmount || 0;
-    const currentSum = watchedSplits.reduce((sum, split) => sum + split.amount, 0);
+    const watchedSplitsArray = watchedSplits || [];
+    const currentSum = watchedSplitsArray.reduce((sum, split) => sum + split.amount, 0);
     const remaining = Math.round((totalAmount - currentSum) * 100) / 100;
     const isValid = Math.abs(remaining) <= 0.01; // ±0.01 tolerance
 
     // Add validation error if sum doesn't match
-    if (!isValid && watchedSplits.length > 0) {
+    if (!isValid && watchedSplitsArray.length > 0) {
       setState((prev) => ({
         ...prev,
         fieldErrors: {
@@ -83,13 +87,14 @@ export function useExpenseForm(
         },
       }));
     } else {
-      setState((prev) => ({
-        ...prev,
-        fieldErrors: {
-          ...prev.fieldErrors,
-          splits: undefined,
-        },
-      }));
+      setState((prev) => {
+        const newFieldErrors = { ...prev.fieldErrors };
+        delete newFieldErrors.splits;
+        return {
+          ...prev,
+          fieldErrors: newFieldErrors,
+        };
+      });
     }
 
     return {
@@ -230,6 +235,79 @@ export function useExpenseForm(
     [form]
   );
 
+  // Populate form with data from voice transcription
+  const populateFromTranscription = useCallback((data: CreateExpenseCommand) => {
+    try {
+      // Validate required fields
+      if (!data.description?.trim()) {
+        throw new Error("Brak opisu w danych z transkrypcji");
+      }
+
+      if (!data.amount || data.amount <= 0) {
+        throw new Error("Nieprawidłowa kwota w danych z transkrypcji");
+      }
+
+      if (!data.currency_code) {
+        throw new Error("Brak waluty w danych z transkrypcji");
+      }
+
+      if (!data.expense_date) {
+        throw new Error("Brak daty w danych z transkrypcji");
+      }
+
+      if (!data.payer_id) {
+        throw new Error("Brak płatnika w danych z transkrypcji");
+      }
+
+      if (!data.splits || data.splits.length === 0) {
+        throw new Error("Brak podziału kosztów w danych z transkrypcji");
+      }
+
+      // Validate payer is a member of the group
+      const payerExists = groupMembers.some(member => member.profile_id === data.payer_id);
+      if (!payerExists) {
+        throw new Error("Płatnik nie należy do grupy");
+      }
+
+      // Validate all split participants are members of the group
+      for (const split of data.splits) {
+        const memberExists = groupMembers.some(member => member.profile_id === split.profile_id);
+        if (!memberExists) {
+          throw new Error(`Uczestnik ${split.profile_id} nie należy do grupy`);
+        }
+      }
+
+      // Validate currency is available in the group
+      const currencyExists = groupCurrencies.some(currency => currency.code === data.currency_code);
+      if (!currencyExists) {
+        throw new Error(`Waluta ${data.currency_code} nie jest dostępna w grupie`);
+      }
+
+      // All validations passed - populate the form
+      form.setValue('description', data.description);
+      form.setValue('amount', data.amount);
+      form.setValue('currency_code', data.currency_code);
+      form.setValue('expense_date', data.expense_date);
+      form.setValue('payer_id', data.payer_id);
+      form.setValue('splits', data.splits);
+
+      // Clear any existing errors
+      setState(prev => ({
+        ...prev,
+        submitError: null,
+        fieldErrors: null,
+      }));
+
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Błąd podczas wypełniania formularza z transkrypcji';
+      setState(prev => ({
+        ...prev,
+        submitError: message,
+      }));
+      throw error;
+    }
+  }, [form, groupMembers, groupCurrencies]);
+
   const reset = useCallback(() => {
     form.reset();
     setState({
@@ -244,6 +322,7 @@ export function useExpenseForm(
     form,
     splitValidation,
     handleSubmit,
+    populateFromTranscription,
     reset,
   };
 }

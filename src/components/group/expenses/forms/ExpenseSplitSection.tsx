@@ -7,13 +7,14 @@ import type { UseFormReturn } from "react-hook-form";
 interface ExpenseSplitSectionProps {
   form: UseFormReturn<CreateExpenseFormValues>;
   groupMembers: GroupMemberSummaryDTO[];
+  hasLowConfidence?: boolean;
 }
 
 /**
  * Expense split section component
  * Handles participant selection and split amount management
  */
-export function ExpenseSplitSection({ form, groupMembers }: ExpenseSplitSectionProps) {
+export function ExpenseSplitSection({ form, groupMembers, hasLowConfidence = false }: ExpenseSplitSectionProps) {
   return (
     <SimpleSplitInput
       members={groupMembers.filter((m) => m.status === "active")}
@@ -23,6 +24,7 @@ export function ExpenseSplitSection({ form, groupMembers }: ExpenseSplitSectionP
       onSplitsChange={(splits) => {
         form.setValue("splits", splits, { shouldValidate: false });
       }}
+      hasLowConfidence={hasLowConfidence}
     />
   );
 }
