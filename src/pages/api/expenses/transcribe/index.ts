@@ -204,6 +204,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
         taskId: task.id,
         audioBlob,
         groupContext,
+        userId: locals.user.id,
       })
       .catch((error) => {
         // Errors are already handled in processTask (updates task status to failed)

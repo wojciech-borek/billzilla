@@ -48,6 +48,7 @@ export interface ProcessTaskParams {
   taskId: string;
   audioBlob: Blob;
   groupContext: GroupContext;
+  userId: string;
 }
 
 // ============================================================================
@@ -214,14 +215,14 @@ export class TranscriptionTaskService {
       });
 
       // Step 2: Build context for LLM
-      const context = this.buildLLMContext(params.groupContext);
+      const context = this.buildLLMContext(params.groupContext, params.userId);
 
       // Step 3: Extract expense data from transcription
       const extractParams: ExtractDataParams<typeof expenseTranscriptionSchema> = {
         transcription: transcriptionResult.text,
         context,
         schema: expenseTranscriptionSchema,
-        model: "anthropic/claude-3.5-sonnet", // Can be made configurable
+        model: "google/gemma-3-27b-it", 
         temperature: 0.1,
         maxTokens: 1024,
       };
@@ -368,8 +369,16 @@ export class TranscriptionTaskService {
   /**
    * Builds context string for LLM to extract expense data
    */
-  private buildLLMContext(context: GroupContext): string {
-    const membersList = context.members.map((m, idx) => `${idx + 1}. ${m.name} (ID: ${m.id})`).join("\n");
+  private buildLLMContext(context: GroupContext, currentUserId: string): string {
+    const currentUser = context.members.find((m) => m.id === currentUserId);
+    const currentUserName = currentUser?.name || "Unknown User";
+
+    const membersList = context.members
+      .map((m, idx) => {
+        const isCurrent = m.id === currentUserId;
+        return `${idx + 1}. ${m.name} (ID: ${m.id})${isCurrent ? " ⭐ CURRENT USER (speaking)" : ""}`;
+      })
+      .join("\n");
 
     const currenciesList = context.currencies.map((c) => `${c.code}: ${c.rate}`).join(", ");
 
@@ -379,6 +388,8 @@ export class TranscriptionTaskService {
 Group ID: ${context.groupId}
 Base Currency: ${context.baseCurrency}
 Today's Date: ${today}
+
+CURRENT USER (person speaking): ${currentUserName} (ID: ${currentUserId})
 
 Available Group Members:
 ${membersList}
@@ -400,7 +411,7 @@ EXTRACTION INSTRUCTIONS:
 3. PAYER (who paid) - IMPORTANT:
    - Look for phrases like: "zapłaciłem", "ja zapłaciłem", "płacił [name]", "[name] zapłacił", "to [name] płacił"
    - Match the person to the member list above using their ID
-   - If "ja"/"mnie"/"zapłaciłem" without a name → this is unclear, leave payer_id as null
+   - If "ja"/"mnie"/"zapłaciłem" → this means CURRENT USER (${currentUserId})
    - If a specific name is mentioned → match to member list and use their ID
    - If no payer mentioned at all → leave payer_id as null (system will default to current user)
 
@@ -420,8 +431,10 @@ EXTRACTION INSTRUCTIONS:
 5. PARTICIPANTS & SPLITS (required):
    - Look for who should pay/split the cost:
      * "wszyscy" / "cała grupa" / "po równo" → all members, equal split
-     * "ja i [name]" → just those two people
+     * "ja i [name]" / "z [name]" / "dzieliliśmy się z [name]" → CURRENT USER (${currentUserId}) and the named person
      * "[name1], [name2], [name3]" → specific people listed
+     * "ja" / "dla mnie" (alone) → only CURRENT USER (${currentUserId})
+   - IMPORTANT: When "ja"/"mnie" is mentioned, always include CURRENT USER (${currentUserId}) in splits
    - Match all names to the member list using their IDs
    - Calculate split amounts:
      * Equal split: divide amount by number of participants
