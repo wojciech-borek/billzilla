@@ -44,7 +44,7 @@ export function useAudioRecorder(): UseAudioRecorderResult {
 
       // Create MediaRecorder with preferred format
       const mediaRecorder = new MediaRecorder(stream, {
-        mimeType: MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/mp4',
+        mimeType: MediaRecorder.isTypeSupported("audio/webm") ? "audio/webm" : "audio/mp4",
       });
 
       chunksRef.current = [];
@@ -60,9 +60,9 @@ export function useAudioRecorder(): UseAudioRecorderResult {
       // Handle recording stop event
       mediaRecorder.onstop = () => {
         const audioBlob = new Blob(chunksRef.current, {
-          type: mediaRecorder.mimeType || 'audio/webm'
+          type: mediaRecorder.mimeType || "audio/webm",
         });
-        setState(prev => ({ ...prev, isRecording: false, audioBlob }));
+        setState((prev) => ({ ...prev, isRecording: false, audioBlob }));
 
         // Clean up timer
         if (timerRef.current) {
@@ -70,16 +70,16 @@ export function useAudioRecorder(): UseAudioRecorderResult {
         }
 
         // Stop all tracks
-        mediaRecorder.stream.getTracks().forEach(track => track.stop());
+        mediaRecorder.stream.getTracks().forEach((track) => track.stop());
       };
 
       // Handle recording errors
       mediaRecorder.onerror = (event) => {
-        console.error('MediaRecorder error:', event);
-        setState(prev => ({
+        console.error("MediaRecorder error:", event);
+        setState((prev) => ({
           ...prev,
           isRecording: false,
-          error: 'Błąd podczas nagrywania',
+          error: "Błąd podczas nagrywania",
         }));
 
         // Clean up timer
@@ -88,38 +88,37 @@ export function useAudioRecorder(): UseAudioRecorderResult {
         }
 
         // Stop all tracks
-        mediaRecorder.stream.getTracks().forEach(track => track.stop());
+        mediaRecorder.stream.getTracks().forEach((track) => track.stop());
       };
 
       // Start recording
       mediaRecorder.start(1000); // Collect data every 1 second
-      setState(prev => ({
+      setState((prev) => ({
         ...prev,
         isRecording: true,
         duration: 0,
         audioBlob: null,
-        error: null
+        error: null,
       }));
 
       // Start duration timer
       timerRef.current = setInterval(() => {
-        setState(prev => ({ ...prev, duration: prev.duration + 1 }));
+        setState((prev) => ({ ...prev, duration: prev.duration + 1 }));
       }, 1000);
-
     } catch (error) {
-      console.error('Failed to start recording:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Nieznany błąd';
+      console.error("Failed to start recording:", error);
+      const errorMessage = error instanceof Error ? error.message : "Nieznany błąd";
 
-      let userFriendlyMessage = 'Nie udało się uzyskać dostępu do mikrofonu';
-      if (errorMessage.includes('Permission denied') || errorMessage.includes('NotAllowedError')) {
-        userFriendlyMessage = 'Brak dostępu do mikrofonu. Sprawdź ustawienia przeglądarki.';
-      } else if (errorMessage.includes('NotFoundError')) {
-        userFriendlyMessage = 'Nie znaleziono mikrofonu. Sprawdź podłączenie urządzenia.';
-      } else if (errorMessage.includes('NotSupportedError')) {
-        userFriendlyMessage = 'Nagrywanie audio nie jest obsługiwane w tej przeglądarce.';
+      let userFriendlyMessage = "Nie udało się uzyskać dostępu do mikrofonu";
+      if (errorMessage.includes("Permission denied") || errorMessage.includes("NotAllowedError")) {
+        userFriendlyMessage = "Brak dostępu do mikrofonu. Sprawdź ustawienia przeglądarki.";
+      } else if (errorMessage.includes("NotFoundError")) {
+        userFriendlyMessage = "Nie znaleziono mikrofonu. Sprawdź podłączenie urządzenia.";
+      } else if (errorMessage.includes("NotSupportedError")) {
+        userFriendlyMessage = "Nagrywanie audio nie jest obsługiwane w tej przeglądarce.";
       }
 
-      setState(prev => ({
+      setState((prev) => ({
         ...prev,
         error: userFriendlyMessage,
       }));
@@ -131,28 +130,28 @@ export function useAudioRecorder(): UseAudioRecorderResult {
   const stopRecording = useCallback(async (): Promise<Blob | null> => {
     return new Promise((resolve) => {
       const mediaRecorder = mediaRecorderRef.current;
-      if (!mediaRecorder || mediaRecorder.state === 'inactive') {
+      if (!mediaRecorder || mediaRecorder.state === "inactive") {
         resolve(null);
         return;
       }
 
       // Set up one-time stop handler to resolve the promise
       const handleStop = () => {
-        mediaRecorder.removeEventListener('stop', handleStop);
+        mediaRecorder.removeEventListener("stop", handleStop);
         const audioBlob = new Blob(chunksRef.current, {
-          type: mediaRecorder.mimeType || 'audio/webm'
+          type: mediaRecorder.mimeType || "audio/webm",
         });
         resolve(audioBlob);
       };
 
-      mediaRecorder.addEventListener('stop', handleStop);
+      mediaRecorder.addEventListener("stop", handleStop);
       mediaRecorder.stop();
     });
   }, []);
 
   const cancelRecording = useCallback(() => {
     const mediaRecorder = mediaRecorderRef.current;
-    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+    if (mediaRecorder && mediaRecorder.state !== "inactive") {
       mediaRecorder.stop();
       // Tracks will be stopped in onstop handler
     }

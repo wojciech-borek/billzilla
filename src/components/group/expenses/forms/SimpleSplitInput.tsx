@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -38,6 +38,16 @@ export function SimpleSplitInput({
     });
     return amounts;
   });
+
+  // Update local state when splits prop changes (e.g., from voice transcription)
+  useEffect(() => {
+    const amounts: Record<string, string> = {};
+    members.forEach((member) => {
+      const existingSplit = splits.find((split) => split.profile_id === member.profile_id);
+      amounts[member.profile_id] = existingSplit ? existingSplit.amount.toString() : "";
+    });
+    setSplitAmounts(amounts);
+  }, [splits, members]);
 
   const handleAmountChange = useCallback(
     (profileId: string, value: string) => {

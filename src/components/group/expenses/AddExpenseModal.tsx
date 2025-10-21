@@ -5,7 +5,14 @@ import { X } from "lucide-react";
 import { toast } from "sonner";
 
 import { ExpenseForm } from "./forms/ExpenseForm";
-import type { GroupMemberSummaryDTO, GroupCurrencyDTO, ExpenseDTO, TranscriptionResultDTO, TranscriptionErrorDTO, CreateExpenseCommand } from "@/types";
+import type {
+  GroupMemberSummaryDTO,
+  GroupCurrencyDTO,
+  ExpenseDTO,
+  TranscriptionResultDTO,
+  TranscriptionErrorDTO,
+  CreateExpenseCommand,
+} from "@/types";
 
 interface AddExpenseModalProps {
   groupId: string;
@@ -55,8 +62,22 @@ export function AddExpenseModal({
         });
       }
 
+      // AI now returns splits with profile_ids directly - no mapping needed!
+      const expenseData = result.expense_data as CreateExpenseCommand;
+
+      // Apply defaults for optional fields (payer, date, currency)
+      // These will be further validated and defaulted in populateFromTranscription
+      const finalExpenseData: CreateExpenseCommand = {
+        description: expenseData.description,
+        amount: expenseData.amount,
+        currency_code: expenseData.currency_code || groupCurrencies[0]?.code || "PLN",
+        expense_date: expenseData.expense_date || new Date().toISOString().slice(0, 16),
+        payer_id: expenseData.payer_id || currentUserId, // null if AI didn't determine, will use current user
+        splits: expenseData.splits,
+      };
+
       // Set transcription data and mark as from voice
-      setTranscriptionData(result.expense_data);
+      setTranscriptionData(finalExpenseData);
       setIsFromVoice(true);
 
       toast.success("Wydatek rozpoznany! Sprawdź dane i zatwierdź.");
@@ -82,10 +103,7 @@ export function AddExpenseModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent
-        className="max-w-3xl p-0 rounded-lg"
-        showCloseButton={false}
-      >
+      <DialogContent className="max-w-3xl p-0 rounded-lg" showCloseButton={false}>
         <DialogHeader className="px-6 py-4 border-b bg-background">
           <div className="flex items-center justify-between">
             <DialogTitle className="text-xl font-semibold">Dodaj wydatek</DialogTitle>

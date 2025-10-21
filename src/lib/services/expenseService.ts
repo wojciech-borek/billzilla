@@ -163,7 +163,11 @@ export async function createExpense(
   }
 
   // Step 10: Transform to DTO format
-  const createdByProfile = completeExpense.profiles as unknown as { id: string; full_name: string | null; avatar_url: string | null };
+  const createdByProfile = completeExpense.profiles as unknown as {
+    id: string;
+    full_name: string | null;
+    avatar_url: string | null;
+  };
 
   const expenseDTO: ExpenseDTO = {
     id: completeExpense.id,
@@ -180,7 +184,11 @@ export async function createExpense(
       avatar_url: createdByProfile.avatar_url,
     },
     splits: completeExpense.expense_splits.map((split) => {
-      const splitProfile = split.profiles as unknown as { id: string; full_name: string | null; avatar_url: string | null };
+      const splitProfile = split.profiles as unknown as {
+        id: string;
+        full_name: string | null;
+        avatar_url: string | null;
+      };
       return {
         profile_id: split.profile_id,
         full_name: splitProfile.full_name,

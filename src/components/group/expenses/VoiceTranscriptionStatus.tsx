@@ -4,11 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
 import { getTranscriptionTaskStatus } from "@/lib/services/expenseTranscriptionService";
-import type {
-  TranscriptionResultDTO,
-  TranscriptionErrorDTO,
-  TranscribeTaskStatusDTO,
-} from "@/types";
+import type { TranscriptionResultDTO, TranscriptionErrorDTO, TranscribeTaskStatusDTO } from "@/types";
 
 interface VoiceTranscriptionStatusProps {
   taskId: string;
@@ -79,7 +75,6 @@ export function VoiceTranscriptionStatus({
       setPollingCount(newPollingCount);
       setCurrentMessage(getMessageForPhase(newPollingCount));
       setProgress(Math.min((newPollingCount / 30) * 100, 90)); // Max 90% until completion
-
     } catch (err) {
       console.error("Polling error:", err);
       const transcriptionError: TranscriptionErrorDTO = {
@@ -110,7 +105,7 @@ export function VoiceTranscriptionStatus({
 
     // Set up polling interval
     const interval = setInterval(() => {
-      setPollingCount(prev => {
+      setPollingCount((prev) => {
         const newCount = prev + 1;
 
         // Check for timeout
@@ -163,9 +158,7 @@ export function VoiceTranscriptionStatus({
             </div>
 
             <div className="text-center">
-              <p className="text-sm font-medium text-foreground">
-                {currentMessage}
-              </p>
+              <p className="text-sm font-medium text-foreground">{currentMessage}</p>
               <p className="text-xs text-muted-foreground mt-1">
                 Próba {pollingCount + 1} z {maxPollingAttempts}
               </p>
@@ -187,9 +180,7 @@ export function VoiceTranscriptionStatus({
             <CheckCircle className="h-8 w-8 text-green-600" />
 
             <div className="text-center">
-              <p className="text-sm font-medium text-green-600">
-                {currentMessage}
-              </p>
+              <p className="text-sm font-medium text-green-600">{currentMessage}</p>
             </div>
           </div>
         );
@@ -205,24 +196,12 @@ export function VoiceTranscriptionStatus({
             )}
 
             <div className="text-center">
-              <p className="text-sm font-medium text-destructive">
-                {currentMessage}
-              </p>
-              {error && (
-                <p className="text-xs text-muted-foreground mt-1">
-                  {error.message}
-                </p>
-              )}
+              <p className="text-sm font-medium text-destructive">{currentMessage}</p>
+              {error && <p className="text-xs text-muted-foreground mt-1">{error.message}</p>}
             </div>
 
             {canRetry && (
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={handleRetry}
-                className="text-xs h-8"
-              >
+              <Button type="button" variant="outline" size="sm" onClick={handleRetry} className="text-xs h-8">
                 <RefreshCw className="h-3 w-3 mr-1" />
                 Spróbuj ponownie
               </Button>
@@ -237,9 +216,7 @@ export function VoiceTranscriptionStatus({
 
   return (
     <Card className="w-48 bg-primary/5 border-primary/20">
-      <CardContent className="p-4">
-        {renderContent()}
-      </CardContent>
+      <CardContent className="p-4">{renderContent()}</CardContent>
     </Card>
   );
 }

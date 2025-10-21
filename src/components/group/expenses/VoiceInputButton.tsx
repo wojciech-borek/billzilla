@@ -6,10 +6,7 @@ import { toast } from "sonner";
 import { useVoiceTranscription } from "@/lib/hooks/useVoiceTranscription";
 import { VoiceRecordingIndicator } from "./VoiceRecordingIndicator";
 import { VoiceTranscriptionStatus } from "./VoiceTranscriptionStatus";
-import type {
-  TranscriptionResultDTO,
-  TranscriptionErrorDTO,
-} from "@/types";
+import type { TranscriptionResultDTO, TranscriptionErrorDTO } from "@/types";
 
 interface VoiceInputButtonProps {
   groupId: string;
@@ -86,7 +83,6 @@ export function VoiceInputButton({
 
       // Start polling for transcription status
       await startTranscriptionPolling(uploadResult.task_id);
-
     } catch (error) {
       console.error("Failed to stop recording:", error);
       toast.error("Błąd podczas zatrzymywania nagrywania");
@@ -99,59 +95,76 @@ export function VoiceInputButton({
     toast.info("Nagrywanie anulowane");
   }, [cancelRecording]);
 
-  const startTranscriptionPolling = useCallback(async (taskId: string) => {
-    try {
-      // Poll immediately for the first time
-      let status = await pollTaskStatus(taskId);
-      let attempts = 0;
-      const maxAttempts = 60; // 60 seconds timeout
-
-      while (status.status === "processing" && attempts < maxAttempts) {
-        // Wait 1 second before next poll
-        await new Promise(resolve => setTimeout(resolve, 1000));
-
-        status = await pollTaskStatus(taskId);
-        attempts++;
-
-        if (status.status === "completed") {
-          // Success - call completion callback
-          if (status.result) {
-            onTranscriptionComplete(status.result);
-          }
-          reset();
-          return;
-        } else if (status.status === "failed") {
-          // Error - call error callback
-          if (status.error) {
-            onTranscriptionError(status.error);
-          } else {
-            onTranscriptionError({
-              code: "TRANSCRIPTION_FAILED",
-              message: "Transkrypcja nie powiodła się",
-            });
-          }
+  const startTranscriptionPolling = useCallback(
+    async (taskId: string) => {
+      try {
+        // Poll immediately for the first time
+        let status = await pollTaskStatus(taskId);
+        
+        // Check if already completed
+        if (status.status === "completed" && status.result) {
+          onTranscriptionComplete(status.result);
           reset();
           return;
         }
-      }
+        
+        if (status.status === "failed" && status.error) {
+          onTranscriptionError(status.error);
+          reset();
+          return;
+        }
+        
+        let attempts = 0;
+        const maxAttempts = 60; // 60 seconds timeout
 
-      // Timeout reached
-      if (attempts >= maxAttempts) {
+        while (status.status === "processing" && attempts < maxAttempts) {
+          // Wait 1 second before next poll
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+
+          status = await pollTaskStatus(taskId);
+          attempts++;
+
+          if (status.status === "completed") {
+            // Success - call completion callback
+            if (status.result) {
+              onTranscriptionComplete(status.result);
+            }
+            reset();
+            return;
+          } else if (status.status === "failed") {
+            // Error - call error callback
+            if (status.error) {
+              onTranscriptionError(status.error);
+            } else {
+              onTranscriptionError({
+                code: "TRANSCRIPTION_FAILED",
+                message: "Transkrypcja nie powiodła się",
+              });
+            }
+            reset();
+            return;
+          }
+        }
+
+        // Timeout reached
+        if (attempts >= maxAttempts) {
+          onTranscriptionError({
+            code: "TIMEOUT",
+            message: "Przetwarzanie trwa zbyt długo. Spróbuj ponownie.",
+          });
+          reset();
+        }
+      } catch (error) {
+        console.error("Polling error:", error);
         onTranscriptionError({
-          code: "TIMEOUT",
-          message: "Przetwarzanie trwa zbyt długo. Spróbuj ponownie.",
+          code: "POLLING_ERROR",
+          message: "Błąd podczas sprawdzania statusu transkrypcji",
         });
         reset();
       }
-    } catch (error) {
-      console.error("Polling error:", error);
-      onTranscriptionError({
-        code: "POLLING_ERROR",
-        message: "Błąd podczas sprawdzania statusu transkrypcji",
-      });
-      reset();
-    }
-  }, [pollTaskStatus, onTranscriptionComplete, onTranscriptionError, reset]);
+    },
+    [pollTaskStatus, onTranscriptionComplete, onTranscriptionError, reset]
+  );
 
   // Show recording indicator if currently recording
   if (currentIsRecording) {

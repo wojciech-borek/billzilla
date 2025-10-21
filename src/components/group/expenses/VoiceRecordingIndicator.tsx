@@ -38,7 +38,6 @@ export function VoiceRecordingIndicator({
     }
   }, [recordingDuration, maxDuration, onStop]);
 
-
   return (
     <div className="flex items-center space-x-2">
       <Button

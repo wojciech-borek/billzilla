@@ -236,77 +236,100 @@ export function useExpenseForm(
   );
 
   // Populate form with data from voice transcription
-  const populateFromTranscription = useCallback((data: CreateExpenseCommand) => {
-    try {
-      // Validate required fields
-      if (!data.description?.trim()) {
-        throw new Error("Brak opisu w danych z transkrypcji");
-      }
+  const populateFromTranscription = useCallback(
+    (data: CreateExpenseCommand) => {
+      try {
+        console.log("📋 Populating form from transcription:", data);
 
-      if (!data.amount || data.amount <= 0) {
-        throw new Error("Nieprawidłowa kwota w danych z transkrypcji");
-      }
-
-      if (!data.currency_code) {
-        throw new Error("Brak waluty w danych z transkrypcji");
-      }
-
-      if (!data.expense_date) {
-        throw new Error("Brak daty w danych z transkrypcji");
-      }
-
-      if (!data.payer_id) {
-        throw new Error("Brak płatnika w danych z transkrypcji");
-      }
-
-      if (!data.splits || data.splits.length === 0) {
-        throw new Error("Brak podziału kosztów w danych z transkrypcji");
-      }
-
-      // Validate payer is a member of the group
-      const payerExists = groupMembers.some(member => member.profile_id === data.payer_id);
-      if (!payerExists) {
-        throw new Error("Płatnik nie należy do grupy");
-      }
-
-      // Validate all split participants are members of the group
-      for (const split of data.splits) {
-        const memberExists = groupMembers.some(member => member.profile_id === split.profile_id);
-        if (!memberExists) {
-          throw new Error(`Uczestnik ${split.profile_id} nie należy do grupy`);
+        // Validate required fields (only truly required ones)
+        if (!data.description?.trim()) {
+          throw new Error("Brak opisu w danych z transkrypcji");
         }
+
+        if (!data.amount || data.amount <= 0) {
+          throw new Error("Nieprawidłowa kwota w danych z transkrypcji");
+        }
+
+        if (!data.splits || data.splits.length === 0) {
+          throw new Error("Brak podziału kosztów w danych z transkrypcji");
+        }
+
+        // Fill in defaults for optional fields
+        const currency_code = data.currency_code || groupCurrencies[0]?.code || "PLN";
+        const expense_date = data.expense_date || new Date().toISOString().slice(0, 16);
+        const payer_id = data.payer_id || defaultPayerId || groupMembers[0]?.profile_id;
+
+        console.log("🔧 Using values:", {
+          currency_code,
+          expense_date,
+          payer_id,
+          payer_from_data: data.payer_id,
+          default_payer: defaultPayerId,
+        });
+
+        // Validate payer is a member of the group (after applying defaults)
+        if (payer_id) {
+          const payerExists = groupMembers.some((member) => member.profile_id === payer_id);
+          if (!payerExists) {
+            console.warn("⚠️ Payer not found in group, using first member");
+            // Don't throw error, use first member as fallback
+          }
+        }
+
+        // Validate all split participants are members of the group
+        const validSplits = data.splits.filter((split) => {
+          const memberExists = groupMembers.some((member) => member.profile_id === split.profile_id);
+          if (!memberExists) {
+            console.warn(`⚠️ Participant ${split.profile_id} not found in group, skipping`);
+          }
+          return memberExists;
+        });
+
+        if (validSplits.length === 0) {
+          throw new Error("Żaden z uczestników nie należy do grupy");
+        }
+
+        // Validate currency is available in the group
+        const currencyExists = groupCurrencies.some((currency) => currency.code === currency_code);
+        if (!currencyExists) {
+          console.warn(`⚠️ Currency ${currency_code} not available, using default`);
+          // Don't throw error, will use default currency
+        }
+
+        // All validations passed - populate the form with defaults applied
+        // Use shouldValidate: true to trigger form validation after setting values
+        form.setValue("description", data.description.trim(), { shouldValidate: true });
+        form.setValue("amount", data.amount, { shouldValidate: true });
+        form.setValue("currency_code", currency_code, { shouldValidate: true });
+        form.setValue("expense_date", expense_date, { shouldValidate: true });
+        form.setValue("payer_id", payer_id, { shouldValidate: true });
+        form.setValue("splits", validSplits, { shouldValidate: true });
+
+        console.log("✅ Form populated successfully");
+
+        // Manually trigger validation to update isValid state
+        setTimeout(() => {
+          form.trigger();
+        }, 0);
+
+        // Clear any existing errors
+        setState((prev) => ({
+          ...prev,
+          submitError: null,
+          fieldErrors: null,
+        }));
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Błąd podczas wypełniania formularza z transkrypcji";
+        console.error("❌ Error populating form:", message);
+        setState((prev) => ({
+          ...prev,
+          submitError: message,
+        }));
+        throw error;
       }
-
-      // Validate currency is available in the group
-      const currencyExists = groupCurrencies.some(currency => currency.code === data.currency_code);
-      if (!currencyExists) {
-        throw new Error(`Waluta ${data.currency_code} nie jest dostępna w grupie`);
-      }
-
-      // All validations passed - populate the form
-      form.setValue('description', data.description);
-      form.setValue('amount', data.amount);
-      form.setValue('currency_code', data.currency_code);
-      form.setValue('expense_date', data.expense_date);
-      form.setValue('payer_id', data.payer_id);
-      form.setValue('splits', data.splits);
-
-      // Clear any existing errors
-      setState(prev => ({
-        ...prev,
-        submitError: null,
-        fieldErrors: null,
-      }));
-
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Błąd podczas wypełniania formularza z transkrypcji';
-      setState(prev => ({
-        ...prev,
-        submitError: message,
-      }));
-      throw error;
-    }
-  }, [form, groupMembers, groupCurrencies]);
+    },
+    [form, groupMembers, groupCurrencies, defaultPayerId]
+  );
 
   const reset = useCallback(() => {
     form.reset();

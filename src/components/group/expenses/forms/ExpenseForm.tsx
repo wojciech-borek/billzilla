@@ -7,7 +7,14 @@ import { createExpenseFormSchema, type CreateExpenseFormValues } from "@/lib/sch
 import { useExpenseForm } from "@/lib/hooks/useExpenseForm";
 import { ExpenseBasicInfo } from "./ExpenseBasicInfo";
 import { ExpenseSplitSection } from "./ExpenseSplitSection";
-import type { GroupMemberSummaryDTO, GroupCurrencyDTO, ExpenseDTO, CreateExpenseCommand, TranscriptionResultDTO, TranscriptionErrorDTO } from "@/types";
+import type {
+  GroupMemberSummaryDTO,
+  GroupCurrencyDTO,
+  ExpenseDTO,
+  CreateExpenseCommand,
+  TranscriptionResultDTO,
+  TranscriptionErrorDTO,
+} from "@/types";
 
 interface ExpenseFormProps {
   groupId: string;
@@ -37,7 +44,7 @@ export function ExpenseForm({
   hasLowConfidence = false,
   onTranscriptionComplete,
   onTranscriptionError,
-  isLoading = false
+  isLoading = false,
 }: ExpenseFormProps) {
   const {
     form,
@@ -46,6 +53,7 @@ export function ExpenseForm({
     submitError,
     fieldErrors,
     handleSubmit: submitExpense,
+    populateFromTranscription,
   } = useExpenseForm(groupMembers, groupCurrencies, currentUserId, initialData);
 
   const {
@@ -65,7 +73,39 @@ export function ExpenseForm({
     }
   };
 
+  // Wrapper for transcription completion that populates the form
+  const handleTranscriptionComplete = React.useCallback(
+    (result: TranscriptionResultDTO) => {
+      try {
+        populateFromTranscription(result.expense_data);
+        // Call parent callback
+        onTranscriptionComplete?.(result);
+      } catch (error) {
+        console.error("Error populating form from transcription:", error);
+        // Still call parent callback to show error
+        if (onTranscriptionError) {
+          onTranscriptionError({
+            code: "FORM_POPULATION_ERROR",
+            message: error instanceof Error ? error.message : "Błąd podczas wypełniania formularza",
+          });
+        }
+      }
+    },
+    [populateFromTranscription, onTranscriptionComplete, onTranscriptionError]
+  );
+
   const formErrors = { ...errors, ...fieldErrors };
+
+  // Debug: log validation state
+  React.useEffect(() => {
+    console.log("🔍 Form validation state:", {
+      isValid,
+      isSubmitting,
+      splitValidation,
+      errors,
+      fieldErrors,
+    });
+  }, [isValid, isSubmitting, splitValidation, errors, fieldErrors]);
 
   return (
     <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-6">
@@ -93,7 +133,7 @@ export function ExpenseForm({
         currentUserId={currentUserId}
         hasLowConfidence={hasLowConfidence}
         groupId={groupId}
-        onTranscriptionComplete={onTranscriptionComplete}
+        onTranscriptionComplete={handleTranscriptionComplete}
         onTranscriptionError={onTranscriptionError}
         isLoading={isLoading}
       />
@@ -114,7 +154,9 @@ export function ExpenseForm({
         <div className="p-4 border border-destructive/50 rounded-lg bg-destructive/10">
           <p className="text-sm text-destructive font-medium">Błąd podziału</p>
           <p className="text-sm text-destructive mt-1">
-            {typeof formErrors.splits === "string" ? formErrors.splits : (formErrors.splits as any)?.message || "Błąd walidacji podziału"}
+            {typeof formErrors.splits === "string"
+              ? formErrors.splits
+              : (formErrors.splits as any)?.message || "Błąd walidacji podziału"}
           </p>
         </div>
       )}

@@ -38,7 +38,7 @@ export function ExpenseBasicInfo({
   groupId,
   onTranscriptionComplete,
   onTranscriptionError,
-  isLoading = false
+  isLoading = false,
 }: ExpenseBasicInfoProps) {
   const {
     register,
@@ -143,7 +143,9 @@ export function ExpenseBasicInfo({
               defaultValue={currentUserId}
               render={({ field }) => (
                 <Select value={field.value} onValueChange={field.onChange}>
-                  <SelectTrigger className={`${errors.payer_id ? "border-destructive focus:ring-destructive" : ""} ${hasLowConfidence ? "ring-2 ring-amber-200 border-amber-300" : ""}`}>
+                  <SelectTrigger
+                    className={`${errors.payer_id ? "border-destructive focus:ring-destructive" : ""} ${hasLowConfidence ? "ring-2 ring-amber-200 border-amber-300" : ""}`}
+                  >
                     <SelectValue placeholder="Wybierz płatnika" />
                   </SelectTrigger>
                   <SelectContent>

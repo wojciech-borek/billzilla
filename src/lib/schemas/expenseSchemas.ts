@@ -138,22 +138,21 @@ export const createExpenseFormSchema = z
       .refine((val) => !val || /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val), {
         message: "Nieprawidłowy identyfikator płatnika",
       }),
-    splits: z
-      .array(
-        z.object({
-          profile_id: z.string().uuid("Nieprawidłowy identyfikator uczestnika"),
-          amount: z
-            .number()
-            .min(0, "Kwota podziału nie może być ujemna")
-            .refine(
-              (val) => {
-                const decimalPlaces = (val.toString().split(".")[1] || "").length;
-                return decimalPlaces <= 2;
-              },
-              { message: "Kwota może mieć maksymalnie 2 miejsca po przecinku" }
-            ),
-        })
-      ),
+    splits: z.array(
+      z.object({
+        profile_id: z.string().uuid("Nieprawidłowy identyfikator uczestnika"),
+        amount: z
+          .number()
+          .min(0, "Kwota podziału nie może być ujemna")
+          .refine(
+            (val) => {
+              const decimalPlaces = (val.toString().split(".")[1] || "").length;
+              return decimalPlaces <= 2;
+            },
+            { message: "Kwota może mieć maksymalnie 2 miejsca po przecinku" }
+          ),
+      })
+    ),
   })
   // Note: Sum validation and duplicates check are handled in the form hook, not in schema
   .refine(
@@ -174,3 +173,54 @@ export const createExpenseFormSchema = z
  * TypeScript type for expense form values (Frontend)
  */
 export type CreateExpenseFormValues = z.infer<typeof createExpenseFormSchema>;
+
+// ============================================================================
+// Transcription Schemas (For AI/LLM extraction)
+// ============================================================================
+
+/**
+ * Schema for expense data extracted from voice transcription
+ * This schema is used by OpenRouter service to validate AI-extracted data
+ *
+ * Note: Some fields are optional or nullable because the AI might not be able
+ * to extract all information from the transcription (e.g., specific participants,
+ * exact date, etc.)
+ */
+export const expenseTranscriptionSchema = z.object({
+  description: z.string().min(1, "Description is required").max(500, "Description must not exceed 500 characters"),
+  amount: z.number().positive("Amount must be positive"),
+  currency_code: z
+    .string()
+    .length(3, "Currency code must be exactly 3 characters")
+    .regex(/^[A-Z]{3}$/, "Currency code must be 3 uppercase letters")
+    .optional()
+    .nullable(),
+  expense_date: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?$/, "Invalid date format")
+    .optional()
+    .nullable(),
+  payer_id: z.string().uuid("Invalid payer ID format").optional().nullable(),
+  splits: z
+    .array(
+      z.object({
+        profile_id: z.string().uuid("Invalid profile ID format"),
+        amount: z.number().min(0, "Split amount cannot be negative"),
+      })
+    )
+    .min(1, "At least one split is required")
+    .describe("List of participants with their profile_id and split amounts"),
+  extraction_confidence: z
+    .number()
+    .min(0)
+    .max(1)
+    .optional()
+    .describe(
+      "Your confidence in the extraction accuracy (0.0 to 1.0). 1.0 = all information clear and certain, 0.7-0.9 = most information clear with some assumptions, 0.4-0.6 = significant ambiguity, 0.0-0.3 = very uncertain"
+    ),
+});
+
+/**
+ * TypeScript type for expense transcription result
+ */
+export type ExpenseTranscriptionResult = z.infer<typeof expenseTranscriptionSchema>;

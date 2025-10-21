@@ -15,7 +15,14 @@ interface CurrencySelectorProps {
 /**
  * Select component for choosing expense currency from available group currencies
  */
-export function CurrencySelector({ currencies, value, onChange, error, disabled = false, hasLowConfidence = false }: CurrencySelectorProps) {
+export function CurrencySelector({
+  currencies,
+  value,
+  onChange,
+  error,
+  disabled = false,
+  hasLowConfidence = false,
+}: CurrencySelectorProps) {
   if (currencies.length === 0) {
     return (
       <div className="space-y-2">

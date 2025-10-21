@@ -1,8 +1,4 @@
-import type {
-  TranscribeTaskResponseDTO,
-  TranscribeTaskStatusDTO,
-  TranscriptionErrorDTO,
-} from "../../types";
+import type { TranscribeTaskResponseDTO, TranscribeTaskStatusDTO, TranscriptionErrorDTO } from "../../types";
 
 /**
  * Service for handling expense transcription API calls
@@ -24,50 +20,50 @@ export async function uploadAudioForTranscription(
 ): Promise<TranscribeTaskResponseDTO> {
   // Validate input parameters
   if (!audioBlob) {
-    throw new Error('Audio blob is required');
+    throw new Error("Audio blob is required");
   }
 
   if (!groupId) {
-    throw new Error('Group ID is required');
+    throw new Error("Group ID is required");
   }
 
   // Validate file size (25MB limit as per API spec)
   const maxSize = 25 * 1024 * 1024; // 25MB
   if (audioBlob.size > maxSize) {
-    throw new Error('Audio file too large. Maximum size: 25MB');
+    throw new Error("Audio file too large. Maximum size: 25MB");
   }
 
   // Validate MIME type
-  const validMimeTypes = ['audio/webm', 'audio/mp4', 'audio/mpeg', 'audio/wav', 'audio/ogg'];
-  if (!validMimeTypes.some(type => audioBlob.type.startsWith(type.split('/')[0]))) {
-    throw new Error('Invalid audio format. Supported formats: webm, mp4, mpeg, wav, ogg');
+  const validMimeTypes = ["audio/webm", "audio/mp4", "audio/mpeg", "audio/wav", "audio/ogg"];
+  if (!validMimeTypes.some((type) => audioBlob.type.startsWith(type.split("/")[0]))) {
+    throw new Error("Invalid audio format. Supported formats: webm, mp4, mpeg, wav, ogg");
   }
 
   try {
     const formData = new FormData();
-    formData.append('audio', audioBlob, 'recording.webm');
-    formData.append('group_id', groupId);
+    formData.append("audio", audioBlob, "recording.webm");
+    formData.append("group_id", groupId);
 
-    const response = await fetch('/api/expenses/transcribe', {
-      method: 'POST',
+    const response = await fetch("/api/expenses/transcribe", {
+      method: "POST",
       body: formData,
     });
 
     if (!response.ok) {
-      let errorMessage = 'Upload failed';
+      let errorMessage = "Upload failed";
 
       if (response.status === 400) {
-        errorMessage = 'Invalid request data';
+        errorMessage = "Invalid request data";
       } else if (response.status === 401) {
-        errorMessage = 'Authentication required';
+        errorMessage = "Authentication required";
       } else if (response.status === 403) {
-        errorMessage = 'Access forbidden';
+        errorMessage = "Access forbidden";
       } else if (response.status === 413) {
-        errorMessage = 'File too large';
+        errorMessage = "File too large";
       } else if (response.status === 503) {
-        errorMessage = 'Transcription service unavailable';
+        errorMessage = "Transcription service unavailable";
       } else if (response.status >= 500) {
-        errorMessage = 'Server error occurred';
+        errorMessage = "Server error occurred";
       }
 
       // Try to parse error details from response
@@ -85,12 +81,11 @@ export async function uploadAudioForTranscription(
 
     const data: TranscribeTaskResponseDTO = await response.json();
     return data;
-
   } catch (error) {
     if (error instanceof Error) {
       throw error;
     }
-    throw new Error('Unknown upload error occurred');
+    throw new Error("Unknown upload error occurred");
   }
 }
 
@@ -101,26 +96,24 @@ export async function uploadAudioForTranscription(
  * @returns Promise resolving to transcription task status
  * @throws Error if polling fails or task not found
  */
-export async function getTranscriptionTaskStatus(
-  taskId: string
-): Promise<TranscribeTaskStatusDTO> {
+export async function getTranscriptionTaskStatus(taskId: string): Promise<TranscribeTaskStatusDTO> {
   // Validate input parameters
   if (!taskId) {
-    throw new Error('Task ID is required');
+    throw new Error("Task ID is required");
   }
 
   try {
     const response = await fetch(`/api/expenses/transcribe/${taskId}`);
 
     if (!response.ok) {
-      let errorMessage = 'Failed to get task status';
+      let errorMessage = "Failed to get task status";
 
       if (response.status === 401) {
-        errorMessage = 'Authentication required';
+        errorMessage = "Authentication required";
       } else if (response.status === 404) {
-        errorMessage = 'Transcription task not found';
+        errorMessage = "Transcription task not found";
       } else if (response.status >= 500) {
-        errorMessage = 'Server error occurred';
+        errorMessage = "Server error occurred";
       }
 
       // Try to parse error details from response
@@ -138,12 +131,11 @@ export async function getTranscriptionTaskStatus(
 
     const data: TranscribeTaskStatusDTO = await response.json();
     return data;
-
   } catch (error) {
     if (error instanceof Error) {
       throw error;
     }
-    throw new Error('Unknown error occurred while checking task status');
+    throw new Error("Unknown error occurred while checking task status");
   }
 }
 
@@ -162,7 +154,7 @@ export function createTranscriptionError(apiError: any): TranscriptionErrorDTO {
   }
 
   return {
-    code: 'UNKNOWN_ERROR',
-    message: apiError?.message || 'Unknown transcription error occurred',
+    code: "UNKNOWN_ERROR",
+    message: apiError?.message || "Unknown transcription error occurred",
   };
 }
