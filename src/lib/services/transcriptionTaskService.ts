@@ -222,7 +222,7 @@ export class TranscriptionTaskService {
         transcription: transcriptionResult.text,
         context,
         schema: expenseTranscriptionSchema,
-        model: "google/gemma-3-27b-it", 
+        model: "google/gemini-2.0-flash-exp:free", 
         temperature: 0.1,
         maxTokens: 1024,
       };
