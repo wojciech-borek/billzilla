@@ -1,46 +1,85 @@
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback } from "react";
 import type {
   TranscriptionResultDTO,
   TranscriptionErrorDTO,
-  TranscribeTaskStatusDTO,
   TranscribeTaskResponseDTO,
 } from "../../types";
 import { useAudioRecorder } from "./useAudioRecorder";
+import { useTranscriptionErrorHandler } from "./useTranscriptionErrorHandler";
 
+/**
+ * Internal state for voice transcription management
+ */
 interface VoiceTranscriptionState {
+  /** Whether audio is currently being recorded */
   isRecording: boolean;
+  /** Whether the upload/transcription task is being processed */
   isProcessing: boolean;
-  recordingDuration: number;
+  /** ID of the transcription task (null if not yet uploaded) */
   taskId: string | null;
+  /** Current error state, if any */
   error: TranscriptionErrorDTO | null;
 }
 
+/**
+ * Return type for useVoiceTranscription hook
+ */
 type UseVoiceTranscriptionResult = VoiceTranscriptionState & {
+  /** Current recording duration in seconds */
+  recordingDuration: number;
+  /** Start audio recording. Throws on microphone access failure. */
   startRecording: () => Promise<void>;
-  stopRecording: () => Promise<void>;
+  /** Stop recording and return audio blob. Throws on recording failure. */
+  stopRecording: () => Promise<Blob | null>;
+  /** Cancel ongoing recording and reset state */
   cancelRecording: () => void;
+  /** Upload audio blob for transcription. Validates size and duration. */
   uploadAudio: (audioBlob: Blob, groupId: string) => Promise<TranscribeTaskResponseDTO>;
-  pollTaskStatus: (taskId: string) => Promise<TranscribeTaskStatusDTO>;
+  /** Reset all state to initial values */
   reset: () => void;
 };
 
 /**
- * Hook for managing the complete voice transcription process
+ * Hook for managing voice recording and upload for transcription
  *
- * Handles recording, uploading, polling, and error management for voice-to-expense conversion.
+ * This hook orchestrates the recording and upload phases of voice-to-expense conversion.
+ * It manages recording state, validates audio constraints, and handles upload to the
+ * transcription service.
+ *
+ * @example
+ * ```tsx
+ * const { isRecording, startRecording, stopRecording, uploadAudio, taskId } = useVoiceTranscription();
+ *
+ * // Start recording
+ * await startRecording();
+ *
+ * // Stop and upload
+ * const blob = await stopRecording();
+ * if (blob) {
+ *   await uploadAudio(blob, groupId);
+ *   // Use taskId for polling
+ * }
+ * ```
+ *
+ * @remarks
+ * - Maximum file size: 25MB
+ * - Minimum recording duration: 1 second
+ * - Audio format: webm (fallback to mp4 if unsupported)
+ * - Polling for results is handled by VoiceTranscriptionStatus component
+ *
+ * @see {@link useTranscriptionPolling} for polling task status
+ * @see {@link useTranscriptionErrorHandler} for error handling
  */
 export function useVoiceTranscription(): UseVoiceTranscriptionResult {
   const [state, setState] = useState<VoiceTranscriptionState>({
     isRecording: false,
     isProcessing: false,
-    recordingDuration: 0,
     taskId: null,
     error: null,
   });
 
   const audioRecorder = useAudioRecorder();
-  const pollingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const errorHandler = useTranscriptionErrorHandler();
 
   const startRecording = useCallback(async () => {
     try {
@@ -51,21 +90,22 @@ export function useVoiceTranscription(): UseVoiceTranscriptionResult {
       console.error("Failed to start recording:", error);
 
       // Convert audio recorder error to transcription error format
-      const transcriptionError: TranscriptionErrorDTO = {
-        code: "MICROPHONE_ERROR",
-        message: audioRecorder.error || "Nie udało się uzyskać dostępu do mikrofonu",
-      };
+      const transcriptionError = errorHandler.createError(
+        "MICROPHONE_ERROR",
+        audioRecorder.error || undefined
+      );
 
       setState((prev) => ({
         ...prev,
         error: transcriptionError,
       }));
 
+      errorHandler.handleError(transcriptionError);
       throw error;
     }
-  }, [audioRecorder]);
+  }, [audioRecorder, errorHandler]);
 
-  const stopRecording = useCallback(async () => {
+  const stopRecording = useCallback(async (): Promise<Blob | null> => {
     try {
       const audioBlob = await audioRecorder.stopRecording();
       setState((prev) => ({ ...prev, isRecording: false }));
@@ -73,17 +113,19 @@ export function useVoiceTranscription(): UseVoiceTranscriptionResult {
       return audioBlob;
     } catch (error) {
       console.error("Failed to stop recording:", error);
+      
+      const transcriptionError = errorHandler.createError("RECORDING_ERROR");
+      
       setState((prev) => ({
         ...prev,
         isRecording: false,
-        error: {
-          code: "RECORDING_ERROR",
-          message: "Błąd podczas zatrzymywania nagrywania",
-        },
+        error: transcriptionError,
       }));
+      
+      errorHandler.handleError(transcriptionError);
       throw error;
     }
-  }, [audioRecorder]);
+  }, [audioRecorder, errorHandler]);
 
   const cancelRecording = useCallback(() => {
     audioRecorder.cancelRecording();
@@ -93,14 +135,6 @@ export function useVoiceTranscription(): UseVoiceTranscriptionResult {
       isProcessing: false,
       error: null,
     }));
-
-    // Clean up polling
-    if (pollingTimeoutRef.current) {
-      clearTimeout(pollingTimeoutRef.current);
-    }
-    if (pollingIntervalRef.current) {
-      clearInterval(pollingIntervalRef.current);
-    }
   }, [audioRecorder]);
 
   const uploadAudio = useCallback(
@@ -108,21 +142,17 @@ export function useVoiceTranscription(): UseVoiceTranscriptionResult {
       // Validate audio blob size (max 25MB as per plan)
       const maxSize = 25 * 1024 * 1024; // 25MB
       if (audioBlob.size > maxSize) {
-        const error: TranscriptionErrorDTO = {
-          code: "FILE_TOO_LARGE",
-          message: "Nagranie jest zbyt duże. Maksymalny rozmiar: 25MB.",
-        };
+        const error = errorHandler.createError("FILE_TOO_LARGE");
         setState((prev) => ({ ...prev, error }));
+        errorHandler.handleError(error);
         throw new Error(error.message);
       }
 
       // Validate minimum recording duration (1 second as per plan)
       if (audioRecorder.duration < 1) {
-        const error: TranscriptionErrorDTO = {
-          code: "RECORDING_TOO_SHORT",
-          message: "Nagranie jest zbyt krótkie. Powiedz więcej szczegółów.",
-        };
+        const error = errorHandler.createError("RECORDING_TOO_SHORT");
         setState((prev) => ({ ...prev, error }));
+        errorHandler.handleError(error);
         throw new Error(error.message);
       }
 
@@ -139,41 +169,9 @@ export function useVoiceTranscription(): UseVoiceTranscriptionResult {
         });
 
         if (!response.ok) {
-          let error: TranscriptionErrorDTO;
-
-          if (response.status === 400) {
-            error = {
-              code: "INVALID_REQUEST",
-              message: "Nieprawidłowe dane nagrania",
-            };
-          } else if (response.status === 401) {
-            error = {
-              code: "UNAUTHORIZED",
-              message: "Brak autoryzacji",
-            };
-          } else if (response.status === 403) {
-            error = {
-              code: "FORBIDDEN",
-              message: "Brak dostępu do grupy",
-            };
-          } else if (response.status === 413) {
-            error = {
-              code: "FILE_TOO_LARGE",
-              message: "Nagranie zbyt duże. Maksymalny rozmiar: 25MB.",
-            };
-          } else if (response.status === 503) {
-            error = {
-              code: "SERVICE_UNAVAILABLE",
-              message: "Usługa transkrypcji jest tymczasowo niedostępna",
-            };
-          } else {
-            error = {
-              code: "UPLOAD_FAILED",
-              message: "Nie udało się wysłać nagrania",
-            };
-          }
-
+          const error = errorHandler.handleHttpError(response.status);
           setState((prev) => ({ ...prev, isProcessing: false, error }));
+          errorHandler.handleError(error);
           throw new Error(error.message);
         }
 
@@ -182,57 +180,29 @@ export function useVoiceTranscription(): UseVoiceTranscriptionResult {
 
         return data;
       } catch (error) {
-        const transcriptionError: TranscriptionErrorDTO = {
-          code: "UPLOAD_FAILED",
-          message: error instanceof Error ? error.message : "Nie udało się wysłać nagrania",
-        };
+        // If it's already a network error we threw, just re-throw
+        if (error instanceof Error && error.message.includes("Błąd")) {
+          throw error;
+        }
 
+        // Otherwise, handle as network error
+        const transcriptionError = errorHandler.handleNetworkError(error);
         setState((prev) => ({ ...prev, isProcessing: false, error: transcriptionError }));
+        errorHandler.handleError(transcriptionError);
         throw error;
       }
     },
-    [audioRecorder.duration]
+    [audioRecorder.duration, errorHandler]
   );
-
-  const pollTaskStatus = useCallback(async (taskId: string): Promise<TranscribeTaskStatusDTO> => {
-    try {
-      const response = await fetch(`/api/expenses/transcribe/${taskId}`);
-
-      if (!response.ok) {
-        if (response.status === 404) {
-          throw new Error("Zadanie transkrypcji nie zostało znalezione");
-        } else if (response.status === 401) {
-          throw new Error("Brak autoryzacji do sprawdzenia statusu");
-        } else {
-          throw new Error("Błąd podczas sprawdzania statusu zadania");
-        }
-      }
-
-      const data: TranscribeTaskStatusDTO = await response.json();
-      return data;
-    } catch (error) {
-      console.error("Failed to poll task status:", error);
-      throw error;
-    }
-  }, []);
 
   const reset = useCallback(() => {
     setState({
       isRecording: false,
       isProcessing: false,
-      recordingDuration: 0,
       taskId: null,
       error: null,
     });
     audioRecorder.reset();
-
-    // Clean up polling
-    if (pollingTimeoutRef.current) {
-      clearTimeout(pollingTimeoutRef.current);
-    }
-    if (pollingIntervalRef.current) {
-      clearInterval(pollingIntervalRef.current);
-    }
   }, [audioRecorder]);
 
   return {
@@ -242,7 +212,6 @@ export function useVoiceTranscription(): UseVoiceTranscriptionResult {
     stopRecording,
     cancelRecording,
     uploadAudio,
-    pollTaskStatus,
     reset,
   };
 }

@@ -8,53 +8,78 @@ import { VoiceRecordingIndicator } from "./VoiceRecordingIndicator";
 import { VoiceTranscriptionStatus } from "./VoiceTranscriptionStatus";
 import type { TranscriptionResultDTO, TranscriptionErrorDTO } from "@/types";
 
+/**
+ * Props for VoiceInputButton component
+ */
 interface VoiceInputButtonProps {
+  /** ID of the group to associate the expense with */
   groupId: string;
+  /** Callback invoked when transcription completes successfully */
   onTranscriptionComplete: (result: TranscriptionResultDTO) => void;
+  /** Callback invoked when transcription fails */
   onTranscriptionError: (error: TranscriptionErrorDTO) => void;
+  /** Whether the button should be disabled */
   disabled?: boolean;
-  isRecording?: boolean;
-  isProcessing?: boolean;
 }
 
 /**
- * Voice input button component
+ * Voice input button component for expense transcription
  *
- * Button with microphone icon that activates voice recording for expense transcription.
- * Shows recording indicator during recording and transcription status during processing.
+ * A button that initiates voice recording for creating expenses. The component
+ * manages the full voice-to-expense flow by orchestrating multiple states:
+ *
+ * 1. **Idle state**: Shows microphone button
+ * 2. **Recording state**: Shows recording indicator with duration and controls
+ * 3. **Processing state**: Shows transcription status with progress
+ * 4. **Error state**: Shows retry button
+ *
+ * @example
+ * ```tsx
+ * <VoiceInputButton
+ *   groupId={group.id}
+ *   onTranscriptionComplete={(result) => {
+ *     setFormData(result.expense_data);
+ *   }}
+ *   onTranscriptionError={(error) => {
+ *     console.error('Transcription failed:', error.message);
+ *   }}
+ * />
+ * ```
+ *
+ * @remarks
+ * - Requires microphone permission from the user
+ * - Maximum recording duration: 60 seconds
+ * - Minimum recording duration: 1 second
+ * - Maximum file size: 25MB
+ * - Auto-resets state after completion or error
  */
 export function VoiceInputButton({
   groupId,
   onTranscriptionComplete,
   onTranscriptionError,
   disabled = false,
-  isRecording: externalIsRecording = false,
-  isProcessing: externalIsProcessing = false,
 }: VoiceInputButtonProps) {
   const {
     isRecording,
     isProcessing,
     recordingDuration,
+    taskId,
     error,
     startRecording,
     stopRecording,
     cancelRecording,
     uploadAudio,
-    pollTaskStatus,
     reset,
   } = useVoiceTranscription();
 
-  // Use external state if provided, otherwise use internal
-  const currentIsRecording = externalIsRecording || isRecording;
-  const currentIsProcessing = externalIsProcessing || isProcessing;
-
+  // ALL HOOKS MUST BE DEFINED BEFORE ANY CONDITIONAL RETURNS
   const handleClick = useCallback(async () => {
     // Don't allow starting recording if already recording or processing
-    if (currentIsRecording || currentIsProcessing) {
+    if (isRecording || isProcessing) {
       return;
     }
 
-    // Don't allow starting if externally disabled
+    // Don't allow starting if disabled
     if (disabled) {
       return;
     }
@@ -66,7 +91,7 @@ export function VoiceInputButton({
       // Error is handled in the hook
       console.error("Failed to start recording:", error);
     }
-  }, [currentIsRecording, currentIsProcessing, disabled, startRecording]);
+  }, [isRecording, isProcessing, disabled, startRecording]);
 
   const handleStopRecording = useCallback(async () => {
     try {
@@ -79,10 +104,9 @@ export function VoiceInputButton({
       }
 
       // Upload audio for transcription
-      const uploadResult = await uploadAudio(audioBlob, groupId);
-
-      // Start polling for transcription status
-      await startTranscriptionPolling(uploadResult.task_id);
+      // The upload will set taskId in the hook state, which will trigger
+      // VoiceTranscriptionStatus component to show and handle polling
+      await uploadAudio(audioBlob, groupId);
     } catch (error) {
       console.error("Failed to stop recording:", error);
       toast.error("Błąd podczas zatrzymywania nagrywania");
@@ -95,79 +119,26 @@ export function VoiceInputButton({
     toast.info("Nagrywanie anulowane");
   }, [cancelRecording]);
 
-  const startTranscriptionPolling = useCallback(
-    async (taskId: string) => {
-      try {
-        // Poll immediately for the first time
-        let status = await pollTaskStatus(taskId);
-        
-        // Check if already completed
-        if (status.status === "completed" && status.result) {
-          onTranscriptionComplete(status.result);
-          reset();
-          return;
-        }
-        
-        if (status.status === "failed" && status.error) {
-          onTranscriptionError(status.error);
-          reset();
-          return;
-        }
-        
-        let attempts = 0;
-        const maxAttempts = 60; // 60 seconds timeout
-
-        while (status.status === "processing" && attempts < maxAttempts) {
-          // Wait 1 second before next poll
-          await new Promise((resolve) => setTimeout(resolve, 1000));
-
-          status = await pollTaskStatus(taskId);
-          attempts++;
-
-          if (status.status === "completed") {
-            // Success - call completion callback
-            if (status.result) {
-              onTranscriptionComplete(status.result);
-            }
-            reset();
-            return;
-          } else if (status.status === "failed") {
-            // Error - call error callback
-            if (status.error) {
-              onTranscriptionError(status.error);
-            } else {
-              onTranscriptionError({
-                code: "TRANSCRIPTION_FAILED",
-                message: "Transkrypcja nie powiodła się",
-              });
-            }
-            reset();
-            return;
-          }
-        }
-
-        // Timeout reached
-        if (attempts >= maxAttempts) {
-          onTranscriptionError({
-            code: "TIMEOUT",
-            message: "Przetwarzanie trwa zbyt długo. Spróbuj ponownie.",
-          });
-          reset();
-        }
-      } catch (error) {
-        console.error("Polling error:", error);
-        onTranscriptionError({
-          code: "POLLING_ERROR",
-          message: "Błąd podczas sprawdzania statusu transkrypcji",
-        });
-        reset();
-      }
+  // Wrap callbacks to reset state after completion
+  const handleTranscriptionComplete = useCallback(
+    (result: TranscriptionResultDTO) => {
+      onTranscriptionComplete(result);
+      reset();
     },
-    [pollTaskStatus, onTranscriptionComplete, onTranscriptionError, reset]
+    [onTranscriptionComplete, reset]
   );
 
+  const handleTranscriptionError = useCallback(
+    (error: TranscriptionErrorDTO) => {
+      onTranscriptionError(error);
+      reset();
+    },
+    [onTranscriptionError, reset]
+  );
+
+  // CONDITIONAL RENDERING AFTER ALL HOOKS
   // Show recording indicator if currently recording
-  if (currentIsRecording) {
+  if (isRecording) {
     return (
       <VoiceRecordingIndicator
         recordingDuration={recordingDuration}
@@ -178,13 +149,13 @@ export function VoiceInputButton({
     );
   }
 
-  // Show transcription status if currently processing
-  if (currentIsProcessing) {
+  // Show transcription status if currently processing and we have a taskId
+  if (isProcessing && taskId) {
     return (
       <VoiceTranscriptionStatus
-        taskId={null} // taskId will be managed internally
-        onComplete={onTranscriptionComplete}
-        onError={onTranscriptionError}
+        taskId={taskId}
+        onComplete={handleTranscriptionComplete}
+        onError={handleTranscriptionError}
         pollingInterval={1000}
       />
     );
@@ -214,7 +185,7 @@ export function VoiceInputButton({
       variant="outline"
       size="sm"
       onClick={handleClick}
-      disabled={disabled || currentIsRecording || currentIsProcessing}
+      disabled={disabled || isRecording || isProcessing}
       title="Dodaj wydatek głosem"
       className="transition-all duration-200 hover:bg-primary/10 hover:border-primary/30 p-2"
     >

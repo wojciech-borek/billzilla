@@ -1,23 +1,55 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React from "react";
 import { Loader2, CheckCircle, XCircle, AlertCircle, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
-import { getTranscriptionTaskStatus } from "@/lib/services/expenseTranscriptionService";
-import type { TranscriptionResultDTO, TranscriptionErrorDTO, TranscribeTaskStatusDTO } from "@/types";
+import { useTranscriptionPolling } from "@/lib/hooks/useTranscriptionPolling";
+import type { TranscriptionResultDTO, TranscriptionErrorDTO } from "@/types";
 
+/**
+ * Props for VoiceTranscriptionStatus component
+ */
 interface VoiceTranscriptionStatusProps {
+  /** ID of the transcription task to monitor */
   taskId: string;
+  /** Callback invoked when transcription completes successfully */
   onComplete: (result: TranscriptionResultDTO) => void;
+  /** Callback invoked when transcription fails or times out */
   onError: (error: TranscriptionErrorDTO) => void;
-  pollingInterval?: number; // interwał odpytywania w ms (domyślnie 1000)
+  /** Polling interval in milliseconds (default: 1000) */
+  pollingInterval?: number;
 }
 
 /**
  * Voice transcription status component
  *
- * Shows processing status with progress indicator, polls transcription task status,
- * and handles completion/error states with appropriate UI feedback.
+ * Displays the current status of a transcription task with visual feedback.
+ * Automatically polls the server for updates and shows appropriate UI for each state:
+ *
+ * - **Processing**: Animated spinner with progress bar and phase messages
+ * - **Completed**: Success icon with confirmation message
+ * - **Failed**: Error icon with message and retry button
+ * - **Timeout**: Warning icon with message and retry button
+ *
+ * @example
+ * ```tsx
+ * <VoiceTranscriptionStatus
+ *   taskId="task-123"
+ *   onComplete={(result) => {
+ *     console.log('Transcription:', result.transcription);
+ *     setExpenseData(result.expense_data);
+ *   }}
+ *   onError={(error) => {
+ *     toast.error(error.message);
+ *   }}
+ * />
+ * ```
+ *
+ * @remarks
+ * - Polling begins automatically on mount
+ * - Status updates occur every pollingInterval milliseconds
+ * - Maximum polling duration: 60 seconds
+ * - Progress messages change based on processing phase
  */
 export function VoiceTranscriptionStatus({
   taskId,
@@ -25,130 +57,21 @@ export function VoiceTranscriptionStatus({
   onError,
   pollingInterval = 1000,
 }: VoiceTranscriptionStatusProps) {
-  const [status, setStatus] = useState<"processing" | "completed" | "failed" | "timeout">("processing");
-  const [currentMessage, setCurrentMessage] = useState("Przygotowywanie...");
-  const [progress, setProgress] = useState(0);
-  const [error, setError] = useState<TranscriptionErrorDTO | null>(null);
-  const [pollingCount, setPollingCount] = useState(0);
-  const [canRetry, setCanRetry] = useState(false);
-
-  const maxPollingAttempts = 60; // 60 seconds timeout
-
-  // Messages for different phases
-  const getMessageForPhase = (attempt: number): string => {
-    if (attempt < 10) {
-      return "Transkrybuję nagranie...";
-    } else if (attempt < 30) {
-      return "Analizuję dane wydatku...";
-    } else {
-      return "Finalizuję przetwarzanie...";
-    }
-  };
-
-  // Poll transcription status
-  const pollStatus = useCallback(async () => {
-    if (!taskId) return;
-
-    try {
-      const response: TranscribeTaskStatusDTO = await getTranscriptionTaskStatus(taskId);
-
-      if (response.status === "completed" && response.result) {
-        setStatus("completed");
-        setCurrentMessage("Przetwarzanie zakończone pomyślnie!");
-        setProgress(100);
-        onComplete(response.result);
-        return;
-      }
-
-      if (response.status === "failed" && response.error) {
-        setStatus("failed");
-        setError(response.error);
-        setCurrentMessage("Przetwarzanie nie powiodło się");
-        setProgress(0);
-        onError(response.error);
-        setCanRetry(true);
-        return;
-      }
-
-      // Still processing - update progress and message
-      const newPollingCount = pollingCount + 1;
-      setPollingCount(newPollingCount);
-      setCurrentMessage(getMessageForPhase(newPollingCount));
-      setProgress(Math.min((newPollingCount / 30) * 100, 90)); // Max 90% until completion
-    } catch (err) {
-      console.error("Polling error:", err);
-      const transcriptionError: TranscriptionErrorDTO = {
-        code: "POLLING_ERROR",
-        message: "Błąd podczas sprawdzania statusu",
-      };
-      setStatus("failed");
-      setError(transcriptionError);
-      setCurrentMessage("Błąd połączenia");
-      onError(transcriptionError);
-      setCanRetry(true);
-    }
-  }, [taskId, pollingCount, onComplete, onError]);
-
-  // Start polling when component mounts or taskId changes
-  useEffect(() => {
-    if (!taskId) return;
-
-    setStatus("processing");
-    setCurrentMessage("Przygotowywanie...");
-    setProgress(0);
-    setError(null);
-    setPollingCount(0);
-    setCanRetry(false);
-
-    // Poll immediately
-    pollStatus();
-
-    // Set up polling interval
-    const interval = setInterval(() => {
-      setPollingCount((prev) => {
-        const newCount = prev + 1;
-
-        // Check for timeout
-        if (newCount >= maxPollingAttempts) {
-          clearInterval(interval);
-          setStatus("timeout");
-          setCurrentMessage("Przetwarzanie trwa zbyt długo");
-          const timeoutError: TranscriptionErrorDTO = {
-            code: "TIMEOUT",
-            message: "Przetwarzanie trwa zbyt długo. Spróbuj ponownie.",
-          };
-          setError(timeoutError);
-          onError(timeoutError);
-          setCanRetry(true);
-          return newCount;
-        }
-
-        return newCount;
-      });
-
-      pollStatus();
-    }, pollingInterval);
-
-    return () => clearInterval(interval);
-  }, [taskId, pollingInterval, pollStatus]);
-
-  const handleRetry = useCallback(() => {
-    if (!taskId) return;
-
-    setStatus("processing");
-    setCurrentMessage("Przygotowywanie...");
-    setProgress(0);
-    setError(null);
-    setPollingCount(0);
-    setCanRetry(false);
-
-    // Restart polling
-    pollStatus();
-  }, [taskId, pollStatus]);
+  const { status, currentMessage, progress, error, pollingCount, canRetry, retry } =
+    useTranscriptionPolling({
+      taskId,
+      pollingInterval,
+      maxAttempts: 60,
+      onComplete,
+      onError,
+    });
 
   // Render based on status
   const renderContent = () => {
     switch (status) {
+      case "idle":
+        return null;
+
       case "processing":
         return (
           <div className="flex flex-col items-center space-y-3">
@@ -160,7 +83,7 @@ export function VoiceTranscriptionStatus({
             <div className="text-center">
               <p className="text-sm font-medium text-foreground">{currentMessage}</p>
               <p className="text-xs text-muted-foreground mt-1">
-                Próba {pollingCount + 1} z {maxPollingAttempts}
+                Próba {pollingCount + 1} z 60
               </p>
             </div>
 
@@ -201,7 +124,7 @@ export function VoiceTranscriptionStatus({
             </div>
 
             {canRetry && (
-              <Button type="button" variant="outline" size="sm" onClick={handleRetry} className="text-xs h-8">
+              <Button type="button" variant="outline" size="sm" onClick={retry} className="text-xs h-8">
                 <RefreshCw className="h-3 w-3 mr-1" />
                 Spróbuj ponownie
               </Button>
