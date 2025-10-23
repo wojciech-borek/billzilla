@@ -20,3 +20,7 @@ export { useCreateGroupMutation } from "./useCreateGroupMutation";
 // Utility hooks
 export { useCurrenciesList } from "./useCurrenciesList";
 
+// Authentication hooks
+export { useAuthForm } from "./useAuthForm";
+export { useSupabaseAuth } from "./useSupabaseAuth";
+export { useLogout } from "./useLogout";

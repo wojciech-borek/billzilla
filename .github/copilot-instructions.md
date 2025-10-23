@@ -22,8 +22,14 @@ When introducing changes to the project, always follow the directory structure b
 - `./src/db` - Supabase clients and types
 - `./src/types.ts` - Shared types for backend and frontend (Entities, DTOs)
 - `./src/components` - Client-side components written in Astro (static) and React (dynamic)
-- `./src/components/ui` - Client-side components from Shadcn/ui
-- `./src/lib` - Services and helpers
+  - `./src/components/ui` - Shadcn/ui components
+  - `./src/components/[feature]` - Feature-specific components (e.g., dashboard, auth, group)
+  - `./src/components/[feature]/hooks` - Feature-specific React hooks
+- `./src/lib` - Shared utilities, services, and helpers
+  - `./src/lib/hooks` - Shared/global React hooks (auth, API calls, utilities)
+  - `./src/lib/services` - Business logic services
+  - `./src/lib/schemas` - Zod validation schemas
+  - `./src/lib/utils` - Utility functions and helpers
 - `./src/assets` - static internal assets
 - `./public` - public assets
 
@@ -81,7 +87,7 @@ When modifying the directory structure, always update this section.
 - Leverage View Transitions API for smooth page transitions (use ClientRouter)
 - Use content collections with type safety for blog posts, documentation, etc.
 - Leverage Server Endpoints for API routes
-- Use POST, GET  - uppercase format for endpoint handlers
+- Use POST, GET - uppercase format for endpoint handlers
 - Use `export const prerender = false` for API routes
 - Use zod for input validation in API routes
 - Extract logic into services in `src/lib/services`
@@ -95,7 +101,9 @@ When modifying the directory structure, always update this section.
 
 - Use functional components with hooks instead of class components
 - Never use "use client" and other Next.js directives as we use React with Astro
-- Extract logic into custom hooks in `src/components/hooks`
+- Extract logic into custom hooks following feature-based organization:
+  - `src/lib/hooks/` - Shared/global hooks (auth, API calls, utilities)
+  - `src/components/[feature]/hooks/` - Feature-specific hooks (dashboard, auth, etc.)
 - Implement React.memo() for expensive components that render often with the same props
 - Utilize React.lazy() and Suspense for code-splitting and performance optimization
 - Use the useCallback hook for event handlers passed to child components to prevent unnecessary re-renders

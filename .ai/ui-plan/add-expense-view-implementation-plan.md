@@ -1,14 +1,17 @@
 # Plan implementacji widoku dodawania wydatku
 
 ## 1. Przegląd
-Widok dodawania wydatku to modalny formularz umożliwiający użytkownikom tworzenie nowych wydatków w grupie dwoma sposobami: ręcznym wypełnieniem formularza lub za pomocą polecenia głosowego. Formularz obsługuje dwa tryby podziału kosztów: równy podział na wszystkich uczestników oraz indywidualne przypisanie kwot. Widok integruje się z systemem walut grupy, zapewniając wybór spośród dostępnych walut oraz automatyczne przeliczenia na walutę bazową. 
+
+Widok dodawania wydatku to modalny formularz umożliwiający użytkownikom tworzenie nowych wydatków w grupie dwoma sposobami: ręcznym wypełnieniem formularza lub za pomocą polecenia głosowego. Formularz obsługuje dwa tryby podziału kosztów: równy podział na wszystkich uczestników oraz indywidualne przypisanie kwot. Widok integruje się z systemem walut grupy, zapewniając wybór spośród dostępnych walut oraz automatyczne przeliczenia na walutę bazową.
 
 Kluczowa funkcjonalność głosowa wykorzystuje dwuetapowe przetwarzanie AI: transkrypcję mowy na tekst (Whisper) oraz ekstrakcję strukturalnych danych wydatku (LLM), które automatycznie wypełniają formularz z możliwością weryfikacji i edycji przez użytkownika przed zatwierdzeniem. Celem jest zapewnienie intuicyjnego i bezpiecznego procesu dodawania wydatków z pełną walidacją po stronie klienta i serwera.
 
 ## 2. Routing widoku
+
 Widok jest dostępny pod dedykowaną ścieżką `/groups/[groupId]/expenses/new`. Jest otwierany poprzez nawigację z poziomu widoku grupy lub przycisk FAB (Floating Action Button) na pulpicie nawigacyjnym.
 
 ## 3. Struktura komponentów
+
 ```
 src/pages/groups/[groupId]/expenses/
 ├── new.astro (strona główna)
@@ -28,6 +31,7 @@ src/components/group/expenses/
 ## 4. Szczegóły komponentów
 
 ### AddExpenseModal
+
 - **Opis komponentu:** Modal wrapper dla formularza dodawania wydatku. Zarządza stanem ładowania, błędami oraz komunikacją między komponentami. Zawiera VoiceInputButton umożliwiający dodawanie wydatków głosem.
 - **Główne elementy:** Dialog z ExpenseForm, VoiceInputButton, przyciski zamykania, obsługa stanów ładowania i błędów.
 - **Obsługiwane interakcje:** onExpenseCreated (po pomyślnym utworzeniu wydatku), onClose (zamknięcie modala), onVoiceInput (rozpoczęcie nagrywania głosowego).
@@ -49,6 +53,7 @@ src/components/group/expenses/
   ```
 
 ### VoiceInputButton
+
 - **Opis komponentu:** Przycisk w formie ikony mikrofonu, który aktywuje nagrywanie polecenia głosowego. Po kliknięciu przechodzi w tryb nagrywania z wizualnym wskaźnikiem, a po zakończeniu wysyła audio do API transkrypcji.
 - **Główne elementy:** Button z ikoną mikrofonu (Mic/MicOff z Lucide React), VoiceRecordingIndicator (podczas nagrywania), VoiceTranscriptionStatus (podczas przetwarzania).
 - **Obsługiwane interakcje:** onClick (rozpoczęcie/zakończenie nagrywania), onTranscriptionComplete (wypełnienie formularza danymi).
@@ -67,6 +72,7 @@ src/components/group/expenses/
   ```
 
 ### VoiceRecordingIndicator
+
 - **Opis komponentu:** Komponent wyświetlany podczas aktywnego nagrywania. Pokazuje animowaną ikonę mikrofonu, czas nagrywania oraz przycisk anulowania nagrywania.
 - **Główne elementy:** Animowana ikona mikrofonu, timer nagrywania, przycisk "Anuluj" lub "Zatrzymaj nagrywanie".
 - **Obsługiwane interakcje:** onStop (zakończenie nagrywania), onCancel (anulowanie bez wysyłania).
@@ -83,6 +89,7 @@ src/components/group/expenses/
   ```
 
 ### VoiceTranscriptionStatus
+
 - **Opis komponentu:** Komponent wyświetlający status przetwarzania transkrypcji. Pokazuje wskaźnik ładowania, komunikaty o postępie oraz wyświetla błędy w przypadku niepowodzenia. Odpytuje endpoint statusu zadania transkrypcji.
 - **Główne elementy:** Spinner/Progress indicator, komunikaty tekstowe o statusie ("Transkrybuję nagranie...", "Analizuję dane wydatku..."), komunikaty błędów.
 - **Obsługiwane interakcje:** onComplete (transkrypcja zakończona), onError (błąd transkrypcji), onRetry (ponowna próba).
@@ -99,6 +106,7 @@ src/components/group/expenses/
   ```
 
 ### ExpenseForm
+
 - **Opis komponentu:** Główny komponent formularza - orchestruje podkomponenty i zarządza komunikacją między nimi. Umożliwia wypełnienie formularza danymi z transkrypcji głosowej lub ręczne wprowadzenie danych.
 - **Główne elementy:** ExpenseBasicInfo, ExpenseSplitSection, obsługa błędów i przycisk submit.
 - **Obsługiwane interakcje:** onSubmit (wysyłanie formularza do API), populateFromTranscription (wypełnienie formularza z transkrypcji).
@@ -118,6 +126,7 @@ src/components/group/expenses/
   ```
 
 ### ExpenseBasicInfo
+
 - **Opis komponentu:** Sekcja formularza zawierająca podstawowe informacje o wydatku.
 - **Główne elementy:** Pola tekstowe dla opisu, kwoty, waluty, daty i płatnika.
 - **Obsługiwana walidacja:** Walidacja formatów i wymaganych pól.
@@ -132,6 +141,7 @@ src/components/group/expenses/
   ```
 
 ### ExpenseSplitSection
+
 - **Opis komponentu:** Sekcja formularza odpowiedzialna za podział kosztów między uczestników.
 - **Główne elementy:** SimpleSplitInput z przyciskiem "podziel po równo".
 - **Obsługiwana walidacja:** Walidacja sumy podziałów.
@@ -144,6 +154,7 @@ src/components/group/expenses/
   ```
 
 ### SimpleSplitInput
+
 - **Opis komponentu:** Komponent do wprowadzania kwot podziału dla każdego uczestnika grupy.
 - **Główne elementy:** Lista członków grupy z polami input dla kwot, przycisk "podziel po równo".
 - **Obsługiwana walidacja:** Suma kwot = całkowita kwota (±0.01 tolerancja).
@@ -159,6 +170,7 @@ src/components/group/expenses/
   ```
 
 ### CurrencySelector
+
 - **Opis komponentu:** Selektor waluty spośród dostępnych w grupie.
 - **Główne elementy:** Select component z Shadcn/ui.
 - **Obsługiwane interakcje:** onValueChange (zmiana wybranej waluty).
@@ -176,6 +188,7 @@ src/components/group/expenses/
   ```
 
 ## 5. Typy
+
 Wymagane typy obejmują istniejące DTO z `types.ts` oraz typy używane w hookach:
 
 ```typescript
@@ -271,9 +284,11 @@ type UseAudioRecorderResult = AudioRecorderState & {
 ```
 
 ## 6. Zarządzanie stanem
+
 Stan widoku jest zarządzany przez trzy custom hooki: `useExpenseForm`, `useVoiceTranscription` i `useAudioRecorder`.
 
 ### useExpenseForm
+
 Hook zarządza stanem formularza, integra React Hook Form z logiką biznesową walidacji podziałów oraz umożliwia wypełnienie formularza danymi z transkrypcji:
 
 ```typescript
@@ -292,11 +307,11 @@ function useExpenseForm(
   // Formularz z React Hook Form
   const form = useForm<CreateExpenseFormValues>({
     resolver: zodResolver(createExpenseFormSchema),
-    mode: 'onChange',
+    mode: "onChange",
     defaultValues: initialData || {
       description: undefined,
       amount: undefined,
-      currency_code: groupCurrencies[0]?.currency_code || 'PLN',
+      currency_code: groupCurrencies[0]?.currency_code || "PLN",
       expense_date: new Date().toISOString().slice(0, 16),
       payer_id: defaultPayerId || undefined,
       splits: [],
@@ -305,28 +320,34 @@ function useExpenseForm(
 
   // Obliczenia walidacji podziałów
   const splitValidation = useMemo(() => {
-    const totalAmount = form.watch('amount') || 0;
-    const currentSum = form.watch('splits').reduce((sum, split) => sum + split.amount, 0);
+    const totalAmount = form.watch("amount") || 0;
+    const currentSum = form.watch("splits").reduce((sum, split) => sum + split.amount, 0);
     const remaining = Math.round((totalAmount - currentSum) * 100) / 100;
     const isValid = Math.abs(remaining) <= 0.01;
 
     return { totalAmount, currentSum, remaining, isValid };
-  }, [form.watch('amount'), form.watch('splits')]);
+  }, [form.watch("amount"), form.watch("splits")]);
 
-  const handleSubmit = useCallback(async (groupId: string): Promise<ExpenseDTO> => {
-    // Walidacja i wysłanie formularza do API
-    // Obsługa błędów i transformacja danych
-  }, [form]);
+  const handleSubmit = useCallback(
+    async (groupId: string): Promise<ExpenseDTO> => {
+      // Walidacja i wysłanie formularza do API
+      // Obsługa błędów i transformacja danych
+    },
+    [form]
+  );
 
   // Wypełnienie formularza danymi z transkrypcji
-  const populateFromTranscription = useCallback((data: CreateExpenseCommand) => {
-    form.setValue('description', data.description);
-    form.setValue('amount', data.amount);
-    form.setValue('currency_code', data.currency_code);
-    form.setValue('expense_date', data.expense_date);
-    form.setValue('payer_id', data.payer_id);
-    form.setValue('splits', data.splits);
-  }, [form]);
+  const populateFromTranscription = useCallback(
+    (data: CreateExpenseCommand) => {
+      form.setValue("description", data.description);
+      form.setValue("amount", data.amount);
+      form.setValue("currency_code", data.currency_code);
+      form.setValue("expense_date", data.expense_date);
+      form.setValue("payer_id", data.payer_id);
+      form.setValue("splits", data.splits);
+    },
+    [form]
+  );
 
   const reset = useCallback(() => {
     form.reset();
@@ -349,6 +370,7 @@ function useExpenseForm(
 ```
 
 ### useVoiceTranscription
+
 Hook zarządza całym procesem transkrypcji głosowej: nagrywaniem audio, uploadem do API oraz pollowaniem statusu zadania:
 
 ```typescript
@@ -366,13 +388,13 @@ function useVoiceTranscription(): UseVoiceTranscriptionResult {
   const startRecording = useCallback(async () => {
     try {
       await audioRecorder.startRecording();
-      setState(prev => ({ ...prev, isRecording: true, error: null }));
+      setState((prev) => ({ ...prev, isRecording: true, error: null }));
     } catch (error) {
-      setState(prev => ({
+      setState((prev) => ({
         ...prev,
         error: {
-          code: 'MICROPHONE_ERROR',
-          message: 'Nie udało się uzyskać dostępu do mikrofonu',
+          code: "MICROPHONE_ERROR",
+          message: "Nie udało się uzyskać dostępu do mikrofonu",
         },
       }));
     }
@@ -380,13 +402,13 @@ function useVoiceTranscription(): UseVoiceTranscriptionResult {
 
   const stopRecording = useCallback(async () => {
     const audioBlob = await audioRecorder.stopRecording();
-    setState(prev => ({ ...prev, isRecording: false }));
+    setState((prev) => ({ ...prev, isRecording: false }));
     return audioBlob;
   }, [audioRecorder]);
 
   const cancelRecording = useCallback(() => {
     audioRecorder.cancelRecording();
-    setState(prev => ({
+    setState((prev) => ({
       ...prev,
       isRecording: false,
       isProcessing: false,
@@ -394,48 +416,43 @@ function useVoiceTranscription(): UseVoiceTranscriptionResult {
     }));
   }, [audioRecorder]);
 
-  const uploadAudio = useCallback(async (
-    audioBlob: Blob,
-    groupId: string
-  ): Promise<TranscribeTaskResponseDTO> => {
-    setState(prev => ({ ...prev, isProcessing: true, error: null }));
+  const uploadAudio = useCallback(async (audioBlob: Blob, groupId: string): Promise<TranscribeTaskResponseDTO> => {
+    setState((prev) => ({ ...prev, isProcessing: true, error: null }));
 
     try {
       const formData = new FormData();
-      formData.append('audio', audioBlob, 'recording.webm');
-      formData.append('group_id', groupId);
+      formData.append("audio", audioBlob, "recording.webm");
+      formData.append("group_id", groupId);
 
-      const response = await fetch('/api/expenses/transcribe', {
-        method: 'POST',
+      const response = await fetch("/api/expenses/transcribe", {
+        method: "POST",
         body: formData,
       });
 
       if (!response.ok) {
-        throw new Error('Upload failed');
+        throw new Error("Upload failed");
       }
 
       const data: TranscribeTaskResponseDTO = await response.json();
-      setState(prev => ({ ...prev, taskId: data.task_id }));
+      setState((prev) => ({ ...prev, taskId: data.task_id }));
       return data;
     } catch (error) {
-      setState(prev => ({
+      setState((prev) => ({
         ...prev,
         isProcessing: false,
         error: {
-          code: 'UPLOAD_FAILED',
-          message: 'Nie udało się wysłać nagrania',
+          code: "UPLOAD_FAILED",
+          message: "Nie udało się wysłać nagrania",
         },
       }));
       throw error;
     }
   }, []);
 
-  const pollTaskStatus = useCallback(async (
-    taskId: string
-  ): Promise<TranscribeTaskStatusDTO> => {
+  const pollTaskStatus = useCallback(async (taskId: string): Promise<TranscribeTaskStatusDTO> => {
     const response = await fetch(`/api/expenses/transcribe/${taskId}`);
     if (!response.ok) {
-      throw new Error('Failed to fetch task status');
+      throw new Error("Failed to fetch task status");
     }
     return response.json();
   }, []);
@@ -465,6 +482,7 @@ function useVoiceTranscription(): UseVoiceTranscriptionResult {
 ```
 
 ### useAudioRecorder
+
 Hook zarządza niskopoziomową funkcjonalnością nagrywania audio przy użyciu Web Audio API (MediaRecorder):
 
 ```typescript
@@ -484,7 +502,7 @@ function useAudioRecorder(): UseAudioRecorderResult {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const mediaRecorder = new MediaRecorder(stream, {
-        mimeType: 'audio/webm',
+        mimeType: "audio/webm",
       });
 
       chunksRef.current = [];
@@ -497,16 +515,16 @@ function useAudioRecorder(): UseAudioRecorderResult {
       };
 
       mediaRecorder.start();
-      setState(prev => ({ ...prev, isRecording: true, duration: 0, error: null }));
+      setState((prev) => ({ ...prev, isRecording: true, duration: 0, error: null }));
 
       // Timer dla duration
       timerRef.current = setInterval(() => {
-        setState(prev => ({ ...prev, duration: prev.duration + 1 }));
+        setState((prev) => ({ ...prev, duration: prev.duration + 1 }));
       }, 1000);
     } catch (error) {
-      setState(prev => ({
+      setState((prev) => ({
         ...prev,
-        error: 'Nie udało się uzyskać dostępu do mikrofonu',
+        error: "Nie udało się uzyskać dostępu do mikrofonu",
       }));
       throw error;
     }
@@ -515,20 +533,20 @@ function useAudioRecorder(): UseAudioRecorderResult {
   const stopRecording = useCallback(async (): Promise<Blob | null> => {
     return new Promise((resolve) => {
       const mediaRecorder = mediaRecorderRef.current;
-      if (!mediaRecorder || mediaRecorder.state === 'inactive') {
+      if (!mediaRecorder || mediaRecorder.state === "inactive") {
         resolve(null);
         return;
       }
 
       mediaRecorder.onstop = () => {
-        const audioBlob = new Blob(chunksRef.current, { type: 'audio/webm' });
-        setState(prev => ({ ...prev, isRecording: false, audioBlob }));
-        
+        const audioBlob = new Blob(chunksRef.current, { type: "audio/webm" });
+        setState((prev) => ({ ...prev, isRecording: false, audioBlob }));
+
         if (timerRef.current) {
           clearInterval(timerRef.current);
         }
 
-        mediaRecorder.stream.getTracks().forEach(track => track.stop());
+        mediaRecorder.stream.getTracks().forEach((track) => track.stop());
         resolve(audioBlob);
       };
 
@@ -538,9 +556,9 @@ function useAudioRecorder(): UseAudioRecorderResult {
 
   const cancelRecording = useCallback(() => {
     const mediaRecorder = mediaRecorderRef.current;
-    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+    if (mediaRecorder && mediaRecorder.state !== "inactive") {
       mediaRecorder.stop();
-      mediaRecorder.stream.getTracks().forEach(track => track.stop());
+      mediaRecorder.stream.getTracks().forEach((track) => track.stop());
     }
 
     if (timerRef.current) {
@@ -573,12 +591,15 @@ function useAudioRecorder(): UseAudioRecorderResult {
 Hooki zapewniają separację odpowiedzialności, walidację w czasie rzeczywistym, obsługę błędów oraz integrację z API.
 
 ## 7. Integracja API
+
 Widok integruje się z trzema endpointami: tworzenie wydatku, upload audio oraz sprawdzanie statusu transkrypcji.
 
 ### 7.1. Tworzenie wydatku (POST /api/groups/:groupId/expenses)
+
 Endpoint wykorzystywany zarówno dla ręcznego dodawania wydatków, jak i zatwierdzania wydatków z transkrypcji głosowej.
 
 **Żądanie (Request):**
+
 ```typescript
 POST /api/groups/:groupId/expenses
 Content-Type: application/json
@@ -595,6 +616,7 @@ Body: CreateExpenseCommand {
 ```
 
 **Odpowiedź (Response):**
+
 ```typescript
 201 Created
 Content-Type: application/json
@@ -614,6 +636,7 @@ Body: ExpenseDTO {
 ```
 
 **Obsługa błędów:**
+
 - 400: Validation/Semantic Error (np. zła suma, uczestnik poza grupą)
 - 401: Unauthorized
 - 403: Forbidden (użytkownik nie należy do grupy)
@@ -621,9 +644,11 @@ Body: ExpenseDTO {
 - 500: Internal Server Error
 
 ### 7.2. Upload audio dla transkrypcji (POST /api/expenses/transcribe)
+
 Endpoint do wysyłania pliku audio i inicjowania procesu transkrypcji asynchronicznej.
 
 **Żądanie (Request):**
+
 ```typescript
 POST /api/expenses/transcribe
 Content-Type: multipart/form-data
@@ -635,6 +660,7 @@ FormData:
 ```
 
 **Odpowiedź (Response):**
+
 ```typescript
 201 Created
 Content-Type: application/json
@@ -647,6 +673,7 @@ Body: TranscribeTaskResponseDTO {
 ```
 
 **Obsługa błędów:**
+
 - 400: Bad Request (nieprawidłowy format pliku, brak parametrów)
 - 401: Unauthorized
 - 403: Forbidden (użytkownik nie należy do grupy)
@@ -656,15 +683,18 @@ Body: TranscribeTaskResponseDTO {
 - 503: Service Unavailable (usługa AI niedostępna)
 
 ### 7.3. Status zadania transkrypcji (GET /api/expenses/transcribe/:taskId)
+
 Endpoint do sprawdzania statusu przetwarzania transkrypcji i pobierania wyników.
 
 **Żądanie (Request):**
+
 ```typescript
 GET /api/expenses/transcribe/:taskId
 Authorization: Bearer <token>
 ```
 
 **Odpowiedź (Response):**
+
 ```typescript
 200 OK
 Content-Type: application/json
@@ -693,6 +723,7 @@ error: {
 ```
 
 **Obsługa błędów:**
+
 - 401: Unauthorized
 - 404: Not Found (zadanie nie istnieje lub nie należy do użytkownika)
 - 500: Internal Server Error
@@ -710,6 +741,7 @@ error: {
 ## 8. Interakcje użytkownika
 
 ### 8.1. Przepływ ręcznego dodawania wydatku
+
 1. **Otwarcie modala:** Załadowanie danych grupy (członkowie, waluty) przez API call
 2. **Wypełnienie pól podstawowych:** Walidacja formatów w czasie rzeczywistym przez React Hook Form + Zod
 3. **Wybór waluty:** Dostępne waluty z grupy, domyślnie pierwsza dostępna
@@ -720,6 +752,7 @@ error: {
 8. **Wysyłanie formularza:** Końcowa walidacja, API call, toast success/error, zamknięcie modala
 
 ### 8.2. Przepływ dodawania wydatku głosem
+
 1. **Rozpoczęcie nagrywania:**
    - Użytkownik klika ikonę mikrofonu w VoiceInputButton
    - System prosi o uprawnienia do mikrofonu (jeśli nie nadane wcześniej)
@@ -759,6 +792,7 @@ error: {
    - Toast success, zamknięcie modala
 
 ### 8.3. Obsługa błędów głosowych
+
 1. **Brak uprawnień do mikrofonu:**
    - Toast error: "Brak dostępu do mikrofonu. Sprawdź ustawienia przeglądarki."
    - VoiceInputButton pozostaje dostępny do ponownej próby
@@ -781,43 +815,47 @@ error: {
    - Opcja "Dodaj ręcznie" lub "Anuluj"
 
 ### 8.4. Dodatkowe interakcje
+
 - **Przełączanie między metodami:** Użytkownik może w każdej chwili przełączyć się z głosu na ręczne dodawanie (anulowanie nagrywania/transkrypcji)
 - **Zamknięcie modala:** Podczas nagrywania/transkrypcji pojawia się dialog potwierdzenia "Czy na pewno chcesz anulować?"
 - **Walidacja confidence:** Jeśli confidence < 0.5, toast warning: "Wyniki mogą być niedokładne. Sprawdź wszystkie pola."
 
 ## 9. Warunki i walidacja
+
 Warunki weryfikowane przez komponenty wpływają na stan UI poprzez disabled/enabled przyciski oraz wyświetlanie błędów:
 
 ### 9.1. Walidacja formularza (ręczna i po transkrypcji)
-- **ExpenseForm:** 
+
+- **ExpenseForm:**
   - Walidacja wszystkich pól + suma podziałów
   - Submit button disabled gdy: błędy walidacji lub isSubmitting = true lub splitValidation.isValid = false
   - Jeśli isFromVoice = true: wyświetlany badge "Wypełnione głosem"
 
-- **ExpenseBasicInfo:** 
+- **ExpenseBasicInfo:**
   - Walidacja opisu: 1-500 znaków, wymagany
   - Walidacja kwoty: > 0, max 2 miejsca po przecinku, wymagana
   - Walidacja daty: format ISO 8601, wymagana
   - Walidacja płatnika: UUID z listy członków grupy, wymagany
   - Pola z błędami podświetlone na czerwono
 
-- **ExpenseSplitSection:** 
+- **ExpenseSplitSection:**
   - Deleguje walidację do SimpleSplitInput
   - Wyświetla wizualne podsumowanie: "Suma: X / Y" gdzie X = suma splits, Y = amount
 
-- **SimpleSplitInput:** 
+- **SimpleSplitInput:**
   - Suma kwot = całkowita kwota (±0.01 tolerancja)
   - Wizualne wskazanie pozostałej kwoty do rozdzielenia
   - Podświetlenie na zielono gdy suma zgadza się
   - Podświetlenie na czerwono gdy suma nie zgadza się
   - Walidacja pojedynczych kwot: >= 0, max 2 miejsca po przecinku
 
-- **CurrencySelector:** 
+- **CurrencySelector:**
   - Waluta dostępna w grupie (z group_currencies)
   - Select pokazuje tylko dostępne waluty
   - Disabled gdy brak walut w grupie
 
 ### 9.2. Walidacja głosowa
+
 - **VoiceInputButton:**
   - Disabled gdy: isRecording = true lub isProcessing = true lub isSubmitting = true
   - Sprawdzenie uprawnień do mikrofonu przed rozpoczęciem nagrywania
@@ -840,6 +878,7 @@ Warunki weryfikowane przez komponenty wpływają na stan UI poprzez disabled/ena
   - Jeśli walidacja nie przechodzi, toast error i pozostawienie pustego formularza
 
 ### 9.3. Warunki API
+
 Wszystkie warunki są walidowane zarówno po stronie klienta (UX) jak i serwera (bezpieczeństwo):
 
 - **Tworzenie wydatku:**
@@ -852,7 +891,7 @@ Wszystkie warunki są walidowane zarówno po stronie klienta (UX) jak i serwera 
 
 - **Upload audio:**
   - Rozmiar pliku <= 25MB
-  - Format MIME: audio/*
+  - Format MIME: audio/\*
   - group_id istnieje i użytkownik należy do grupy
 
 - **Status transkrypcji:**
@@ -862,6 +901,7 @@ Wszystkie warunki są walidowane zarówno po stronie klienta (UX) jak i serwera 
 ## 10. Obsługa błędów
 
 ### 10.1. Błędy formularza (ręczne i po transkrypcji)
+
 - **Błędy walidacji formularza:** Wyświetlanie pod polami przez React Hook Form
 - **Błędy API tworzenia wydatku:** Toast notifications przez Sonner z Shadcn/ui
 - **Błędy sieci:** Retry logic + fallback messages
@@ -871,6 +911,7 @@ Wszystkie warunki są walidowane zarówno po stronie klienta (UX) jak i serwera 
 ### 10.2. Błędy funkcjonalności głosowej
 
 #### Błędy uprawnień i sprzętu
+
 - **Brak uprawnień do mikrofonu:**
   - Komunikat: "Brak dostępu do mikrofonu. Sprawdź ustawienia przeglądarki."
   - Toast error z instrukcją jak nadać uprawnienia
@@ -882,6 +923,7 @@ Wszystkie warunki są walidowane zarówno po stronie klienta (UX) jak i serwera 
   - VoiceInputButton disabled (póki nie wykryje mikrofonu)
 
 #### Błędy nagrywania
+
 - **Błąd podczas nagrywania (MediaRecorder error):**
   - Komunikat: "Błąd nagrywania. Spróbuj ponownie."
   - Toast error
@@ -894,6 +936,7 @@ Wszystkie warunki są walidowane zarówno po stronie klienta (UX) jak i serwera 
   - Brak wysyłania do API, reset stanu
 
 #### Błędy uploadu
+
 - **Plik za duży (> 25MB):**
   - Komunikat: "Nagranie zbyt długie. Spróbuj krótszego opisu."
   - Toast error
@@ -927,6 +970,7 @@ Wszystkie warunki są walidowane zarówno po stronie klienta (UX) jak i serwera 
   - VoiceInputButton disabled przez 5 minut
 
 #### Błędy transkrypcji
+
 - **Błąd przetwarzania (status = "failed"):**
   - Wyświetlenie komunikatu z error.message z API
   - Kody błędów i komunikaty:
@@ -948,6 +992,7 @@ Wszystkie warunki są walidowane zarówno po stronie klienta (UX) jak i serwera 
   - Reset stanu, możliwość nowego nagrania
 
 #### Błędy walidacji wyników
+
 - **Niepełne dane z AI:**
   - Komunikat: "AI nie rozpoznało wszystkich informacji. Uzupełnij brakujące pola."
   - Toast warning
@@ -973,6 +1018,7 @@ Wszystkie warunki są walidowane zarówno po stronie klienta (UX) jak i serwera 
   - Podświetlenie pola do edycji
 
 ### 10.3. Handling strategy
+
 - **Graceful degradation:** Przy błędach transkrypcji, użytkownik zawsze może przejść do ręcznego dodawania
 - **User feedback:** Wszystkie błędy komunikowane przez toast z jasnym opisem problemu i sugerowanym rozwiązaniem
 - **Error logging:** Wszystkie błędy API i transkrypcji logowane po stronie serwera dla debugowania
@@ -982,6 +1028,7 @@ Wszystkie warunki są walidowane zarówno po stronie klienta (UX) jak i serwera 
 ## 11. Kroki implementacji
 
 ### Faza 1: Fundament (już zrealizowane)
+
 1. ✅ Utworzyć schematy Zod w `src/lib/schemas/expenseSchemas.ts` dla walidacji formularza
 2. ✅ Zaimplementować hook `useExpenseForm` w `src/lib/hooks/useExpenseForm.ts`
 3. ✅ Stworzyć komponenty podrzędne (ExpenseBasicInfo, ExpenseSplitSection, SimpleSplitInput, CurrencySelector)
@@ -991,6 +1038,7 @@ Wszystkie warunki są walidowane zarówno po stronie klienta (UX) jak i serwera 
 7. ✅ Zintegrować modal z istniejącym widokiem grupy
 
 ### Faza 2: Backend dla transkrypcji (prerequisite)
+
 8. Zaimplementować endpoint `POST /api/expenses/transcribe` (upload audio)
 9. Zaimplementować endpoint `GET /api/expenses/transcribe/:taskId` (status zadania)
 10. Skonfigurować Edge Function w Supabase dla przetwarzania AI
@@ -999,6 +1047,7 @@ Wszystkie warunki są walidowane zarówno po stronie klienta (UX) jak i serwera 
 13. Przetestować backend endpoints z przykładowymi plikami audio
 
 ### Faza 3: Hooki audio i transkrypcji
+
 14. Zaimplementować `useAudioRecorder` w `src/lib/hooks/useAudioRecorder.ts`:
     - Integracja z MediaRecorder API
     - Zarządzanie stanem nagrywania
@@ -1014,6 +1063,7 @@ Wszystkie warunki są walidowane zarówno po stronie klienta (UX) jak i serwera 
     - Obsługa FormData i multipart/form-data
 
 ### Faza 4: Komponenty głosowe
+
 17. Stworzyć `VoiceInputButton.tsx`:
     - Przycisk z ikoną mikrofonu
     - Stany: idle, recording, processing
@@ -1029,6 +1079,7 @@ Wszystkie warunki są walidowane zarówno po stronie klienta (UX) jak i serwera 
     - Obsługa błędów i timeoutów
 
 ### Faza 5: Integracja głosu z formularzem
+
 20. Zaktualizować `useExpenseForm`:
     - Dodać metodę `populateFromTranscription(data: CreateExpenseCommand)`
     - Obsługa `initialData` prop
@@ -1044,6 +1095,7 @@ Wszystkie warunki są walidowane zarówno po stronie klienta (UX) jak i serwera 
     - Walidacja confidence i ostrzeżenia
 
 ### Faza 6: Walidacja i obsługa błędów
+
 23. Dodać walidacje dla funkcjonalności głosowej:
     - Sprawdzenie rozmiaru pliku audio (max 25MB)
     - Walidacja uprawnień do mikrofonu
@@ -1059,6 +1111,7 @@ Wszystkie warunki są walidowane zarówno po stronie klienta (UX) jak i serwera 
     - Podświetlenie pól wymagających weryfikacji
 
 ### Faza 7: UX i optymalizacje
+
 26. Dodać animacje i transitions:
     - Pulsująca ikona mikrofonu podczas nagrywania
     - Smooth transition między stanami
@@ -1072,6 +1125,7 @@ Wszystkie warunki są walidowane zarówno po stronie klienta (UX) jak i serwera 
     - Indykatory postępu
 
 ### Faza 8: Testowanie
+
 29. Testy jednostkowe:
     - `useAudioRecorder.test.ts` (mock MediaRecorder)
     - `useVoiceTranscription.test.ts` (mock fetch)
@@ -1091,6 +1145,7 @@ Wszystkie warunki są walidowane zarówno po stronie klienta (UX) jak i serwera 
     - Optymalizacja czasu przetwarzania
 
 ### Faza 9: Dokumentacja i deployment
+
 33. Dokumentacja:
     - Aktualizacja tego planu implementacji
     - Dokumentacja API dla endpointów transkrypcji

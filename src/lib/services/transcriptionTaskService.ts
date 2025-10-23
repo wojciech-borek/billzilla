@@ -8,7 +8,7 @@
  * 4. Update task with results or errors
  */
 
-import type { SupabaseClient } from "../../db/supabase.client";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "../../db/database.types";
 import { WhisperService, type TranscribeAudioParams } from "./whisperService";
 import { OpenRouterService, type ExtractDataParams } from "./openRouterService";
@@ -106,7 +106,7 @@ export class TranscriptionTaskService {
   /**
    * Creates a new transcription task in the database
    */
-  async createTask(supabase: SupabaseClient, params: CreateTaskParams): Promise<TranscriptionTaskRow> {
+  async createTask(supabase: SupabaseClient<Database>, params: CreateTaskParams): Promise<TranscriptionTaskRow> {
     const taskData: TranscriptionTaskInsert = {
       group_id: params.groupId,
       user_id: params.userId,
@@ -127,7 +127,7 @@ export class TranscriptionTaskService {
   /**
    * Gets a transcription task by ID
    */
-  async getTask(supabase: SupabaseClient, taskId: string, userId: string): Promise<TranscriptionTaskRow> {
+  async getTask(supabase: SupabaseClient<Database>, taskId: string, userId: string): Promise<TranscriptionTaskRow> {
     const { data, error } = await supabase
       .from("transcription_tasks")
       .select("*")
@@ -154,7 +154,7 @@ export class TranscriptionTaskService {
    * Updates task status to completed with results
    */
   async completeTask(
-    supabase: SupabaseClient,
+    supabase: SupabaseClient<Database>,
     taskId: string,
     transcriptionText: string,
     resultData: ExpenseTranscriptionResult
@@ -178,7 +178,12 @@ export class TranscriptionTaskService {
   /**
    * Updates task status to failed with error details
    */
-  async failTask(supabase: SupabaseClient, taskId: string, errorCode: string, errorMessage: string): Promise<void> {
+  async failTask(
+    supabase: SupabaseClient<Database>,
+    taskId: string,
+    errorCode: string,
+    errorMessage: string
+  ): Promise<void> {
     const { error } = await supabase
       .from("transcription_tasks")
       .update({
@@ -205,7 +210,7 @@ export class TranscriptionTaskService {
    * 2. Extract expense data from text (OpenRouter LLM)
    * 3. Update task with results
    */
-  async processTask(supabase: SupabaseClient, params: ProcessTaskParams): Promise<void> {
+  async processTask(supabase: SupabaseClient<Database>, params: ProcessTaskParams): Promise<void> {
     try {
       // Step 1: Transcribe audio to text
       const transcriptionResult = await this.whisperService.transcribeAudio({
@@ -222,7 +227,7 @@ export class TranscriptionTaskService {
         transcription: transcriptionResult.text,
         context,
         schema: expenseTranscriptionSchema,
-        model: "google/gemini-2.0-flash-exp:free", 
+        model: "google/gemini-2.0-flash-exp:free",
         temperature: 0.1,
         maxTokens: 1024,
       };
@@ -277,7 +282,7 @@ export class TranscriptionTaskService {
    * Fetches group context needed for expense extraction
    * Includes: group name, members, currencies
    */
-  async getGroupContext(supabase: SupabaseClient, groupId: string, userId: string): Promise<GroupContext> {
+  async getGroupContext(supabase: SupabaseClient<Database>, groupId: string, userId: string): Promise<GroupContext> {
     // Step 1: Verify user is a member of the group and get group details
     const { data: groupData, error: groupError } = await supabase
       .from("groups")

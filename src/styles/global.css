@@ -4,66 +4,75 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  /* Billzilla Brand Colors */
-  --radius: 1.5rem; /* rounded-2xl jako standard */
-  
-  /* Primary - Zielony dinozaura #49A067 */
-  --primary: #49A067;
-  --primary-foreground: #ffffff;
-  --primary-dark: #0E2E24;
-  
-  /* Secondary - Jasna zieleń #6DBE83 */
-  --secondary: #6DBE83;
-  --secondary-foreground: #0C2231;
-  
-  /* Accent - Pomarańczowo-różowy język #F49B7A */
-  --accent: #F49B7A;
-  --accent-foreground: #0C2231;
-  
-  /* Background - Jasny kremowy #F9FAF8 */
-  --background: #F9FAF8;
-  --foreground: #0C2231; /* Ciemny granat - główny tekst */
-  
-  /* Card */
-  --card: #ffffff;
-  --card-foreground: #0C2231;
-  
-  /* Popover */
-  --popover: #ffffff;
-  --popover-foreground: #0C2231;
-  
-  /* Muted */
-  --muted: #E8EBE6;
-  --muted-foreground: #5A6C66;
-  
-  /* Destructive */
-  --destructive: #EF4444;
-  --destructive-foreground: #ffffff;
-  
-  /* Border & Input */
-  --border: #D1D5DB;
-  --input: #E5E7EB;
-  --ring: #49A067;
-  
-  /* Charts - odcienie zieleni i akcentu */
-  --chart-1: #49A067;
-  --chart-2: #6DBE83;
-  --chart-3: #F49B7A;
-  --chart-4: #0E2E24;
-  --chart-5: #8DD4A0;
-  
-  /* Sidebar - używa primary color */
-  --sidebar: #ffffff;
-  --sidebar-foreground: #0C2231;
-  --sidebar-primary: #49A067;
-  --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #6DBE83;
-  --sidebar-accent-foreground: #0C2231;
-  --sidebar-border: #D1D5DB;
-  --sidebar-ring: #49A067;
+  --radius: 0.625rem;
+  /* Billzilla Brand Colors - converted to OKLCH */
+  --background: oklch(0.985 0.005 95); /* #F9FAF8 - jasny kremowy */
+  --foreground: oklch(0.145 0.01 220); /* #0C2231 - ciemny granat */
+  --card: oklch(0.985 0.005 95); /* #F9FAF8 - jasny kremowy */
+  --card-foreground: oklch(0.145 0.01 220); /* #0C2231 - ciemny granat */
+  --popover: oklch(0.985 0.005 95); /* #F9FAF8 - jasny kremowy */
+  --popover-foreground: oklch(0.145 0.01 220); /* #0C2231 - ciemny granat */
+  --primary: oklch(0.62 0.15 145); /* #49A067 - zielony dinozaura */
+  --primary-foreground: oklch(0.99 0.005 180); /* #0E2E24 - ciemnozielony kontur */
+  --secondary: oklch(0.75 0.12 145); /* #6DBE83 - jasna zieleń */
+  --secondary-foreground: oklch(0.145 0.01 220); /* #0C2231 - ciemny granat */
+  --muted: oklch(0.97 0.005 95); /* jasny kremowy dla muted */
+  --muted-foreground: oklch(0.45 0.02 220); /* ciemniejszy dla muted text */
+  --accent: oklch(0.75 0.08 25); /* #F49B7A - pomarańczowo-różowy język */
+  --accent-foreground: oklch(0.145 0.01 220); /* #0C2231 - ciemny granat */
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.92 0.005 95); /* jasny border */
+  --input: oklch(0.94 0.005 95); /* jasny input */
+  --ring: oklch(0.62 0.15 145); /* #49A067 - zielony dinozaura */
+  --chart-1: oklch(0.62 0.15 145); /* zielony dinozaura */
+  --chart-2: oklch(0.75 0.12 145); /* jasna zieleń */
+  --chart-3: oklch(0.75 0.08 25); /* pomarańczowo-różowy */
+  --chart-4: oklch(0.145 0.01 220); /* ciemny granat */
+  --chart-5: oklch(0.7 0.13 145); /* odcień zieleni */
+  --sidebar: oklch(0.985 0.005 95); /* jasny kremowy */
+  --sidebar-foreground: oklch(0.145 0.01 220); /* ciemny granat */
+  --sidebar-primary: oklch(0.62 0.15 145); /* zielony dinozaura */
+  --sidebar-primary-foreground: oklch(0.99 0.005 180); /* ciemnozielony kontur */
+  --sidebar-accent: oklch(0.75 0.12 145); /* jasna zieleń */
+  --sidebar-accent-foreground: oklch(0.145 0.01 220); /* ciemny granat */
+  --sidebar-border: oklch(0.92 0.005 95); /* jasny border */
+  --sidebar-ring: oklch(0.62 0.15 145); /* zielony dinozaura */
 }
 
-/* Dark mode nie jest używany w Billzilla - aplikacja ma być jasna i optymistyczna */
+.dark {
+  /* Dark mode - adapted Billzilla colors */
+  --background: oklch(0.145 0.01 220); /* ciemny granat */
+  --foreground: oklch(0.985 0.005 95); /* jasny kremowy */
+  --card: oklch(0.18 0.015 220); /* ciemniejszy dla kart */
+  --card-foreground: oklch(0.985 0.005 95); /* jasny kremowy */
+  --popover: oklch(0.18 0.015 220); /* ciemniejszy dla popover */
+  --popover-foreground: oklch(0.985 0.005 95); /* jasny kremowy */
+  --primary: oklch(0.7 0.13 145); /* jaśniejszy zielony dla dark mode */
+  --primary-foreground: oklch(0.145 0.01 220); /* ciemny granat */
+  --secondary: oklch(0.25 0.05 145); /* ciemniejszy dla secondary */
+  --secondary-foreground: oklch(0.985 0.005 95); /* jasny kremowy */
+  --muted: oklch(0.25 0.05 145); /* ciemniejszy dla muted */
+  --muted-foreground: oklch(0.7 0.005 95); /* jaśniejszy dla muted text */
+  --accent: oklch(0.8 0.08 25); /* jaśniejszy accent dla dark mode */
+  --accent-foreground: oklch(0.145 0.01 220); /* ciemny granat */
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(0.25 0.05 145 / 50%); /* półprzezroczysty border */
+  --input: oklch(0.22 0.04 145 / 60%); /* półprzezroczysty input */
+  --ring: oklch(0.7 0.13 145); /* jaśniejszy zielony dla ring */
+  --chart-1: oklch(0.7 0.13 145); /* jaśniejszy zielony */
+  --chart-2: oklch(0.75 0.12 145); /* jasna zieleń */
+  --chart-3: oklch(0.8 0.08 25); /* jaśniejszy accent */
+  --chart-4: oklch(0.5 0.05 220); /* jaśniejszy granat */
+  --chart-5: oklch(0.72 0.11 145); /* odcień zieleni */
+  --sidebar: oklch(0.18 0.015 220); /* ciemniejszy sidebar */
+  --sidebar-foreground: oklch(0.985 0.005 95); /* jasny kremowy */
+  --sidebar-primary: oklch(0.7 0.13 145); /* jaśniejszy zielony */
+  --sidebar-primary-foreground: oklch(0.145 0.01 220); /* ciemny granat */
+  --sidebar-accent: oklch(0.25 0.05 145); /* ciemniejszy accent */
+  --sidebar-accent-foreground: oklch(0.985 0.005 95); /* jasny kremowy */
+  --sidebar-border: oklch(0.25 0.05 145 / 50%); /* półprzezroczysty border */
+  --sidebar-ring: oklch(0.7 0.13 145); /* jaśniejszy zielony */
+}
 
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);
@@ -109,10 +118,5 @@
   }
   body {
     @apply bg-background text-foreground;
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  }
-  
-  h1, h2, h3, h4, h5, h6 {
-    @apply font-bold tracking-tight;
   }
 }

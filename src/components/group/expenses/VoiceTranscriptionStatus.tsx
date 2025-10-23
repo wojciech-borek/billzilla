@@ -57,14 +57,13 @@ export function VoiceTranscriptionStatus({
   onError,
   pollingInterval = 1000,
 }: VoiceTranscriptionStatusProps) {
-  const { status, currentMessage, progress, error, pollingCount, canRetry, retry } =
-    useTranscriptionPolling({
-      taskId,
-      pollingInterval,
-      maxAttempts: 60,
-      onComplete,
-      onError,
-    });
+  const { status, currentMessage, progress, error, pollingCount, canRetry, retry } = useTranscriptionPolling({
+    taskId,
+    pollingInterval,
+    maxAttempts: 60,
+    onComplete,
+    onError,
+  });
 
   // Render based on status
   const renderContent = () => {
@@ -82,9 +81,7 @@ export function VoiceTranscriptionStatus({
 
             <div className="text-center">
               <p className="text-sm font-medium text-foreground">{currentMessage}</p>
-              <p className="text-xs text-muted-foreground mt-1">
-                Próba {pollingCount + 1} z 60
-              </p>
+              <p className="text-xs text-muted-foreground mt-1">Próba {pollingCount + 1} z 60</p>
             </div>
 
             {/* Progress bar */}

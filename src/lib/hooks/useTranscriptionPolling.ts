@@ -1,9 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import type {
-  TranscriptionResultDTO,
-  TranscriptionErrorDTO,
-  TranscribeTaskStatusDTO,
-} from "../../types";
+import type { TranscriptionResultDTO, TranscriptionErrorDTO, TranscribeTaskStatusDTO } from "../../types";
 import { getTranscriptionTaskStatus } from "../services/expenseTranscriptionService";
 
 /**
@@ -224,12 +220,12 @@ export function useTranscriptionPolling({
         // Check for timeout
         if (pollingCountRef.current >= maxAttempts) {
           if (intervalId) clearInterval(intervalId);
-          
+
           const timeoutError: TranscriptionErrorDTO = {
             code: "TIMEOUT",
             message: "Przetwarzanie trwa zbyt długo. Spróbuj ponownie.",
           };
-          
+
           setState({
             status: "timeout",
             currentMessage: "Przetwarzanie trwa zbyt długo",
@@ -264,4 +260,3 @@ export function useTranscriptionPolling({
     retry,
   };
 }
-

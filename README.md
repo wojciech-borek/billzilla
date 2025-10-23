@@ -45,6 +45,7 @@ To set up and run the project on your local machine, follow these steps:
 ### Installation
 
 1.  **Clone the repository:**
+
     ```sh
     git clone https://github.com/wojciech-borek/billzilla.git
     cd billzilla
@@ -52,20 +53,24 @@ To set up and run the project on your local machine, follow these steps:
 
 2.  **Set the Node.js version:**
     If you are using `nvm`, run the following command in the project root:
+
     ```sh
     nvm use
     ```
 
 3.  **Install dependencies:**
+
     ```sh
     npm install
     ```
 
 4.  **Set up environment variables:**
     Create a `.env` file in the root of the project by copying the example file:
+
     ```sh
     cp .env.example .env
     ```
+
     Then, fill in the necessary environment variables in the `.env` file (e.g., database credentials, API keys for Google authentication).
 
 5.  **Run the development server:**
@@ -78,52 +83,52 @@ To set up and run the project on your local machine, follow these steps:
 
 The following scripts are available in `package.json`:
 
-| Script       | Description                                      |
-| ------------ | ------------------------------------------------ |
-| `npm run dev`    | Starts the development server.                   |
-| `npm run build`  | Builds the application for production.           |
-| `npm run preview`| Previews the production build locally.           |
-| `npm run astro`  | Runs the Astro CLI.                              |
-| `npm run lint`   | Lints the codebase for errors.                   |
-| `npm run lint:fix`| Fixes linting errors automatically.            |
-| `npm run format` | Formats the code using Prettier.                 |
+| Script             | Description                            |
+| ------------------ | -------------------------------------- |
+| `npm run dev`      | Starts the development server.         |
+| `npm run build`    | Builds the application for production. |
+| `npm run preview`  | Previews the production build locally. |
+| `npm run astro`    | Runs the Astro CLI.                    |
+| `npm run lint`     | Lints the codebase for errors.         |
+| `npm run lint:fix` | Fixes linting errors automatically.    |
+| `npm run format`   | Formats the code using Prettier.       |
 
 ## Project Scope
 
 ### Key Features
 
--   **User and Group Management**:
-    -   Secure sign-up and login exclusively via Google accounts.
-    -   Create and name new expense groups.
-    -   Invite others to groups via email.
-    -   Ability to leave a group at any time (financial data is preserved for final settlements).
+- **User and Group Management**:
+  - Secure sign-up and login exclusively via Google accounts.
+  - Create and name new expense groups.
+  - Invite others to groups via email.
+  - Ability to leave a group at any time (financial data is preserved for final settlements).
 
--   **Expense Management**:
-    -   Add expenses via a manual form (description, amount, date, currency).
-    -   **Voice-powered Expense Entry**: Add expenses using natural language voice commands.
-    -   Support for both "equal" and "specific amount" splits.
-    -   Real-time validation to ensure split amounts match the total expense.
-    -   Only the expense creator can edit or delete their entries.
+- **Expense Management**:
+  - Add expenses via a manual form (description, amount, date, currency).
+  - **Voice-powered Expense Entry**: Add expenses using natural language voice commands.
+  - Support for both "equal" and "specific amount" splits.
+  - Real-time validation to ensure split amounts match the total expense.
+  - Only the expense creator can edit or delete their entries.
 
--   **Balances and Settlements**:
-    -   Automatic calculation and updating of balances within each group.
-    -   Clear summary of who owes whom, presented in the group's base currency.
-    -   "Settle Up" feature to log full or partial debt repayments.
+- **Balances and Settlements**:
+  - Automatic calculation and updating of balances within each group.
+  - Clear summary of who owes whom, presented in the group's base currency.
+  - "Settle Up" feature to log full or partial debt repayments.
 
--   **Currency Management**:
-    -   Define a base currency for each group.
-    -   Add other currencies with manually set, fixed exchange rates against the base currency.
+- **Currency Management**:
+  - Define a base currency for each group.
+  - Add other currencies with manually set, fixed exchange rates against the base currency.
 
 ### Out of Scope (for MVP)
 
 The following features are intentionally excluded from the initial MVP release to focus on core functionality:
 
--   Email and password authentication.
--   Automatic fetching of currency exchange rates from external services.
--   Complex user roles and permissions within groups.
--   Push notifications for new expenses or balance changes.
--   Data export functionality.
--   Ability to attach images or receipts to expenses.
+- Email and password authentication.
+- Automatic fetching of currency exchange rates from external services.
+- Complex user roles and permissions within groups.
+- Push notifications for new expenses or balance changes.
+- Data export functionality.
+- Ability to attach images or receipts to expenses.
 
 ## Project Status
 

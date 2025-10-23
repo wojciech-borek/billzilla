@@ -469,3 +469,55 @@ export interface ErrorResponseDTO {
     details?: Record<string, unknown>;
   };
 }
+
+// ============================================================================
+// Authentication DTOs
+// ============================================================================
+
+/**
+ * Login credentials
+ * Used in: LoginForm component
+ */
+export interface LoginCredentials {
+  email: string;
+  password: string;
+}
+
+/**
+ * Signup credentials
+ * Used in: SignupForm component
+ */
+export interface SignupCredentials {
+  full_name: string; // Nazwa użytkownika - może być login, pseudonim, itp.
+  email: string;
+  password: string;
+  confirm_password: string;
+}
+
+/**
+ * Password reset request
+ * Used in: ResetPasswordForm component
+ */
+export interface PasswordResetRequest {
+  email: string;
+}
+
+/**
+ * Set new password
+ * Used in: ResetPasswordForm component
+ */
+export interface SetNewPassword {
+  new_password: string;
+  confirm_password: string;
+}
+
+/**
+ * Authenticated user info with profile data
+ * Passed as props to components from SSR
+ */
+export interface AuthUserWithProfile {
+  id: string;
+  email: string;
+  full_name: string | null; // Nazwa użytkownika (login, pseudonim, itp.)
+  avatar_url: string | null;
+}

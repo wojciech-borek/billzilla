@@ -1,9 +1,11 @@
 ## API Endpoint Implementation Plan: POST /api/groups/:groupId/expenses
 
 ### 1. Przegląd punktu końcowego
+
 Dodaje nowy wydatek w obrębie grupy wraz z podziałem kwoty na uczestników. Endpoint waliduje sumę podziałów, sprawdza członkostwo uczestników w grupie, weryfikuje dostępność waluty w grupie oraz wylicza kwotę w walucie bazowej grupy na potrzeby odpowiedzi.
 
 ### 2. Szczegóły żądania
+
 - **Metoda HTTP**: POST
 - **Struktura URL**: `/api/groups/:groupId/expenses`
 - **Parametry**:
@@ -21,6 +23,7 @@ Dodaje nowy wydatek w obrębie grupy wraz z podziałem kwoty na uczestników. En
     - `amount`: number (> 0, suma = `amount` w tolerancji ±0.01)
 
 Walidacja wejścia (Zod):
+
 - Format pól (typy, zakresy, długości, regex dla waluty).
 - Suma `splits[].amount` = `amount` z tolerancją ±0.01.
 - Brak duplikatów `profile_id` w `splits` (lub agregacja do jednej pozycji w usługach).
@@ -28,6 +31,7 @@ Walidacja wejścia (Zod):
 - Płatnik nie musi być uczestnikiem wydatku (może płacić za innych bez dzielenia kosztów).
 
 ### 3. Wykorzystywane typy
+
 - DTO/Commands z `src/types.ts`:
   - `CreateExpenseCommand`
   - `ExpenseSplitCommand`
@@ -36,6 +40,7 @@ Walidacja wejścia (Zod):
 - Typ klienta: `SupabaseClient` z `src/db/supabase.client.ts`
 
 ### 4. Szczegóły odpowiedzi
+
 - **201 Created** — `ExpenseDTO`:
   - Pola z `expenses` (bez `created_by` w surowej postaci),
   - `amount_in_base_currency`: number (wyliczony: `amount * exchange_rate`),
@@ -48,6 +53,7 @@ Walidacja wejścia (Zod):
   - 500: nieoczekiwany błąd serwera / błąd transakcji
 
 Przykład odpowiedzi 201:
+
 ```json
 {
   "id": "uuid-expense",
@@ -68,6 +74,7 @@ Przykład odpowiedzi 201:
 ```
 
 ### 5. Przepływ danych
+
 1. Uwierzytelnienie: pobierz `locals.user`; w razie braku → 401.
 2. Parsowanie `request.json()` z obsługą błędnego JSON (400: `INVALID_JSON`).
 3. Walidacja Zod dla `CreateExpenseCommand` (400 przy błędzie, z `details`).
@@ -98,6 +105,7 @@ Przykład odpowiedzi 201:
 10. Odpowiedź 201 z `ExpenseDTO`.
 
 ### 6. Względy bezpieczeństwa
+
 - Autoryzacja: tylko zalogowani (`locals.user`).
 - RLS już ogranicza odczyt/zapis do członków grupy; dodatkowo wymuszamy `created_by === locals.user.id` przez walidację `payer_id`.
 - Waluta musi istnieć w `group_currencies` danej grupy (zapobiega nadużyciom kursów).
@@ -106,6 +114,7 @@ Przykład odpowiedzi 201:
 - Rozważ limit rate (poza zakresem tej implementacji) oraz audit trail (opcjonalnie w przyszłości).
 
 ### 7. Obsługa błędów
+
 - 400 `VALIDATION_ERROR`: błąd schematu Zod (z `.flatten()`).
 - 400 `SEMANTIC_ERROR`: suma podziałów, uczestnik spoza grupy, waluta spoza grupy, `payer_id` ≠ `locals.user.id`.
 - 401 `UNAUTHORIZED`: brak `locals.user`.
@@ -114,28 +123,30 @@ Przykład odpowiedzi 201:
 - Logowanie: `console.error` (brak dedykowanej tabeli błędów w schemacie; możliwe rozszerzenie w osobnej migracji).
 
 ### 8. Rozważania dotyczące wydajności
+
 - Zapytania łączone: jednorazowy odczyt członków przez `IN (...)` i walut grupy.
 - Indeksy w schemacie pokrywają `group_members.profile_id`, `expenses.group_id`, `expense_splits.profile_id`, `group_currencies` klucz złożony — korzystamy z nich.
 - Batch insert `expense_splits` w jednej operacji.
 - Preferowana implementacja jako RPC w Postgres dla atomowości i mniejszego round-trip.
 
 ### 9. Etapy wdrożenia
-1) Schematy walidacji (Zod)
+
+1. Schematy walidacji (Zod)
    - Plik: `src/lib/schemas/expenseSchemas.ts`
    - Eksport: `createExpenseSchema`
    - Reguły: jak w sekcji „Szczegóły żądania” (typy, zakresy, suma podziałów ±0.01, `payer_id` = `locals.user.id`).
 
-2) Serwis biznesowy
+2. Serwis biznesowy
    - Plik: `src/lib/services/expenseService.ts`
    - Funkcje:
      - `createExpense(supabase: SupabaseClient, groupId: string, userId: string, command: CreateExpenseCommand): Promise<ExpenseDTO>`
        - Realizuje kroki 5–9 z „Przepływ danych”.
        - Wariant A: woła RPC; wariant B: insert + batch insert + manualny rollback.
 
-3) Endpoint (Astro API)
+3. Endpoint (Astro API)
    - Plik: `src/pages/api/groups/[groupId]/expenses/index.ts`
    - `export const prerender = false;`
-   - `POST`: 
+   - `POST`:
      - Auth z `locals.user` (401),
      - `groupId` z `params`,
      - parse JSON (400 przy błędzie),
@@ -145,21 +156,23 @@ Przykład odpowiedzi 201:
      - 201 z `ExpenseDTO`;
      - mapowanie wyjątków na kody (400/404/500) zgodnie z „Obsługa błędów”.
 
-4) (Opcjonalnie) Migracja RPC dla atomowości
+4. (Opcjonalnie) Migracja RPC dla atomowości
    - Plik: `supabase/migrations/2025XXXXXX_create_expense_with_splits.sql`
    - Funkcja `create_expense_with_splits(...)` (`SECURITY DEFINER`, sprawdzenia wejścia, transakcja, zwrot rekordu wydatku).
    - Grant EXECUTE dla roli `authenticated`.
 
-5) Typy/eksporty
+5. Typy/eksporty
    - Typy już dostępne w `src/types.ts`.
    - Dodaj eksport schematów w `src/lib/schemas/index.ts` (jeśli istnieje) dla spójności.
 
-6) Testy ręczne (smoke)
+6. Testy ręczne (smoke)
    - Scenariusz happy-path: 3 splits, równa suma.
    - Błędy: zła suma, uczestnik spoza grupy, waluta spoza grupy, brak auth.
 
 ### 10. Przykładowe payloady
+
 #### Równy podział (100 PLN na 3 osoby)
+
 ```json
 {
   "description": "Kolacja",
@@ -176,6 +189,7 @@ Przykład odpowiedzi 201:
 ```
 
 #### Niestandardowy podział
+
 ```json
 {
   "description": "Zakupy",
@@ -192,6 +206,7 @@ Przykład odpowiedzi 201:
 ```
 
 #### Płatnik nieuczestniczący w podziale
+
 ```json
 {
   "description": "Prezent urodzinowy",
@@ -205,5 +220,3 @@ Przykład odpowiedzi 201:
   ]
 }
 ```
-
-

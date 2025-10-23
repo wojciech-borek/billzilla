@@ -1,0 +1,47 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import { LoginForm } from "@/components/auth/LoginForm";
+import { Card } from "@/components/ui/card";
+import { isValidRedirectUrl } from "@/lib/utils/redirectValidation";
+
+// Sprawdzenie czy użytkownik jest już zalogowany
+// Używamy getUser() zamiast deprecated getSession()
+const {
+  data: { user },
+  error: authError,
+} = await Astro.locals.supabase.auth.getUser();
+
+// Jeśli użytkownik jest zalogowany, przekieruj na stronę główną
+if (user && !authError) {
+  return Astro.redirect("/");
+}
+
+// Odczyt parametrów URL dla komunikatów błędów (np. po OAuth callback)
+const error = Astro.url.searchParams.get("error") || undefined;
+
+// Odczyt i walidacja parametru redirect
+const redirectParam = Astro.url.searchParams.get("redirect");
+const redirectTo = isValidRedirectUrl(redirectParam) ? redirectParam : "/";
+---
+
+<Layout title="Zaloguj się | Billzilla" showHeader={true}>
+  <main class="min-h-screen bg-background flex items-center justify-center p-4">
+    <div class="w-full max-w-md">
+      <!-- Logo i nagłówek -->
+      <div class="text-center mb-8">
+        <img
+          src="/billzilla-logo.png"
+          alt="Billzilla"
+          class="h-20 w-20 mx-auto rounded-2xl transition-all duration-300 ease-out hover:scale-105"
+        />
+        <h1 class="mt-4 text-3xl font-bold tracking-tight text-foreground">Witaj z powrotem!</h1>
+        <p class="mt-2 text-gray-600">Zaloguj się do swojego konta</p>
+      </div>
+
+      <!-- Formularz w karcie -->
+      <Card className="bg-white rounded-2xl shadow-md shadow-green-100 p-8">
+        <LoginForm errorMessage={error} redirectTo={redirectTo} client:load />
+      </Card>
+    </div>
+  </main>
+</Layout>

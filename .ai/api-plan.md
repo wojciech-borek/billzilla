@@ -4,17 +4,17 @@
 
 Poniżej lista głównych zasobów API wraz z odpowiadającymi im tabelami bazy danych:
 
-| Zasób | Tabela bazy danych | Opis |
-|-------|-------------------|------|
-| **Profiles** | `profiles` | Profile użytkowników, rozszerzenie `auth.users` |
-| **Groups** | `groups` | Grupy rozliczeniowe |
-| **Group Members** | `group_members` | Członkowie grup (relacja M:M) |
-| **Currencies** | `currencies` | Globalna lista walut (ISO 4217) |
-| **Group Currencies** | `group_currencies` | Waluty z kursami wymiany w grupie |
-| **Invitations** | `invitations` | Zaproszenia do grup |
-| **Expenses** | `expenses` + `expense_splits` | Wydatki i ich podziały |
-| **Settlements** | `settlements` | Rozliczenia długów między użytkownikami |
-| **Balances** | _obliczane dynamicznie_ | Salda użytkowników w grupie |
+| Zasób                | Tabela bazy danych            | Opis                                            |
+| -------------------- | ----------------------------- | ----------------------------------------------- |
+| **Profiles**         | `profiles`                    | Profile użytkowników, rozszerzenie `auth.users` |
+| **Groups**           | `groups`                      | Grupy rozliczeniowe                             |
+| **Group Members**    | `group_members`               | Członkowie grup (relacja M:M)                   |
+| **Currencies**       | `currencies`                  | Globalna lista walut (ISO 4217)                 |
+| **Group Currencies** | `group_currencies`            | Waluty z kursami wymiany w grupie               |
+| **Invitations**      | `invitations`                 | Zaproszenia do grup                             |
+| **Expenses**         | `expenses` + `expense_splits` | Wydatki i ich podziały                          |
+| **Settlements**      | `settlements`                 | Rozliczenia długów między użytkownikami         |
+| **Balances**         | _obliczane dynamicznie_       | Salda użytkowników w grupie                     |
 
 ---
 
@@ -22,13 +22,123 @@ Poniżej lista głównych zasobów API wraz z odpowiadającymi im tabelami bazy 
 
 ### 2.1. Uwierzytelnianie
 
+#### POST /api/auth/signup
+
+**Opis:** Rejestracja nowego użytkownika za pomocą adresu e-mail i hasła. Wysyła e-mail weryfikacyjny.
+
+**Wymagane nagłówki:**
+
+- `Content-Type: application/json`
+
+**Struktura żądania:**
+
+```json
+{
+  "email": "user@example.com",
+  "password": "securePassword123",
+  "full_name": "Jan Kowalski"
+}
+```
+
+**Struktura odpowiedzi (sukces):**
+
+```json
+{
+  "user": {
+    "id": "uuid",
+    "email": "user@example.com",
+    "email_confirmed_at": null,
+    "created_at": "2025-01-01T00:00:00Z"
+  },
+  "message": "Rejestracja pomyślna. Sprawdź swoją skrzynkę e-mail, aby potwierdzić adres."
+}
+```
+
+**Kody odpowiedzi:**
+
+- `201 Created` - Rejestracja pomyślna, e-mail weryfikacyjny wysłany
+- `400 Bad Request` - Nieprawidłowe dane wejściowe
+- `422 Unprocessable Entity` - Błąd walidacji (np. hasło za krótkie, e-mail już istnieje)
+
+**Walidacja:**
+
+- `email` - wymagane, prawidłowy format e-mail, unikalny
+- `password` - wymagane, min. 8 znaków
+- `full_name` - opcjonalne, max. 100 znaków
+
+---
+
+#### POST /api/auth/login
+
+**Opis:** Logowanie użytkownika za pomocą adresu e-mail i hasła.
+
+**Wymagane nagłówki:**
+
+- `Content-Type: application/json`
+
+**Struktura żądania:**
+
+```json
+{
+  "email": "user@example.com",
+  "password": "securePassword123"
+}
+```
+
+**Struktura odpowiedzi (sukces):**
+
+```json
+{
+  "access_token": "jwt_token_string",
+  "token_type": "bearer",
+  "expires_in": 3600,
+  "refresh_token": "refresh_token_string",
+  "user": {
+    "id": "uuid",
+    "email": "user@example.com",
+    "email_confirmed_at": "2025-01-01T12:00:00Z",
+    "created_at": "2025-01-01T00:00:00Z"
+  }
+}
+```
+
+**Kody odpowiedzi:**
+
+- `200 OK` - Logowanie pomyślne
+- `400 Bad Request` - Nieprawidłowe dane wejściowe
+- `401 Unauthorized` - Nieprawidłowy e-mail lub hasło
+- `403 Forbidden` - E-mail nie został potwierdzony
+
+---
+
+#### POST /api/auth/google
+
+**Opis:** Inicjuje proces logowania/rejestracji przez Google OAuth. Przekierowuje do Google.
+
+**Struktura odpowiedzi (sukces):**
+
+```json
+{
+  "url": "https://accounts.google.com/o/oauth2/v2/auth?..."
+}
+```
+
+**Kody odpowiedzi:**
+
+- `200 OK` - URL do przekierowania zwrócony
+
+---
+
 #### POST /api/auth/callback
+
 **Opis:** Callback po uwierzytelnieniu Google OAuth. Obsługiwany przez Supabase Auth.
 
 **Parametry zapytania:**
+
 - `code` (string, wymagany) - Kod autoryzacyjny z Google
 
 **Struktura odpowiedzi (sukces):**
+
 ```json
 {
   "access_token": "jwt_token_string",
@@ -44,21 +154,117 @@ Poniżej lista głównych zasobów API wraz z odpowiadającymi im tabelami bazy 
 ```
 
 **Kody odpowiedzi:**
+
 - `200 OK` - Uwierzytelnienie pomyślne
 - `400 Bad Request` - Nieprawidłowy kod autoryzacyjny
 - `401 Unauthorized` - Uwierzytelnianie nieudane
 
 ---
 
-### 2.2. Profile użytkowników
+#### POST /api/auth/reset-password
 
-#### GET /api/profiles/me
-**Opis:** Pobiera profil zalogowanego użytkownika.
+**Opis:** Wysyła e-mail z linkiem do resetowania hasła.
 
 **Wymagane nagłówki:**
+
+- `Content-Type: application/json`
+
+**Struktura żądania:**
+
+```json
+{
+  "email": "user@example.com"
+}
+```
+
+**Struktura odpowiedzi (sukces):**
+
+```json
+{
+  "message": "Jeśli podany adres e-mail istnieje w systemie, wysłaliśmy na niego link do resetowania hasła."
+}
+```
+
+**Kody odpowiedzi:**
+
+- `200 OK` - Żądanie przetworzone (zawsze zwraca sukces ze względów bezpieczeństwa)
+- `400 Bad Request` - Nieprawidłowy format e-mail
+
+---
+
+#### POST /api/auth/update-password
+
+**Opis:** Aktualizuje hasło użytkownika po użyciu linku resetującego.
+
+**Wymagane nagłówki:**
+
+- `Content-Type: application/json`
+- `Authorization: Bearer {access_token_from_reset_link}`
+
+**Struktura żądania:**
+
+```json
+{
+  "password": "newSecurePassword123"
+}
+```
+
+**Struktura odpowiedzi (sukces):**
+
+```json
+{
+  "message": "Hasło zostało zmienione pomyślnie."
+}
+```
+
+**Kody odpowiedzi:**
+
+- `200 OK` - Hasło zmienione
+- `400 Bad Request` - Nieprawidłowe dane
+- `401 Unauthorized` - Nieprawidłowy lub wygasły token
+- `422 Unprocessable Entity` - Błąd walidacji (np. hasło za krótkie)
+
+**Walidacja:**
+
+- `password` - wymagane, min. 8 znaków
+
+---
+
+#### POST /api/auth/logout
+
+**Opis:** Wylogowuje użytkownika (unieważnia token).
+
+**Wymagane nagłówki:**
+
 - `Authorization: Bearer {access_token}`
 
 **Struktura odpowiedzi (sukces):**
+
+```json
+{
+  "message": "Wylogowano pomyślnie."
+}
+```
+
+**Kody odpowiedzi:**
+
+- `200 OK` - Wylogowanie pomyślne
+- `401 Unauthorized` - Brak lub nieprawidłowy token
+
+---
+
+### 2.2. Profile użytkowników
+
+#### GET /api/profiles/me
+
+**Opis:** Pobiera profil zalogowanego użytkownika.
+
+**Wymagane nagłówki:**
+
+- `Authorization: Bearer {access_token}`
+
+**Struktura odpowiedzi (sukces):**
+
 ```json
 {
   "id": "uuid",
@@ -70,11 +276,13 @@ Poniżej lista głównych zasobów API wraz z odpowiadającymi im tabelami bazy 
 ```
 
 **Kody odpowiedzi:**
+
 - `200 OK` - Sukces
 - `401 Unauthorized` - Brak lub nieprawidłowy token
 - `404 Not Found` - Profil nie istnieje
 
 **Uwagi:**
+
 - Dane profilu są synchronizowane z Google OAuth przy każdym logowaniu
 - Użytkownik nie może edytować profilu - zmiany muszą być dokonane w koncie Google
 
@@ -83,33 +291,42 @@ Poniżej lista głównych zasobów API wraz z odpowiadającymi im tabelami bazy 
 ### 2.3. Grupy
 
 #### GET /api/groups
+
 **Opis:** Pobiera listę grup, do których należy użytkownik.
 
 **Wymagane nagłówki:**
+
 - `Authorization: Bearer {access_token}`
 
 **Parametry zapytania:**
+
 - `status` (string, opcjonalny) - Filtruj po statusie: `active`, `archived`. Domyślnie: `active`
 - `limit` (number, opcjonalny) - Limit wyników (1-100). Domyślnie: 50
 - `offset` (number, opcjonalny) - Przesunięcie dla paginacji. Domyślnie: 0
 
 **Struktura odpowiedzi (sukces):**
+
 ```json
 {
   "data": [
     {
-      "id":"28635650-7151-43e6-a95b-f5c70709734d",
-      "name":"Wyjazd w gory",
-      "base_currency_code":"PLN",
-      "status":"active",
-      "created_at":"2025-10-18T11:46:11.229243+00:00",
-      "role":"creator",
-      "member_count":1,
-      "my_balance":0,
-      "members":[
-        {"profile_id":"a814cd69-42a9-4154-b97c-4f2565d05b57","full_name":null,"avatar_url":null,"status":"active"}
-        ]
+      "id": "28635650-7151-43e6-a95b-f5c70709734d",
+      "name": "Wyjazd w gory",
+      "base_currency_code": "PLN",
+      "status": "active",
+      "created_at": "2025-10-18T11:46:11.229243+00:00",
+      "role": "creator",
+      "member_count": 1,
+      "my_balance": 0,
+      "members": [
+        {
+          "profile_id": "a814cd69-42a9-4154-b97c-4f2565d05b57",
+          "full_name": null,
+          "avatar_url": null,
+          "status": "active"
         }
+      ]
+    }
   ],
   "total": 10,
   "limit": 50,
@@ -118,6 +335,7 @@ Poniżej lista głównych zasobów API wraz z odpowiadającymi im tabelami bazy 
 ```
 
 **Kody odpowiedzi:**
+
 - `200 OK` - Sukces
 - `401 Unauthorized` - Brak autoryzacji
 - `400 Bad Request` - Nieprawidłowe parametry zapytania
@@ -125,13 +343,16 @@ Poniżej lista głównych zasobów API wraz z odpowiadającymi im tabelami bazy 
 ---
 
 #### POST /api/groups
+
 **Opis:** Tworzy nową grupę. Użytkownik automatycznie staje się jej twórcą i pierwszym członkiem. Opcjonalnie można od razu zaprosić członków.
 
 **Wymagane nagłówki:**
+
 - `Authorization: Bearer {access_token}`
 - `Content-Type: application/json`
 
 **Struktura żądania:**
+
 ```json
 {
   "name": "Wyjazd do Zakopanego",
@@ -141,6 +362,7 @@ Poniżej lista głównych zasobów API wraz z odpowiadającymi im tabelami bazy 
 ```
 
 **Struktura odpowiedzi (sukces):**
+
 ```json
 {
   "id": "uuid",
@@ -170,17 +392,20 @@ Poniżej lista głównych zasobów API wraz z odpowiadającymi im tabelami bazy 
 ```
 
 **Kody odpowiedzi:**
+
 - `201 Created` - Grupa utworzona pomyślnie (zaproszenia przetwarzane best-effort)
 - `400 Bad Request` - Nieprawidłowe dane wejściowe
 - `401 Unauthorized` - Brak autoryzacji
 - `422 Unprocessable Entity` - Błąd walidacji (np. nieprawidłowy kod waluty)
 
 **Walidacja:**
+
 - `name` - wymagane, min. 1 znak, max. 100 znaków
 - `base_currency_code` - wymagane, musi istnieć w tabeli `currencies`
 - `invite_emails` - opcjonalne, tablica, max. 20 elementów, każdy e-mail musi być prawidłowym adresem
 
 **Uwagi:**
+
 - Jeśli `invite_emails` jest puste lub nie podane, tworzona jest tylko grupa
 - Grupa jest tworzona w transakcji, ale błędy zaproszeń nie rollbackują utworzenia grupy
 - Zaproszenia są przetwarzane analogicznie jak w `POST /api/groups/:groupId/members/invite`
@@ -188,15 +413,19 @@ Poniżej lista głównych zasobów API wraz z odpowiadającymi im tabelami bazy 
 ---
 
 #### GET /api/groups/:id
+
 **Opis:** Pobiera szczegóły grupy wraz z listą członków.
 
 **Wymagane nagłówki:**
+
 - `Authorization: Bearer {access_token}`
 
 **Parametry URL:**
+
 - `id` (uuid) - Identyfikator grupy
 
 **Struktura odpowiedzi (sukces):**
+
 ```json
 {
   "id": "uuid",
@@ -237,6 +466,7 @@ Poniżej lista głównych zasobów API wraz z odpowiadającymi im tabelami bazy 
 ```
 
 **Kody odpowiedzi:**
+
 - `200 OK` - Sukces
 - `401 Unauthorized` - Brak autoryzacji
 - `403 Forbidden` - Użytkownik nie jest członkiem grupy
@@ -245,16 +475,20 @@ Poniżej lista głównych zasobów API wraz z odpowiadającymi im tabelami bazy 
 ---
 
 #### PATCH /api/groups/:id
+
 **Opis:** Aktualizuje dane grupy (tylko nazwa). Dostępne tylko dla twórcy grupy.
 
 **Wymagane nagłówki:**
+
 - `Authorization: Bearer {access_token}`
 - `Content-Type: application/json`
 
 **Parametry URL:**
+
 - `id` (uuid) - Identyfikator grupy
 
 **Struktura żądania:**
+
 ```json
 {
   "name": "Nowa nazwa grupy"
@@ -262,6 +496,7 @@ Poniżej lista głównych zasobów API wraz z odpowiadającymi im tabelami bazy 
 ```
 
 **Struktura odpowiedzi (sukces):**
+
 ```json
 {
   "id": "uuid",
@@ -273,6 +508,7 @@ Poniżej lista głównych zasobów API wraz z odpowiadającymi im tabelami bazy 
 ```
 
 **Kody odpowiedzi:**
+
 - `200 OK` - Aktualizacja pomyślna
 - `400 Bad Request` - Nieprawidłowe dane
 - `401 Unauthorized` - Brak autoryzacji
@@ -281,20 +517,25 @@ Poniżej lista głównych zasobów API wraz z odpowiadającymi im tabelami bazy 
 - `422 Unprocessable Entity` - Błąd walidacji
 
 **Walidacja:**
+
 - `name` - min. 1 znak, max. 100 znaków
 
 ---
 
 #### POST /api/groups/:id/archive
+
 **Opis:** Archiwizuje grupę (soft delete). Dostępne tylko dla twórcy grupy.
 
 **Wymagane nagłówki:**
+
 - `Authorization: Bearer {access_token}`
 
 **Parametry URL:**
+
 - `id` (uuid) - Identyfikator grupy
 
 **Struktura odpowiedzi (sukces):**
+
 ```json
 {
   "id": "uuid",
@@ -306,6 +547,7 @@ Poniżej lista głównych zasobów API wraz z odpowiadającymi im tabelami bazy 
 ```
 
 **Kody odpowiedzi:**
+
 - `200 OK` - Grupa zarchiwizowana
 - `401 Unauthorized` - Brak autoryzacji
 - `403 Forbidden` - Użytkownik nie jest twórcą grupy
@@ -314,15 +556,19 @@ Poniżej lista głównych zasobów API wraz z odpowiadającymi im tabelami bazy 
 ---
 
 #### POST /api/groups/:id/leave
+
 **Opis:** Użytkownik opuszcza grupę. Status członkostwa zmienia się na "inactive", ale dane finansowe są zachowane.
 
 **Wymagane nagłówki:**
+
 - `Authorization: Bearer {access_token}`
 
 **Parametry URL:**
+
 - `id` (uuid) - Identyfikator grupy
 
 **Struktura odpowiedzi (sukces):**
+
 ```json
 {
   "message": "Opuściłeś grupę",
@@ -331,6 +577,7 @@ Poniżej lista głównych zasobów API wraz z odpowiadającymi im tabelami bazy 
 ```
 
 **Kody odpowiedzi:**
+
 - `200 OK` - Opuszczenie grupy pomyślne
 - `401 Unauthorized` - Brak autoryzacji
 - `403 Forbidden` - Użytkownik nie jest członkiem grupy lub jest twórcą (twórca nie może opuścić grupy bez jej archiwizacji)
@@ -341,16 +588,20 @@ Poniżej lista głównych zasobów API wraz z odpowiadającymi im tabelami bazy 
 ### 2.4. Członkowie grup
 
 #### POST /api/groups/:groupId/members/invite
+
 **Opis:** Zaprasza użytkowników do grupy po adresie e-mail. Jeśli użytkownik istnieje, jest dodawany automatycznie. Jeśli nie, tworzone jest zaproszenie.
 
 **Wymagane nagłówki:**
+
 - `Authorization: Bearer {access_token}`
 - `Content-Type: application/json`
 
 **Parametry URL:**
+
 - `groupId` (uuid) - Identyfikator grupy
 
 **Struktura żądania:**
+
 ```json
 {
   "emails": ["user1@example.com", "user2@example.com"]
@@ -358,6 +609,7 @@ Poniżej lista głównych zasobów API wraz z odpowiadającymi im tabelami bazy 
 ```
 
 **Struktura odpowiedzi (sukces):**
+
 ```json
 {
   "added_members": [
@@ -379,6 +631,7 @@ Poniżej lista głównych zasobów API wraz z odpowiadającymi im tabelami bazy 
 ```
 
 **Kody odpowiedzi:**
+
 - `200 OK` - Zaproszenia przetworzone
 - `400 Bad Request` - Nieprawidłowe dane (np. pusta lista e-maili)
 - `401 Unauthorized` - Brak autoryzacji
@@ -387,22 +640,27 @@ Poniżej lista głównych zasobów API wraz z odpowiadającymi im tabelami bazy 
 - `422 Unprocessable Entity` - Błąd walidacji (np. nieprawidłowy format e-mail)
 
 **Walidacja:**
+
 - `emails` - wymagane, tablica, min. 1 element, max. 20 elementów
 - każdy e-mail musi być prawidłowym adresem e-mail
 
 ---
 
 #### DELETE /api/groups/:groupId/members/:profileId
+
 **Opis:** Usuwa członka z grupy (zmienia status na "inactive"). Członek może usunąć siebie (równoważne z `leave`). Twórca może usuwać innych członków.
 
 **Wymagane nagłówki:**
+
 - `Authorization: Bearer {access_token}`
 
 **Parametry URL:**
+
 - `groupId` (uuid) - Identyfikator grupy
 - `profileId` (uuid) - Identyfikator profilu do usunięcia
 
 **Struktura odpowiedzi (sukces):**
+
 ```json
 {
   "message": "Członek usunięty z grupy",
@@ -412,6 +670,7 @@ Poniżej lista głównych zasobów API wraz z odpowiadającymi im tabelami bazy 
 ```
 
 **Kody odpowiedzi:**
+
 - `200 OK` - Członek usunięty
 - `401 Unauthorized` - Brak autoryzacji
 - `403 Forbidden` - Użytkownik nie ma uprawnień (nie jest twórcą ani nie usuwa siebie)
@@ -422,38 +681,43 @@ Poniżej lista głównych zasobów API wraz z odpowiadającymi im tabelami bazy 
 ### 2.5. Waluty w grupie
 
 #### GET /api/groups/:groupId/currencies
+
 **Opis:** Pobiera listę walut dostępnych w grupie wraz z kursami wymiany.
 
 **Wymagane nagłówki:**
+
 - `Authorization: Bearer {access_token}`
 
 **Parametry URL:**
+
 - `groupId` (uuid) - Identyfikator grupy
 
 **Struktura odpowiedzi (sukces):**
+
 ```json
 {
   "base_currency": {
     "code": "PLN",
     "name": "Polski złoty",
-    "exchange_rate": 1.0000
+    "exchange_rate": 1.0
   },
   "additional_currencies": [
     {
       "code": "EUR",
       "name": "Euro",
-      "exchange_rate": 4.5000
+      "exchange_rate": 4.5
     },
     {
       "code": "USD",
       "name": "Dolar amerykański",
-      "exchange_rate": 4.1000
+      "exchange_rate": 4.1
     }
   ]
 }
 ```
 
 **Kody odpowiedzi:**
+
 - `200 OK` - Sukces
 - `401 Unauthorized` - Brak autoryzacji
 - `403 Forbidden` - Użytkownik nie jest członkiem grupy
@@ -462,33 +726,39 @@ Poniżej lista głównych zasobów API wraz z odpowiadającymi im tabelami bazy 
 ---
 
 #### POST /api/groups/:groupId/currencies
+
 **Opis:** Dodaje nową walutę do grupy z określonym kursem wymiany.
 
 **Wymagane nagłówki:**
+
 - `Authorization: Bearer {access_token}`
 - `Content-Type: application/json`
 
 **Parametry URL:**
+
 - `groupId` (uuid) - Identyfikator grupy
 
 **Struktura żądania:**
+
 ```json
 {
   "currency_code": "EUR",
-  "exchange_rate": 4.5000
+  "exchange_rate": 4.5
 }
 ```
 
 **Struktura odpowiedzi (sukces):**
+
 ```json
 {
   "currency_code": "EUR",
   "name": "Euro",
-  "exchange_rate": 4.5000
+  "exchange_rate": 4.5
 }
 ```
 
 **Kody odpowiedzi:**
+
 - `201 Created` - Waluta dodana
 - `400 Bad Request` - Nieprawidłowe dane
 - `401 Unauthorized` - Brak autoryzacji
@@ -498,6 +768,7 @@ Poniżej lista głównych zasobów API wraz z odpowiadającymi im tabelami bazy 
 - `422 Unprocessable Entity` - Błąd walidacji
 
 **Walidacja:**
+
 - `currency_code` - wymagane, musi istnieć w tabeli `currencies`
 - `exchange_rate` - wymagane, liczba > 0, max. 4 miejsca po przecinku
 - waluta nie może być taka sama jak waluta bazowa grupy
@@ -505,33 +776,39 @@ Poniżej lista głównych zasobów API wraz z odpowiadającymi im tabelami bazy 
 ---
 
 #### PATCH /api/groups/:groupId/currencies/:code
+
 **Opis:** Aktualizuje kurs wymiany waluty w grupie.
 
 **Wymagane nagłówki:**
+
 - `Authorization: Bearer {access_token}`
 - `Content-Type: application/json`
 
 **Parametry URL:**
+
 - `groupId` (uuid) - Identyfikator grupy
 - `code` (string) - Kod waluty (np. "EUR")
 
 **Struktura żądania:**
+
 ```json
 {
-  "exchange_rate": 4.6000
+  "exchange_rate": 4.6
 }
 ```
 
 **Struktura odpowiedzi (sukces):**
+
 ```json
 {
   "currency_code": "EUR",
   "name": "Euro",
-  "exchange_rate": 4.6000
+  "exchange_rate": 4.6
 }
 ```
 
 **Kody odpowiedzi:**
+
 - `200 OK` - Kurs zaktualizowany
 - `400 Bad Request` - Nieprawidłowe dane
 - `401 Unauthorized` - Brak autoryzacji
@@ -540,21 +817,26 @@ Poniżej lista głównych zasobów API wraz z odpowiadającymi im tabelami bazy 
 - `422 Unprocessable Entity` - Błąd walidacji
 
 **Walidacja:**
+
 - `exchange_rate` - wymagane, liczba > 0, max. 4 miejsca po przecinku
 
 ---
 
 #### DELETE /api/groups/:groupId/currencies/:code
+
 **Opis:** Usuwa walutę z grupy. Nie można usunąć waluty bazowej.
 
 **Wymagane nagłówki:**
+
 - `Authorization: Bearer {access_token}`
 
 **Parametry URL:**
+
 - `groupId` (uuid) - Identyfikator grupy
 - `code` (string) - Kod waluty (np. "EUR")
 
 **Struktura odpowiedzi (sukces):**
+
 ```json
 {
   "message": "Waluta usunięta z grupy",
@@ -563,6 +845,7 @@ Poniżej lista głównych zasobów API wraz z odpowiadającymi im tabelami bazy 
 ```
 
 **Kody odpowiedzi:**
+
 - `200 OK` - Waluta usunięta
 - `401 Unauthorized` - Brak autoryzacji
 - `403 Forbidden` - Użytkownik nie jest członkiem grupy lub próbuje usunąć walutę bazową
@@ -574,15 +857,19 @@ Poniżej lista głównych zasobów API wraz z odpowiadającymi im tabelami bazy 
 ### 2.6. Wydatki
 
 #### GET /api/groups/:groupId/expenses
+
 **Opis:** Pobiera listę wydatków w grupie z możliwością filtrowania i sortowania.
 
 **Wymagane nagłówki:**
+
 - `Authorization: Bearer {access_token}`
 
 **Parametry URL:**
+
 - `groupId` (uuid) - Identyfikator grupy
 
 **Parametry zapytania:**
+
 - `limit` (number, opcjonalny) - Limit wyników (1-100). Domyślnie: 50
 - `offset` (number, opcjonalny) - Przesunięcie dla paginacji. Domyślnie: 0
 - `sort` (string, opcjonalny) - Sortowanie: `date_desc`, `date_asc`, `amount_desc`, `amount_asc`. Domyślnie: `date_desc`
@@ -592,6 +879,7 @@ Poniżej lista głównych zasobów API wraz z odpowiadającymi im tabelami bazy 
 - `currency_code` (string, opcjonalny) - Filtruj po walucie
 
 **Struktura odpowiedzi (sukces):**
+
 ```json
 {
   "data": [
@@ -599,9 +887,9 @@ Poniżej lista głównych zasobów API wraz z odpowiadającymi im tabelami bazy 
       "id": "uuid",
       "group_id": "uuid",
       "description": "Obiad w restauracji",
-      "amount": 250.00,
+      "amount": 250.0,
       "currency_code": "PLN",
-      "amount_in_base_currency": 250.00,
+      "amount_in_base_currency": 250.0,
       "expense_date": "2025-01-15T18:30:00Z",
       "created_at": "2025-01-15T19:00:00Z",
       "created_by": {
@@ -613,12 +901,12 @@ Poniżej lista głównych zasobów API wraz z odpowiadającymi im tabelami bazy 
         {
           "profile_id": "uuid",
           "full_name": "Jan Kowalski",
-          "amount": 125.00
+          "amount": 125.0
         },
         {
           "profile_id": "uuid",
           "full_name": "Anna Nowak",
-          "amount": 125.00
+          "amount": 125.0
         }
       ]
     }
@@ -630,6 +918,7 @@ Poniżej lista głównych zasobów API wraz z odpowiadającymi im tabelami bazy 
 ```
 
 **Kody odpowiedzi:**
+
 - `200 OK` - Sukces
 - `400 Bad Request` - Nieprawidłowe parametry zapytania
 - `401 Unauthorized` - Brak autoryzacji
@@ -639,20 +928,24 @@ Poniżej lista głównych zasobów API wraz z odpowiadającymi im tabelami bazy 
 ---
 
 #### POST /api/groups/:groupId/expenses
+
 **Opis:** Tworzy nowy wydatek w grupie. Wymaga podania szczegółów wydatku oraz dokładnego podziału na uczestników (obliczonego po stronie klienta).
 
 **Wymagane nagłówki:**
+
 - `Authorization: Bearer {access_token}`
 - `Content-Type: application/json`
 
 **Parametry URL:**
+
 - `groupId` (uuid) - Identyfikator grupy
 
 **Struktura żądania:**
+
 ```json
 {
   "description": "Obiad w restauracji",
-  "amount": 250.00,
+  "amount": 250.0,
   "currency_code": "PLN",
   "expense_date": "2025-01-15T18:30:00Z",
   "payer_id": "uuid",
@@ -674,14 +967,15 @@ Poniżej lista głównych zasobów API wraz z odpowiadającymi im tabelami bazy 
 ```
 
 **Struktura odpowiedzi (sukces):**
+
 ```json
 {
   "id": "uuid",
   "group_id": "uuid",
   "description": "Obiad w restauracji",
-  "amount": 250.00,
+  "amount": 250.0,
   "currency_code": "PLN",
-  "amount_in_base_currency": 250.00,
+  "amount_in_base_currency": 250.0,
   "expense_date": "2025-01-15T18:30:00Z",
   "created_at": "2025-01-15T19:00:00Z",
   "created_by": "uuid",
@@ -703,6 +997,7 @@ Poniżej lista głównych zasobów API wraz z odpowiadającymi im tabelami bazy 
 ```
 
 **Kody odpowiedzi:**
+
 - `201 Created` - Wydatek utworzony
 - `400 Bad Request` - Nieprawidłowe dane
 - `401 Unauthorized` - Brak autoryzacji
@@ -711,6 +1006,7 @@ Poniżej lista głównych zasobów API wraz z odpowiadającymi im tabelami bazy 
 - `422 Unprocessable Entity` - Błąd walidacji (np. suma podziałów ≠ kwota wydatku)
 
 **Walidacja:**
+
 - `description` - wymagane, min. 1 znak, max. 500 znaków
 - `amount` - wymagane, liczba > 0, max. 2 miejsca po przecinku
 - `currency_code` - wymagane, musi istnieć w walutach grupy
@@ -722,6 +1018,7 @@ Poniżej lista głównych zasobów API wraz z odpowiadającymi im tabelami bazy 
   - **SUMA `splits[].amount` musi być równa `amount`** (walidacja po stronie serwera)
 
 **Logika biznesowa:**
+
 - Operacja wykonywana w transakcji bazodanowej
 - Walidacja sumy: `sum(splits[].amount) === amount` (z tolerancją ±0.01 na błędy zaokrągleń)
 - Tworzenie rekordu w `expenses`
@@ -730,6 +1027,7 @@ Poniżej lista głównych zasobów API wraz z odpowiadającymi im tabelami bazy 
 - Po zapisie wysłanie aktualizacji przez Realtime Subscriptions
 
 **Uwagi:**
+
 - Klient (frontend) jest odpowiedzialny za obliczenie podziału kwoty
 - Backend tylko waliduje, czy suma się zgadza
 - To daje użytkownikowi pełną kontrolę nad dokładnym podziałem (kto dostaje "resztę z dzielenia")
@@ -737,23 +1035,27 @@ Poniżej lista głównych zasobów API wraz z odpowiadającymi im tabelami bazy 
 ---
 
 #### GET /api/expenses/:id
+
 **Opis:** Pobiera szczegóły pojedynczego wydatku.
 
 **Wymagane nagłówki:**
+
 - `Authorization: Bearer {access_token}`
 
 **Parametry URL:**
+
 - `id` (uuid) - Identyfikator wydatku
 
 **Struktura odpowiedzi (sukces):**
+
 ```json
 {
   "id": "uuid",
   "group_id": "uuid",
   "description": "Obiad w restauracji",
-  "amount": 250.00,
+  "amount": 250.0,
   "currency_code": "PLN",
-  "amount_in_base_currency": 250.00,
+  "amount_in_base_currency": 250.0,
   "expense_date": "2025-01-15T18:30:00Z",
   "created_at": "2025-01-15T19:00:00Z",
   "created_by": {
@@ -770,18 +1072,19 @@ Poniżej lista głównych zasobów API wraz z odpowiadającymi im tabelami bazy 
     {
       "profile_id": "uuid",
       "full_name": "Jan Kowalski",
-      "amount": 125.00
+      "amount": 125.0
     },
     {
       "profile_id": "uuid",
       "full_name": "Anna Nowak",
-      "amount": 125.00
+      "amount": 125.0
     }
   ]
 }
 ```
 
 **Kody odpowiedzi:**
+
 - `200 OK` - Sukces
 - `401 Unauthorized` - Brak autoryzacji
 - `403 Forbidden` - Użytkownik nie jest członkiem grupy
@@ -790,62 +1093,68 @@ Poniżej lista głównych zasobów API wraz z odpowiadającymi im tabelami bazy 
 ---
 
 #### PATCH /api/expenses/:id
+
 **Opis:** Aktualizuje wydatek. Dostępne tylko dla twórcy wydatku.
 
 **Wymagane nagłówki:**
+
 - `Authorization: Bearer {access_token}`
 - `Content-Type: application/json`
 
 **Parametry URL:**
+
 - `id` (uuid) - Identyfikator wydatku
 
 **Struktura żądania:**
+
 ```json
 {
   "description": "Obiad w restauracji (zaktualizowany)",
-  "amount": 280.00,
+  "amount": 280.0,
   "currency_code": "PLN",
   "expense_date": "2025-01-15T18:30:00Z",
   "payer_id": "uuid",
   "splits": [
     {
       "profile_id": "uuid1",
-      "amount": 140.00
+      "amount": 140.0
     },
     {
       "profile_id": "uuid2",
-      "amount": 140.00
+      "amount": 140.0
     }
   ]
 }
 ```
 
 **Struktura odpowiedzi (sukces):**
+
 ```json
 {
   "id": "uuid",
   "group_id": "uuid",
   "description": "Obiad w restauracji (zaktualizowany)",
-  "amount": 280.00,
+  "amount": 280.0,
   "currency_code": "PLN",
-  "amount_in_base_currency": 280.00,
+  "amount_in_base_currency": 280.0,
   "expense_date": "2025-01-15T18:30:00Z",
   "created_at": "2025-01-15T19:00:00Z",
   "created_by": "uuid",
   "splits": [
     {
       "profile_id": "uuid1",
-      "amount": 140.00
+      "amount": 140.0
     },
     {
       "profile_id": "uuid2",
-      "amount": 140.00
+      "amount": 140.0
     }
   ]
 }
 ```
 
 **Kody odpowiedzi:**
+
 - `200 OK` - Wydatek zaktualizowany
 - `400 Bad Request` - Nieprawidłowe dane
 - `401 Unauthorized` - Brak autoryzacji
@@ -856,6 +1165,7 @@ Poniżej lista głównych zasobów API wraz z odpowiadającymi im tabelami bazy 
 **Walidacja:** Taka sama jak przy tworzeniu wydatku (patrz `POST /api/groups/:groupId/expenses`)
 
 **Logika biznesowa:**
+
 - Operacja wykonywana w transakcji bazodanowej
 - Usunięcie starych rekordów z `expense_splits`
 - Aktualizacja rekordu w `expenses`
@@ -865,15 +1175,19 @@ Poniżej lista głównych zasobów API wraz z odpowiadającymi im tabelami bazy 
 ---
 
 #### DELETE /api/expenses/:id
+
 **Opis:** Usuwa wydatek. Dostępne tylko dla twórcy wydatku.
 
 **Wymagane nagłówki:**
+
 - `Authorization: Bearer {access_token}`
 
 **Parametry URL:**
+
 - `id` (uuid) - Identyfikator wydatku
 
 **Struktura odpowiedzi (sukces):**
+
 ```json
 {
   "message": "Wydatek usunięty",
@@ -882,12 +1196,14 @@ Poniżej lista głównych zasobów API wraz z odpowiadającymi im tabelami bazy 
 ```
 
 **Kody odpowiedzi:**
+
 - `200 OK` - Wydatek usunięty
 - `401 Unauthorized` - Brak autoryzacji
 - `403 Forbidden` - Użytkownik nie jest twórcą wydatku
 - `404 Not Found` - Wydatek nie istnieje
 
 **Logika biznesowa:**
+
 - Operacja wykonywana w transakcji bazodanowej
 - Usunięcie rekordów z `expense_splits` (CASCADE)
 - Usunięcie rekordu z `expenses`
@@ -896,17 +1212,21 @@ Poniżej lista głównych zasobów API wraz z odpowiadającymi im tabelami bazy 
 ---
 
 #### POST /api/expenses/transcribe
+
 **Opis:** Przetwarza nagranie głosowe i zwraca ustrukturyzowane dane wydatku (AI endpoint). Endpoint asynchroniczny - zwraca task_id, który można odpytywać o status.
 
 **Wymagane nagłówki:**
+
 - `Authorization: Bearer {access_token}`
 - `Content-Type: multipart/form-data`
 
 **Struktura żądania:**
+
 - `audio` (file) - Plik audio (max. 10MB, formaty: mp3, wav, m4a, webm)
 - `group_id` (uuid) - Identyfikator grupy (do kontekstu członków)
 
 **Struktura odpowiedzi (sukces - zadanie utworzone):**
+
 ```json
 {
   "task_id": "uuid",
@@ -916,6 +1236,7 @@ Poniżej lista głównych zasobów API wraz z odpowiadającymi im tabelami bazy 
 ```
 
 **Kody odpowiedzi:**
+
 - `202 Accepted` - Zadanie przyjęte do przetwarzania
 - `400 Bad Request` - Nieprawidłowy plik lub parametry
 - `401 Unauthorized` - Brak autoryzacji
@@ -926,15 +1247,19 @@ Poniżej lista głównych zasobów API wraz z odpowiadającymi im tabelami bazy 
 ---
 
 #### GET /api/expenses/transcribe/:taskId
+
 **Opis:** Pobiera status i wyniki przetwarzania nagrania głosowego.
 
 **Wymagane nagłówki:**
+
 - `Authorization: Bearer {access_token}`
 
 **Parametry URL:**
+
 - `taskId` (uuid) - Identyfikator zadania
 
 **Struktura odpowiedzi (sukces - w trakcie przetwarzania):**
+
 ```json
 {
   "task_id": "uuid",
@@ -944,6 +1269,7 @@ Poniżej lista głównych zasobów API wraz z odpowiadającymi im tabelami bazy 
 ```
 
 **Struktura odpowiedzi (sukces - przetworzono):**
+
 ```json
 {
   "task_id": "uuid",
@@ -954,17 +1280,17 @@ Poniżej lista głównych zasobów API wraz z odpowiadającymi im tabelami bazy 
     "transcription": "Ja zapłaciłem 50 euro za lunch dla mnie i Ani",
     "expense_data": {
       "description": "lunch",
-      "amount": 50.00,
+      "amount": 50.0,
       "currency_code": "EUR",
       "payer_id": "uuid_zalogowanego_użytkownika",
       "splits": [
         {
           "profile_id": "uuid_zalogowanego",
-          "amount": 25.00
+          "amount": 25.0
         },
         {
           "profile_id": "uuid_ani",
-          "amount": 25.00
+          "amount": 25.0
         }
       ]
     },
@@ -974,6 +1300,7 @@ Poniżej lista głównych zasobów API wraz z odpowiadającymi im tabelami bazy 
 ```
 
 **Struktura odpowiedzi (błąd przetwarzania):**
+
 ```json
 {
   "task_id": "uuid",
@@ -988,11 +1315,13 @@ Poniżej lista głównych zasobów API wraz z odpowiadającymi im tabelami bazy 
 ```
 
 **Kody odpowiedzi:**
+
 - `200 OK` - Status zadania pobrany
 - `401 Unauthorized` - Brak autoryzacji
 - `404 Not Found` - Zadanie nie istnieje
 
 **Logika biznesowa:**
+
 - Krok 1: Transkrypcja audio na tekst (Whisper przez Openrouter.ai)
 - Krok 2: Ekstrakcja danych z tekstu (LLM przez Openrouter.ai)
 - Kontekst dla LLM: lista członków grupy, waluta bazowa, dostępne waluty
@@ -1004,20 +1333,25 @@ Poniżej lista głównych zasobów API wraz z odpowiadającymi im tabelami bazy 
 ### 2.7. Rozliczenia
 
 #### GET /api/groups/:groupId/settlements
+
 **Opis:** Pobiera listę rozliczeń w grupie.
 
 **Wymagane nagłówki:**
+
 - `Authorization: Bearer {access_token}`
 
 **Parametry URL:**
+
 - `groupId` (uuid) - Identyfikator grupy
 
 **Parametry zapytania:**
+
 - `limit` (number, opcjonalny) - Limit wyników (1-100). Domyślnie: 50
 - `offset` (number, opcjonalny) - Przesunięcie dla paginacji. Domyślnie: 0
 - `sort` (string, opcjonalny) - Sortowanie: `date_desc`, `date_asc`. Domyślnie: `date_desc`
 
 **Struktura odpowiedzi (sukces):**
+
 ```json
 {
   "data": [
@@ -1034,7 +1368,7 @@ Poniżej lista głównych zasobów API wraz z odpowiadającymi im tabelami bazy 
         "full_name": "Jan Kowalski",
         "avatar_url": "https://example.com/avatar.jpg"
       },
-      "amount": 150.00,
+      "amount": 150.0,
       "settled_at": "2025-01-16T10:00:00Z"
     }
   ],
@@ -1045,6 +1379,7 @@ Poniżej lista głównych zasobów API wraz z odpowiadającymi im tabelami bazy 
 ```
 
 **Kody odpowiedzi:**
+
 - `200 OK` - Sukces
 - `401 Unauthorized` - Brak autoryzacji
 - `403 Forbidden` - Użytkownik nie jest członkiem grupy
@@ -1053,37 +1388,43 @@ Poniżej lista głównych zasobów API wraz z odpowiadającymi im tabelami bazy 
 ---
 
 #### POST /api/groups/:groupId/settlements
+
 **Opis:** Tworzy nowe rozliczenie (spłata długu) w grupie. Kwota zawsze w walucie bazowej grupy.
 
 **Wymagane nagłówki:**
+
 - `Authorization: Bearer {access_token}`
 - `Content-Type: application/json`
 
 **Parametry URL:**
+
 - `groupId` (uuid) - Identyfikator grupy
 
 **Struktura żądania:**
+
 ```json
 {
   "payer_id": "uuid",
   "payee_id": "uuid",
-  "amount": 150.00
+  "amount": 150.0
 }
 ```
 
 **Struktura odpowiedzi (sukces):**
+
 ```json
 {
   "id": "uuid",
   "group_id": "uuid",
   "payer_id": "uuid",
   "payee_id": "uuid",
-  "amount": 150.00,
+  "amount": 150.0,
   "settled_at": "2025-01-16T10:00:00Z"
 }
 ```
 
 **Kody odpowiedzi:**
+
 - `201 Created` - Rozliczenie utworzone
 - `400 Bad Request` - Nieprawidłowe dane
 - `401 Unauthorized` - Brak autoryzacji
@@ -1092,11 +1433,13 @@ Poniżej lista głównych zasobów API wraz z odpowiadającymi im tabelami bazy 
 - `422 Unprocessable Entity` - Błąd walidacji
 
 **Walidacja:**
+
 - `payer_id` - wymagane, musi być członkiem grupy
 - `payee_id` - wymagane, musi być członkiem grupy, nie może być taki sam jak `payer_id`
 - `amount` - wymagane, liczba > 0, max. 2 miejsca po przecinku
 
 **Logika biznesowa:**
+
 - Kwota zawsze w walucie bazowej grupy
 - Rozliczenie jest niemutowalne (nie można edytować ani usuwać)
 - Po zapisie wysłanie aktualizacji przez Realtime Subscriptions
@@ -1104,15 +1447,19 @@ Poniżej lista głównych zasobów API wraz z odpowiadającymi im tabelami bazy 
 ---
 
 #### GET /api/groups/:groupId/balances
+
 **Opis:** Oblicza i zwraca podsumowanie sald w grupie. Pokazuje, kto komu jest winien pieniądze. Wszystkie kwoty w walucie bazowej grupy.
 
 **Wymagane nagłówki:**
+
 - `Authorization: Bearer {access_token}`
 
 **Parametry URL:**
+
 - `groupId` (uuid) - Identyfikator grupy
 
 **Struktura odpowiedzi (sukces):**
+
 ```json
 {
   "group_id": "uuid",
@@ -1123,7 +1470,7 @@ Poniżej lista głównych zasobów API wraz z odpowiadającymi im tabelami bazy 
       "profile_id": "uuid",
       "full_name": "Jan Kowalski",
       "avatar_url": "https://example.com/avatar.jpg",
-      "balance": 125.50,
+      "balance": 125.5,
       "status": "active"
     },
     {
@@ -1169,12 +1516,14 @@ Poniżej lista głównych zasobów API wraz z odpowiadającymi im tabelami bazy 
 ```
 
 **Kody odpowiedzi:**
+
 - `200 OK` - Sukces
 - `401 Unauthorized` - Brak autoryzacji
 - `403 Forbidden` - Użytkownik nie jest członkiem grupy
 - `404 Not Found` - Grupa nie istnieje
 
 **Logika biznesowa:**
+
 - Salda obliczane dynamicznie na podstawie:
   - Wydatków: kto zapłacił vs. kto uczestniczył (z `expenses` i `expense_splits`)
   - Rozliczeń: spłaty długów (z `settlements`)
@@ -1188,15 +1537,19 @@ Poniżej lista głównych zasobów API wraz z odpowiadającymi im tabelami bazy 
 ### 2.8. Waluty (globalne)
 
 #### GET /api/currencies
+
 **Opis:** Pobiera listę wszystkich dostępnych walut w systemie (ISO 4217).
 
 **Wymagane nagłówki:**
+
 - `Authorization: Bearer {access_token}`
 
 **Parametry zapytania:**
+
 - `search` (string, opcjonalny) - Wyszukaj po kodzie lub nazwie waluty
 
 **Struktura odpowiedzi (sukces):**
+
 ```json
 {
   "data": [
@@ -1218,6 +1571,7 @@ Poniżej lista głównych zasobów API wraz z odpowiadającymi im tabelami bazy 
 ```
 
 **Kody odpowiedzi:**
+
 - `200 OK` - Sukces
 - `401 Unauthorized` - Brak autoryzacji
 
@@ -1226,15 +1580,19 @@ Poniżej lista głównych zasobów API wraz z odpowiadającymi im tabelami bazy 
 ### 2.9. Zaproszenia
 
 #### GET /api/invitations
+
 **Opis:** Pobiera listę zaproszeń dla zalogowanego użytkownika (po adresie e-mail).
 
 **Wymagane nagłówki:**
+
 - `Authorization: Bearer {access_token}`
 
 **Parametry zapytania:**
+
 - `status` (string, opcjonalny) - Filtruj po statusie: `pending`, `accepted`, `declined`. Domyślnie: `pending`
 
 **Struktura odpowiedzi (sukces):**
+
 ```json
 {
   "data": [
@@ -1254,21 +1612,26 @@ Poniżej lista głównych zasobów API wraz z odpowiadającymi im tabelami bazy 
 ```
 
 **Kody odpowiedzi:**
+
 - `200 OK` - Sukces
 - `401 Unauthorized` - Brak autoryzacji
 
 ---
 
 #### POST /api/invitations/:id/accept
+
 **Opis:** Akceptuje zaproszenie do grupy. Użytkownik zostaje dodany jako członek grupy.
 
 **Wymagane nagłówki:**
+
 - `Authorization: Bearer {access_token}`
 
 **Parametry URL:**
+
 - `id` (uuid) - Identyfikator zaproszenia
 
 **Struktura odpowiedzi (sukces):**
+
 ```json
 {
   "message": "Zaproszenie zaakceptowane",
@@ -1279,6 +1642,7 @@ Poniżej lista głównych zasobów API wraz z odpowiadającymi im tabelami bazy 
 ```
 
 **Kody odpowiedzi:**
+
 - `200 OK` - Zaproszenie zaakceptowane
 - `401 Unauthorized` - Brak autoryzacji
 - `403 Forbidden` - Zaproszenie nie jest przeznaczone dla tego użytkownika
@@ -1286,6 +1650,7 @@ Poniżej lista głównych zasobów API wraz z odpowiadającymi im tabelami bazy 
 - `409 Conflict` - Zaproszenie już zostało przetworzone
 
 **Logika biznesowa:**
+
 - Operacja wykonywana w transakcji bazodanowej
 - Zmiana statusu zaproszenia na "accepted"
 - Dodanie użytkownika do `group_members` z rolą "member" i statusem "active"
@@ -1293,15 +1658,19 @@ Poniżej lista głównych zasobów API wraz z odpowiadającymi im tabelami bazy 
 ---
 
 #### POST /api/invitations/:id/decline
+
 **Opis:** Odrzuca zaproszenie do grupy.
 
 **Wymagane nagłówki:**
+
 - `Authorization: Bearer {access_token}`
 
 **Parametry URL:**
+
 - `id` (uuid) - Identyfikator zaproszenia
 
 **Struktura odpowiedzi (sukces):**
+
 ```json
 {
   "message": "Zaproszenie odrzucone",
@@ -1310,6 +1679,7 @@ Poniżej lista głównych zasobów API wraz z odpowiadającymi im tabelami bazy 
 ```
 
 **Kody odpowiedzi:**
+
 - `200 OK` - Zaproszenie odrzucone
 - `401 Unauthorized` - Brak autoryzacji
 - `403 Forbidden` - Zaproszenie nie jest przeznaczone dla tego użytkownika
@@ -1317,6 +1687,7 @@ Poniżej lista głównych zasobów API wraz z odpowiadającymi im tabelami bazy 
 - `409 Conflict` - Zaproszenie już zostało przetworzone
 
 **Logika biznesowa:**
+
 - Zmiana statusu zaproszenia na "declined"
 
 ---
@@ -1325,15 +1696,57 @@ Poniżej lista głównych zasobów API wraz z odpowiadającymi im tabelami bazy 
 
 ### 3.1. Mechanizm uwierzytelniania
 
-Aplikacja wykorzystuje **Supabase Auth z Google OAuth** jako wyłączny mechanizm uwierzytelniania:
+Aplikacja wykorzystuje **Supabase Auth** z dwoma metodami uwierzytelniania:
+
+#### 3.1.1. Logowanie e-mail i hasło
+
+1. **Proces rejestracji:**
+   - Użytkownik wypełnia formularz rejestracji (e-mail, hasło, opcjonalnie imię)
+   - Frontend wysyła żądanie `POST /api/auth/signup`
+   - Supabase Auth tworzy konto użytkownika i wysyła e-mail weryfikacyjny
+   - Automatycznie tworzony jest rekord w tabeli `profiles`
+   - Użytkownik musi potwierdzić adres e-mail klikając w link w e-mailu
+   - Po potwierdzeniu użytkownik może się zalogować
+
+2. **Proces logowania:**
+   - Użytkownik wpisuje e-mail i hasło na stronie logowania
+   - Frontend wysyła żądanie `POST /api/auth/login`
+   - Supabase Auth weryfikuje dane i zwraca tokeny JWT (access_token i refresh_token)
+   - Użytkownik jest przekierowywany na pulpit lub poprzednią stronę
+
+3. **Proces resetowania hasła:**
+   - Użytkownik klika "Zapomniałeś hasła?" na stronie logowania
+   - Podaje swój adres e-mail w formularzu resetowania
+   - Frontend wysyła żądanie `POST /api/auth/reset-password`
+   - Supabase wysyła e-mail z linkiem resetującym
+   - Użytkownik klika w link i jest przekierowywany na stronę ustawiania nowego hasła
+   - Po ustawieniu nowego hasła użytkownik może się zalogować
+
+#### 3.1.2. Logowanie Google OAuth
 
 1. **Proces logowania:**
-   - Użytkownik klika "Zaloguj się z Google" na stronie logowania
-   - Frontend przekierowuje do `/api/auth/login` (endpoint Supabase)
+   - Użytkownik klika "Kontynuuj z Google" na stronie logowania/rejestracji
+   - Frontend wysyła żądanie `POST /api/auth/google` lub przekierowuje bezpośrednio
    - Supabase Auth obsługuje flow OAuth z Google
    - Po pomyślnym uwierzytelnieniu, użytkownik jest przekierowywany z powrotem do aplikacji z kodem autoryzacyjnym
    - Kod jest wymieniany na tokeny JWT (access_token i refresh_token)
    - Jeśli użytkownik loguje się po raz pierwszy, automatycznie tworzony jest rekord w tabeli `profiles`
+   - Użytkownik jest przekierowywany na pulpit
+
+#### 3.1.3. Ochrona tras
+
+Wszystkie strony aplikacji wymagają uwierzytelnienia, z następującymi wyjątkami:
+
+- `/login` - strona logowania
+- `/signup` - strona rejestracji
+- `/reset-password` - strona resetowania hasła
+- `/about` - strona o aplikacji
+
+Implementacja ochrony tras:
+
+- **Middleware Astro:** Sprawdza obecność ważnego tokenu JWT w nagłówkach lub cookies
+- Jeśli token jest nieważny lub nie istnieje, użytkownik jest przekierowywany na `/login`
+- Po zalogowaniu użytkownik jest przekierowywany na pierwotnie żądaną stronę (lub `/` jako domyślna)
 
 2. **Format tokenu:**
    - Każde żądanie API wymaga nagłówka: `Authorization: Bearer {access_token}`
@@ -1391,6 +1804,7 @@ Autoryzacja opiera się na **Row-Level Security (RLS)** w PostgreSQL:
 ### 4.1. Warunki walidacji dla poszczególnych zasobów
 
 #### Profiles
+
 - `email` - wymagane, prawidłowy format e-mail, unikalny (synchronizowane z Google)
 - `full_name` - opcjonalne, max. 100 znaków (synchronizowane z Google)
 - `avatar_url` - opcjonalne, prawidłowy URL (synchronizowane z Google)
@@ -1399,28 +1813,33 @@ Autoryzacja opiera się na **Row-Level Security (RLS)** w PostgreSQL:
 **Uwaga:** Profile nie mogą być edytowane przez API, tylko synchronizowane z Google OAuth
 
 #### Groups
+
 - `name` - wymagane, min. 1 znak, max. 100 znaków
 - `base_currency_code` - wymagane, musi istnieć w tabeli `currencies`, 3 znaki
 - `status` - domyślnie `active`, wartości: `active`, `archived`
 
 #### Group Members
+
 - `group_id` - wymagane, musi istnieć
 - `profile_id` - wymagane, musi istnieć
 - `role` - domyślnie `member`, wartości: `creator`, `member`
 - `status` - domyślnie `active`, wartości: `active`, `inactive`
 
 #### Group Currencies
+
 - `currency_code` - wymagane, musi istnieć w tabeli `currencies`
 - `exchange_rate` - wymagane, numeric(10, 4), musi być > 0
 - nie można dodać waluty bazowej jako dodatkowej waluty
 - nie można usunąć waluty, jeśli jest używana w istniejących wydatkach
 
 #### Invitations
+
 - `email` - wymagane, prawidłowy format e-mail
 - `group_id` - wymagane, musi istnieć
 - `status` - domyślnie `pending`, wartości: `pending`, `accepted`, `declined`
 
 #### Expenses
+
 - `description` - wymagane, min. 1 znak, max. 500 znaków
 - `amount` - wymagane, numeric(10, 2), musi być > 0
 - `currency_code` - wymagane, musi istnieć w walutach grupy
@@ -1432,11 +1851,13 @@ Autoryzacja opiera się na **Row-Level Security (RLS)** w PostgreSQL:
   - suma wszystkich `splits[].amount` musi być równa `amount` (tolerancja ±0.01)
 
 #### Expense Splits
+
 - `expense_id` - wymagane, musi istnieć
 - `profile_id` - wymagane, musi być członkiem grupy
 - `amount` - wymagane, numeric(10, 2), musi być > 0
 
 #### Settlements
+
 - `group_id` - wymagane, musi istnieć
 - `payer_id` - wymagane, musi być członkiem grupy
 - `payee_id` - wymagane, musi być członkiem grupy, nie może być taki sam jak `payer_id`
@@ -1445,9 +1866,11 @@ Autoryzacja opiera się na **Row-Level Security (RLS)** w PostgreSQL:
 ### 4.2. Implementacja logiki biznesowej
 
 #### 1. Tworzenie grupy (F-002, F-018)
+
 **Endpoint:** `POST /api/groups`
 
 **Logika:**
+
 1. Walidacja danych wejściowych (nazwa, waluta bazowa, opcjonalnie invite_emails)
 2. Utworzenie rekordu w tabeli `groups` (w transakcji)
 3. Automatyczne dodanie użytkownika do `group_members` z rolą `creator` i statusem `active` (w transakcji)
@@ -1462,9 +1885,11 @@ Autoryzacja opiera się na **Row-Level Security (RLS)** w PostgreSQL:
 ---
 
 #### 2. Zapraszanie do grupy (F-003, F-004, F-005)
+
 **Endpoint:** `POST /api/groups/:groupId/members/invite`
 
 **Logika:**
+
 1. Walidacja: czy użytkownik jest członkiem grupy
 2. Dla każdego adresu e-mail:
    - Sprawdzenie, czy użytkownik istnieje w systemie (tabela `profiles`)
@@ -1477,9 +1902,11 @@ Autoryzacja opiera się na **Row-Level Security (RLS)** w PostgreSQL:
 ---
 
 #### 3. Opuszczanie grupy (F-006, F-007)
+
 **Endpoint:** `POST /api/groups/:id/leave`
 
 **Logika:**
+
 1. Walidacja: czy użytkownik jest członkiem grupy
 2. Sprawdzenie: czy użytkownik nie jest twórcą grupy (twórca musi najpierw zarchiwizować grupę)
 3. Zmiana statusu w `group_members` z `active` na `inactive`
@@ -1492,9 +1919,11 @@ Autoryzacja opiera się na **Row-Level Security (RLS)** w PostgreSQL:
 ---
 
 #### 4. Dodawanie wydatku (F-008, F-011, F-012)
+
 **Endpoint:** `POST /api/groups/:groupId/expenses`
 
 **Logika:**
+
 1. Walidacja wszystkich danych wejściowych
 2. **Walidacja sumy:** suma wszystkich `splits[].amount` musi być równa `amount` (tolerancja ±0.01 na błędy zaokrągleń)
 3. Sprawdzenie, czy wszyscy uczestnicy z `splits[]` są członkami grupy
@@ -1507,12 +1936,14 @@ Autoryzacja opiera się na **Row-Level Security (RLS)** w PostgreSQL:
 **Transakcja:** Tak (tworzenie wydatku + wszystkie splits)
 
 **Podział kwoty:**
+
 - Frontend jest odpowiedzialny za obliczenie podziału (równego lub niestandardowego)
 - Użytkownik widzi dokładnie co zostanie zapisane przed submitem
 - Backend tylko waliduje, czy suma się zgadza
 - To daje użytkownikowi pełną kontrolę (np. decyzja kto dostaje "resztę")
 
 **Przykład - podział równy:** Wydatek 100 PLN na 3 osoby (obliczony przez frontend):
+
 ```json
 "splits": [
   { "profile_id": "uuid1", "amount": 33.33 },
@@ -1522,6 +1953,7 @@ Autoryzacja opiera się na **Row-Level Security (RLS)** w PostgreSQL:
 ```
 
 **Przykład - podział niestandardowy:**
+
 ```json
 "splits": [
   { "profile_id": "uuid1", "amount": 50.00 },
@@ -1533,40 +1965,45 @@ Autoryzacja opiera się na **Row-Level Security (RLS)** w PostgreSQL:
 ---
 
 #### 5. Dodawanie wydatku głosem (F-009, F-010)
+
 **Endpoint:** `POST /api/expenses/transcribe`
 
 **Logika - asynchroniczna:**
+
 1. **Request:** Upload pliku audio + group_id
 2. **Odpowiedź:** task_id, status: "processing"
 3. **Przetwarzanie w tle (Edge Function):**
    - Krok 1: Wysłanie audio do Openrouter.ai (model Whisper)
    - Otrzymanie transkrypcji tekstowej
    - Krok 2: Przygotowanie promptu dla LLM:
+
      ```
      Kontekst: Grupa "Wyjazd do Zakopanego"
      Członkowie: Jan Kowalski (ja), Anna Nowak, Piotr Wiśniewski
      Waluta bazowa: PLN
      Dostępne waluty: PLN, EUR (4.50), USD (4.10)
-     
+
      Tekst: "Ja zapłaciłem 50 euro za lunch dla mnie i Ani"
-     
+
      Wyodrębnij dane wydatku w formacie JSON. Podziel kwotę równo między uczestników.
      ```
+
    - Krok 3: Wysłanie promptu do Openrouter.ai (model Claude/GPT)
    - Otrzymanie strukturalnego JSON:
      ```json
      {
        "description": "lunch",
-       "amount": 50.00,
+       "amount": 50.0,
        "currency_code": "EUR",
        "payer_id": "uuid_jana",
        "splits": [
-         { "profile_id": "uuid_jana", "amount": 25.00 },
-         { "profile_id": "uuid_ani", "amount": 25.00 }
+         { "profile_id": "uuid_jana", "amount": 25.0 },
+         { "profile_id": "uuid_ani", "amount": 25.0 }
        ]
      }
      ```
    - Krok 4: Zapis wyniku do pamięci podręcznej (Redis lub tabela pomocnicza)
+
 4. **Odpytywanie:** `GET /api/expenses/transcribe/:taskId`
    - Zwraca status i wynik (jeśli gotowy)
 5. **Frontend:** Wypełnia formularz danymi z `result.expense_data`
@@ -1580,9 +2017,11 @@ Autoryzacja opiera się na **Row-Level Security (RLS)** w PostgreSQL:
 ---
 
 #### 6. Edycja wydatku (F-013)
+
 **Endpoint:** `PATCH /api/expenses/:id`
 
 **Logika:**
+
 1. Weryfikacja: czy użytkownik jest twórcą wydatku (`created_by = auth.uid()`)
 2. Walidacja nowych danych (taka sama jak przy tworzeniu)
 3. Usunięcie starych rekordów z `expense_splits`
@@ -1595,9 +2034,11 @@ Autoryzacja opiera się na **Row-Level Security (RLS)** w PostgreSQL:
 ---
 
 #### 7. Usuwanie wydatku (F-013)
+
 **Endpoint:** `DELETE /api/expenses/:id`
 
 **Logika:**
+
 1. Weryfikacja: czy użytkownik jest twórcą wydatku
 2. Usunięcie rekordów z `expense_splits` (CASCADE)
 3. Usunięcie rekordu z `expenses`
@@ -1608,9 +2049,11 @@ Autoryzacja opiera się na **Row-Level Security (RLS)** w PostgreSQL:
 ---
 
 #### 8. Obliczanie sald (F-014, F-015, F-020)
+
 **Endpoint:** `GET /api/groups/:groupId/balances`
 
 **Logika - dynamiczne obliczanie:**
+
 1. Pobranie wszystkich wydatków grupy z `expenses` i `expense_splits`
 2. Pobranie wszystkich rozliczeń grupy z `settlements`
 3. Przeliczenie wszystkich kwot na walutę bazową (z użyciem kursów z `group_currencies`)
@@ -1632,9 +2075,11 @@ Autoryzacja opiera się na **Row-Level Security (RLS)** w PostgreSQL:
 ---
 
 #### 9. Rejestrowanie rozliczenia (F-016, F-017)
+
 **Endpoint:** `POST /api/groups/:groupId/settlements`
 
 **Logika:**
+
 1. Walidacja: czy payer i payee są członkami grupy
 2. Walidacja: czy payer ≠ payee
 3. Walidacja: kwota > 0, w walucie bazowej grupy
@@ -1647,9 +2092,11 @@ Autoryzacja opiera się na **Row-Level Security (RLS)** w PostgreSQL:
 ---
 
 #### 10. Zarządzanie walutami w grupie (F-018, F-019, F-020)
+
 **Endpoint:** `POST /api/groups/:groupId/currencies`, `PATCH`, `DELETE`
 
 **Logika:**
+
 - **Dodawanie:**
   1. Walidacja: czy waluta istnieje w `currencies`
   2. Walidacja: czy waluta nie jest walutą bazową
@@ -1670,6 +2117,7 @@ Autoryzacja opiera się na **Row-Level Security (RLS)** w PostgreSQL:
 ### 4.3. Bezpieczeństwo i wydajność
 
 #### Bezpieczeństwo
+
 1. **Row-Level Security (RLS):** Wszystkie tabele mają włączone RLS z precyzyjnymi politykami
 2. **JWT Tokens:** Krótki czas życia (1h), automatyczne odnawianie
 3. **Walidacja po stronie serwera:** Wszystkie dane wejściowe walidowane przed zapisem
@@ -1679,6 +2127,7 @@ Autoryzacja opiera się na **Row-Level Security (RLS)** w PostgreSQL:
 7. **Klucze API:** Openrouter.ai klucz tylko w Edge Functions (server-side)
 
 #### Wydajność
+
 1. **Indeksy bazodanowe:** Wszystkie klucze obce + często używane kolumny
 2. **Paginacja:** Wszystkie endpointy listowe (limit/offset)
 3. **Realtime Subscriptions:** Aktualizacje push zamiast pollingu
@@ -1691,6 +2140,7 @@ Autoryzacja opiera się na **Row-Level Security (RLS)** w PostgreSQL:
 ## 5. Dodatkowe uwagi
 
 ### 5.1. Kody błędów
+
 Aplikacja używa standardowych kodów HTTP oraz dodatkowych kodów błędów w body:
 
 ```json
@@ -1699,14 +2149,15 @@ Aplikacja używa standardowych kodów HTTP oraz dodatkowych kodów błędów w b
     "code": "VALIDATION_ERROR",
     "message": "Suma podziałów nie równa się kwocie wydatku",
     "details": {
-      "expected": 250.00,
-      "actual": 240.00
+      "expected": 250.0,
+      "actual": 240.0
     }
   }
 }
 ```
 
 **Kody własne:**
+
 - `VALIDATION_ERROR` - Błąd walidacji danych
 - `UNAUTHORIZED` - Brak lub nieprawidłowy token
 - `FORBIDDEN` - Brak uprawnień do zasobu
@@ -1719,16 +2170,20 @@ Aplikacja używa standardowych kodów HTTP oraz dodatkowych kodów błędów w b
 - `CURRENCY_IN_USE` - Waluta jest używana w wydatkach
 
 ### 5.2. Versioning
+
 API nie wymaga wersjonowania w MVP (brak `/v1/` w ścieżkach). W przyszłości można dodać wersjonowanie przez:
+
 - Ścieżkę URL: `/api/v2/...`
 - Nagłówek: `Accept: application/vnd.billzilla.v2+json`
 
 ### 5.3. Dokumentacja API
+
 Dla developerów zewnętrznych (w przyszłości):
+
 - OpenAPI 3.0 specification (Swagger)
 - Interaktywna dokumentacja (Swagger UI)
 - Przykłady requestów w różnych językach
 
 ### 5.4. Monitoring i logi
-- Logowanie wszystkich żądań API (timestamp, user_id, endpoint, status, czas wykonania)
 
+- Logowanie wszystkich żądań API (timestamp, user_id, endpoint, status, czas wykonania)

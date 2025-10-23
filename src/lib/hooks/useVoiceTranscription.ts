@@ -1,9 +1,5 @@
 import { useState, useCallback } from "react";
-import type {
-  TranscriptionResultDTO,
-  TranscriptionErrorDTO,
-  TranscribeTaskResponseDTO,
-} from "../../types";
+import type { TranscriptionResultDTO, TranscriptionErrorDTO, TranscribeTaskResponseDTO } from "../../types";
 import { useAudioRecorder } from "./useAudioRecorder";
 import { useTranscriptionErrorHandler } from "./useTranscriptionErrorHandler";
 
@@ -90,10 +86,7 @@ export function useVoiceTranscription(): UseVoiceTranscriptionResult {
       console.error("Failed to start recording:", error);
 
       // Convert audio recorder error to transcription error format
-      const transcriptionError = errorHandler.createError(
-        "MICROPHONE_ERROR",
-        audioRecorder.error || undefined
-      );
+      const transcriptionError = errorHandler.createError("MICROPHONE_ERROR", audioRecorder.error || undefined);
 
       setState((prev) => ({
         ...prev,
@@ -113,15 +106,15 @@ export function useVoiceTranscription(): UseVoiceTranscriptionResult {
       return audioBlob;
     } catch (error) {
       console.error("Failed to stop recording:", error);
-      
+
       const transcriptionError = errorHandler.createError("RECORDING_ERROR");
-      
+
       setState((prev) => ({
         ...prev,
         isRecording: false,
         error: transcriptionError,
       }));
-      
+
       errorHandler.handleError(transcriptionError);
       throw error;
     }

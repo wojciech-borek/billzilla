@@ -14,130 +14,139 @@ CREATE TYPE group_status AS ENUM ('active', 'archived');
 ---
 
 ### Tabela: `profiles`
+
 Przechowuje publiczne dane użytkowników, rozszerzając tabelę `auth.users` od Supabase.
 
-| Nazwa kolumny  | Typ danych      | Ograniczenia                                             | Opis                                           |
-|---------------|-----------------|----------------------------------------------------------|------------------------------------------------|
-| `id`          | `uuid`          | `PRIMARY KEY`, `REFERENCES auth.users(id) ON DELETE CASCADE` | Klucz podstawowy, referencja do `auth.users`. |
-| `updated_at`  | `timestamptz`   | `NULL`                                                   | Data ostatniej aktualizacji profilu.           |
-| `full_name`   | `text`          | `NULL`                                                   | Pełna nazwa użytkownika.                       |
-| `avatar_url`  | `text`          | `NULL`                                                   | URL do awatara użytkownika.                    |
-| `email`       | `text`          | `NOT NULL`, `UNIQUE`                                     | Adres e-mail użytkownika.                      |
+| Nazwa kolumny | Typ danych    | Ograniczenia                                                 | Opis                                          |
+| ------------- | ------------- | ------------------------------------------------------------ | --------------------------------------------- |
+| `id`          | `uuid`        | `PRIMARY KEY`, `REFERENCES auth.users(id) ON DELETE CASCADE` | Klucz podstawowy, referencja do `auth.users`. |
+| `updated_at`  | `timestamptz` | `NULL`                                                       | Data ostatniej aktualizacji profilu.          |
+| `full_name`   | `text`        | `NULL`                                                       | Pełna nazwa użytkownika.                      |
+| `avatar_url`  | `text`        | `NULL`                                                       | URL do awatara użytkownika.                   |
+| `email`       | `text`        | `NOT NULL`, `UNIQUE`                                         | Adres e-mail użytkownika.                     |
 
 ---
 
 ### Tabela: `groups`
+
 Przechowuje informacje o grupach rozliczeniowych.
 
-| Nazwa kolumny        | Typ danych      | Ograniczenia                                  | Opis                                                            |
-|----------------------|-----------------|-----------------------------------------------|-----------------------------------------------------------------|
-| `id`                 | `uuid`          | `PRIMARY KEY`, `DEFAULT uuid_generate_v4()`   | Unikalny identyfikator grupy.                                   |
-| `created_at`         | `timestamptz`   | `NOT NULL`, `DEFAULT now()`                   | Data utworzenia grupy.                                          |
-| `name`               | `text`          | `NOT NULL`                                    | Nazwa grupy.                                                    |
-| `base_currency_code` | `varchar(3)`    | `NOT NULL`, `REFERENCES currencies(code)`     | Kod waluty bazowej dla grupy (np. 'PLN').                       |
-| `status`             | `group_status`  | `NOT NULL`, `DEFAULT 'active'`                | Status grupy (np. 'active', 'archived').                        |
+| Nazwa kolumny        | Typ danych     | Ograniczenia                                | Opis                                      |
+| -------------------- | -------------- | ------------------------------------------- | ----------------------------------------- |
+| `id`                 | `uuid`         | `PRIMARY KEY`, `DEFAULT uuid_generate_v4()` | Unikalny identyfikator grupy.             |
+| `created_at`         | `timestamptz`  | `NOT NULL`, `DEFAULT now()`                 | Data utworzenia grupy.                    |
+| `name`               | `text`         | `NOT NULL`                                  | Nazwa grupy.                              |
+| `base_currency_code` | `varchar(3)`   | `NOT NULL`, `REFERENCES currencies(code)`   | Kod waluty bazowej dla grupy (np. 'PLN'). |
+| `status`             | `group_status` | `NOT NULL`, `DEFAULT 'active'`              | Status grupy (np. 'active', 'archived').  |
 
 ---
 
 ### Tabela: `group_members`
+
 Tabela łącząca użytkowników (`profiles`) z grupami (`groups`).
 
-| Nazwa kolumny | Typ danych            | Ograniczenia                                   | Opis                                                  |
-|---------------|-----------------------|------------------------------------------------|-------------------------------------------------------|
-| `group_id`    | `uuid`                | `PRIMARY KEY`, `REFERENCES groups(id)`         | Identyfikator grupy.                                  |
-| `profile_id`  | `uuid`                | `PRIMARY KEY`, `REFERENCES profiles(id)`       | Identyfikator profilu użytkownika.                    |
-| `role`        | `group_role`          | `NOT NULL`, `DEFAULT 'member'`                 | Rola użytkownika w grupie ('creator' lub 'member').   |
-| `status`      | `group_member_status` | `NOT NULL`, `DEFAULT 'active'`                 | Status użytkownika w grupie ('active' lub 'inactive'). |
-| `joined_at`   | `timestamptz`         | `NOT NULL`, `DEFAULT now()`                    | Data dołączenia użytkownika do grupy.                 |
+| Nazwa kolumny | Typ danych            | Ograniczenia                             | Opis                                                   |
+| ------------- | --------------------- | ---------------------------------------- | ------------------------------------------------------ |
+| `group_id`    | `uuid`                | `PRIMARY KEY`, `REFERENCES groups(id)`   | Identyfikator grupy.                                   |
+| `profile_id`  | `uuid`                | `PRIMARY KEY`, `REFERENCES profiles(id)` | Identyfikator profilu użytkownika.                     |
+| `role`        | `group_role`          | `NOT NULL`, `DEFAULT 'member'`           | Rola użytkownika w grupie ('creator' lub 'member').    |
+| `status`      | `group_member_status` | `NOT NULL`, `DEFAULT 'active'`           | Status użytkownika w grupie ('active' lub 'inactive'). |
+| `joined_at`   | `timestamptz`         | `NOT NULL`, `DEFAULT now()`              | Data dołączenia użytkownika do grupy.                  |
 
 ---
 
 ### Tabela: `currencies`
+
 Globalna, statyczna tabela przechowująca listę dostępnych walut (ISO 4217).
 
-| Nazwa kolumny | Typ danych   | Ograniczenia     | Opis                          |
-|---------------|--------------|------------------|-------------------------------|
-| `code`        | `varchar(3)` | `PRIMARY KEY`    | Kod waluty ISO 4217 (np. 'PLN'). |
-| `name`        | `text`       | `NOT NULL`       | Pełna nazwa waluty.           |
+| Nazwa kolumny | Typ danych   | Ograniczenia  | Opis                             |
+| ------------- | ------------ | ------------- | -------------------------------- |
+| `code`        | `varchar(3)` | `PRIMARY KEY` | Kod waluty ISO 4217 (np. 'PLN'). |
+| `name`        | `text`       | `NOT NULL`    | Pełna nazwa waluty.              |
 
 ---
 
 ### Tabela: `group_currencies`
+
 Przechowuje zdefiniowane przez użytkownika kursy wymiany dla walut w danej grupie.
 
-| Nazwa kolumny   | Typ danych       | Ograniczenia                             | Opis                                                               |
-|-----------------|------------------|------------------------------------------|--------------------------------------------------------------------|
-| `group_id`      | `uuid`           | `PRIMARY KEY`, `REFERENCES groups(id)`   | Identyfikator grupy.                                               |
-| `currency_code` | `varchar(3)`     | `PRIMARY KEY`, `REFERENCES currencies(code)` | Kod waluty.                                                        |
-| `exchange_rate` | `numeric(10, 4)` | `NOT NULL`, `CHECK (exchange_rate > 0)`  | Kurs wymiany w stosunku do waluty bazowej grupy (np. 4.50 dla EUR, gdy bazą jest PLN). |
+| Nazwa kolumny   | Typ danych       | Ograniczenia                                 | Opis                                                                                   |
+| --------------- | ---------------- | -------------------------------------------- | -------------------------------------------------------------------------------------- |
+| `group_id`      | `uuid`           | `PRIMARY KEY`, `REFERENCES groups(id)`       | Identyfikator grupy.                                                                   |
+| `currency_code` | `varchar(3)`     | `PRIMARY KEY`, `REFERENCES currencies(code)` | Kod waluty.                                                                            |
+| `exchange_rate` | `numeric(10, 4)` | `NOT NULL`, `CHECK (exchange_rate > 0)`      | Kurs wymiany w stosunku do waluty bazowej grupy (np. 4.50 dla EUR, gdy bazą jest PLN). |
 
 ---
 
 ### Tabela: `invitations`
+
 Przechowuje zaproszenia do grup dla osób, które nie mają jeszcze konta.
 
-| Nazwa kolumny | Typ danych          | Ograniczenia                                  | Opis                                                  |
-|---------------|---------------------|-----------------------------------------------|-------------------------------------------------------|
-| `id`          | `uuid`              | `PRIMARY KEY`, `DEFAULT uuid_generate_v4()`   | Unikalny identyfikator zaproszenia.                   |
-| `group_id`    | `uuid`              | `NOT NULL`, `REFERENCES groups(id)`           | Identyfikator grupy, do której wysłano zaproszenie.    |
-| `email`       | `text`              | `NOT NULL`                                    | Adres e-mail zaproszonej osoby.                       |
-| `status`      | `invitation_status` | `NOT NULL`, `DEFAULT 'pending'`               | Status zaproszenia.                                   |
-| `created_at`  | `timestamptz`       | `NOT NULL`, `DEFAULT now()`                   | Data wysłania zaproszenia.                            |
+| Nazwa kolumny | Typ danych          | Ograniczenia                                | Opis                                                |
+| ------------- | ------------------- | ------------------------------------------- | --------------------------------------------------- |
+| `id`          | `uuid`              | `PRIMARY KEY`, `DEFAULT uuid_generate_v4()` | Unikalny identyfikator zaproszenia.                 |
+| `group_id`    | `uuid`              | `NOT NULL`, `REFERENCES groups(id)`         | Identyfikator grupy, do której wysłano zaproszenie. |
+| `email`       | `text`              | `NOT NULL`                                  | Adres e-mail zaproszonej osoby.                     |
+| `status`      | `invitation_status` | `NOT NULL`, `DEFAULT 'pending'`             | Status zaproszenia.                                 |
+| `created_at`  | `timestamptz`       | `NOT NULL`, `DEFAULT now()`                 | Data wysłania zaproszenia.                          |
 
 ---
 
 ### Tabela: `expenses`
+
 Główna tabela przechowująca informacje o wydatkach.
 
-| Nazwa kolumny   | Typ danych       | Ograniczenia                                   | Opis                                                |
-|-----------------|------------------|------------------------------------------------|-----------------------------------------------------|
-| `id`            | `uuid`           | `PRIMARY KEY`, `DEFAULT uuid_generate_v4()`    | Unikalny identyfikator wydatku.                     |
-| `group_id`      | `uuid`           | `NOT NULL`, `REFERENCES groups(id)`            | Grupa, do której należy wydatek.                    |
-| `created_by`    | `uuid`           | `NOT NULL`, `REFERENCES profiles(id)`          | Użytkownik, który dodał wydatek.                    |
-| `description`   | `text`           | `NOT NULL`                                     | Opis wydatku.                                       |
-| `amount`        | `numeric(10, 2)` | `NOT NULL`, `CHECK (amount > 0)`               | Całkowita kwota wydatku.                            |
-| `currency_code` | `varchar(3)`     | `NOT NULL`, `REFERENCES currencies(code)`      | Waluta, w której dokonano wydatku.                  |
-| `expense_date`  | `timestamptz`    | `NOT NULL`, `DEFAULT now()`                    | Data poniesienia wydatku.                           |
-| `created_at`    | `timestamptz`    | `NOT NULL`, `DEFAULT now()`                    | Data dodania wpisu do systemu.                      |
+| Nazwa kolumny   | Typ danych       | Ograniczenia                                | Opis                               |
+| --------------- | ---------------- | ------------------------------------------- | ---------------------------------- |
+| `id`            | `uuid`           | `PRIMARY KEY`, `DEFAULT uuid_generate_v4()` | Unikalny identyfikator wydatku.    |
+| `group_id`      | `uuid`           | `NOT NULL`, `REFERENCES groups(id)`         | Grupa, do której należy wydatek.   |
+| `created_by`    | `uuid`           | `NOT NULL`, `REFERENCES profiles(id)`       | Użytkownik, który dodał wydatek.   |
+| `description`   | `text`           | `NOT NULL`                                  | Opis wydatku.                      |
+| `amount`        | `numeric(10, 2)` | `NOT NULL`, `CHECK (amount > 0)`            | Całkowita kwota wydatku.           |
+| `currency_code` | `varchar(3)`     | `NOT NULL`, `REFERENCES currencies(code)`   | Waluta, w której dokonano wydatku. |
+| `expense_date`  | `timestamptz`    | `NOT NULL`, `DEFAULT now()`                 | Data poniesienia wydatku.          |
+| `created_at`    | `timestamptz`    | `NOT NULL`, `DEFAULT now()`                 | Data dodania wpisu do systemu.     |
 
 ---
 
 ### Tabela: `expense_splits`
+
 Przechowuje szczegóły podziału wydatku na poszczególnych uczestników.
 
-| Nazwa kolumny | Typ danych       | Ograniczenia                             | Opis                                                |
-|---------------|------------------|------------------------------------------|-----------------------------------------------------|
-| `expense_id`  | `uuid`           | `PRIMARY KEY`, `REFERENCES expenses(id)` | Identyfikator wydatku.                              |
+| Nazwa kolumny | Typ danych       | Ograniczenia                             | Opis                                                     |
+| ------------- | ---------------- | ---------------------------------------- | -------------------------------------------------------- |
+| `expense_id`  | `uuid`           | `PRIMARY KEY`, `REFERENCES expenses(id)` | Identyfikator wydatku.                                   |
 | `profile_id`  | `uuid`           | `PRIMARY KEY`, `REFERENCES profiles(id)` | Użytkownik (uczestnik), na którego przypada część kwoty. |
-| `amount`      | `numeric(10, 2)` | `NOT NULL`, `CHECK (amount > 0)`         | Kwota przypadająca na danego uczestnika.            |
+| `amount`      | `numeric(10, 2)` | `NOT NULL`, `CHECK (amount > 0)`         | Kwota przypadająca na danego uczestnika.                 |
 
 ---
 
 ### Tabela: `settlements`
+
 Rejestruje transakcje rozliczeniowe (spłaty długów) między użytkownikami.
 
-| Nazwa kolumny | Typ danych       | Ograniczenia                                  | Opis                                                   |
-|---------------|------------------|-----------------------------------------------|--------------------------------------------------------|
-| `id`          | `uuid`           | `PRIMARY KEY`, `DEFAULT uuid_generate_v4()`   | Unikalny identyfikator rozliczenia.                    |
-| `group_id`    | `uuid`           | `NOT NULL`, `REFERENCES groups(id)`           | Grupa, w ramach której dokonano rozliczenia.           |
-| `payer_id`    | `uuid`           | `NOT NULL`, `REFERENCES profiles(id)`         | Użytkownik, który spłaca dług.                         |
-| `payee_id`    | `uuid`           | `NOT NULL`, `REFERENCES profiles(id)`         | Użytkownik, który otrzymuje spłatę.                    |
-| `amount`      | `numeric(10, 2)` | `NOT NULL`, `CHECK (amount > 0)`              | Kwota rozliczenia (zawsze w walucie bazowej grupy).    |
-| `settled_at`  | `timestamptz`    | `NOT NULL`, `DEFAULT now()`                   | Data dokonania rozliczenia.                            |
+| Nazwa kolumny | Typ danych       | Ograniczenia                                | Opis                                                |
+| ------------- | ---------------- | ------------------------------------------- | --------------------------------------------------- |
+| `id`          | `uuid`           | `PRIMARY KEY`, `DEFAULT uuid_generate_v4()` | Unikalny identyfikator rozliczenia.                 |
+| `group_id`    | `uuid`           | `NOT NULL`, `REFERENCES groups(id)`         | Grupa, w ramach której dokonano rozliczenia.        |
+| `payer_id`    | `uuid`           | `NOT NULL`, `REFERENCES profiles(id)`       | Użytkownik, który spłaca dług.                      |
+| `payee_id`    | `uuid`           | `NOT NULL`, `REFERENCES profiles(id)`       | Użytkownik, który otrzymuje spłatę.                 |
+| `amount`      | `numeric(10, 2)` | `NOT NULL`, `CHECK (amount > 0)`            | Kwota rozliczenia (zawsze w walucie bazowej grupy). |
+| `settled_at`  | `timestamptz`    | `NOT NULL`, `DEFAULT now()`                 | Data dokonania rozliczenia.                         |
 
 ## 2. Relacje między tabelami
 
--   **`auth.users` <-> `profiles` (1:1):** Każdy użytkownik Supabase Auth ma dokładnie jeden profil w aplikacji.
--   **`profiles` <-> `group_members` <-> `groups` (M:M):** Użytkownicy i grupy są połączeni przez tabelę `group_members`. Użytkownik może należeć do wielu grup, a grupa może mieć wielu członków.
--   **`groups` -> `expenses` (1:M):** Każdy wydatek należy do jednej grupy.
--   **`profiles` -> `expenses` (1:M):** Każdy wydatek jest tworzony przez jednego użytkownika.
--   **`expenses` -> `expense_splits` (1:M):** Każdy wydatek jest podzielony na co najmniej jedną część w `expense_splits`.
--   **`profiles` <-> `expense_splits` <-> `expenses` (M:M):** Użytkownicy i wydatki są powiązani przez tabelę `expense_splits`, która określa udział każdego użytkownika w danym wydatku.
--   **`groups` -> `settlements` (1:M):** Każde rozliczenie należy do jednej grupy.
--   **`profiles` -> `settlements` (1:M, dwie relacje):** Każde rozliczenie ma jednego płacącego (`payer_id`) i jednego odbiorcę (`payee_id`).
--   **`currencies` -> `group_currencies` (1:M):** Każda waluta może być używana w wielu grupach z różnymi kursami.
--   **`groups` -> `group_currencies` (1:M):** Każda grupa może mieć zdefiniowane wiele walut z kursami wymiany.
--   **`groups` -> `invitations` (1:M):** Każde zaproszenie jest powiązane z jedną grupą.
+- **`auth.users` <-> `profiles` (1:1):** Każdy użytkownik Supabase Auth ma dokładnie jeden profil w aplikacji.
+- **`profiles` <-> `group_members` <-> `groups` (M:M):** Użytkownicy i grupy są połączeni przez tabelę `group_members`. Użytkownik może należeć do wielu grup, a grupa może mieć wielu członków.
+- **`groups` -> `expenses` (1:M):** Każdy wydatek należy do jednej grupy.
+- **`profiles` -> `expenses` (1:M):** Każdy wydatek jest tworzony przez jednego użytkownika.
+- **`expenses` -> `expense_splits` (1:M):** Każdy wydatek jest podzielony na co najmniej jedną część w `expense_splits`.
+- **`profiles` <-> `expense_splits` <-> `expenses` (M:M):** Użytkownicy i wydatki są powiązani przez tabelę `expense_splits`, która określa udział każdego użytkownika w danym wydatku.
+- **`groups` -> `settlements` (1:M):** Każde rozliczenie należy do jednej grupy.
+- **`profiles` -> `settlements` (1:M, dwie relacje):** Każde rozliczenie ma jednego płacącego (`payer_id`) i jednego odbiorcę (`payee_id`).
+- **`currencies` -> `group_currencies` (1:M):** Każda waluta może być używana w wielu grupach z różnymi kursami.
+- **`groups` -> `group_currencies` (1:M):** Każda grupa może mieć zdefiniowane wiele walut z kursami wymiany.
+- **`groups` -> `invitations` (1:M):** Każde zaproszenie jest powiązane z jedną grupą.
 
 ## 3. Indeksy
 

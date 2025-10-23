@@ -26,13 +26,7 @@ const ERROR_MESSAGES: Record<string, string> = {
  * Determine if an error is retryable
  */
 const isRetryableError = (code: string): boolean => {
-  const retryableCodes = [
-    "NETWORK_ERROR",
-    "SERVICE_UNAVAILABLE",
-    "TIMEOUT",
-    "POLLING_ERROR",
-    "UPLOAD_FAILED",
-  ];
+  const retryableCodes = ["NETWORK_ERROR", "SERVICE_UNAVAILABLE", "TIMEOUT", "POLLING_ERROR", "UPLOAD_FAILED"];
   return retryableCodes.includes(code);
 };
 
@@ -93,15 +87,12 @@ export function useTranscriptionErrorHandler() {
   /**
    * Create a standardized error object
    */
-  const createError = useCallback(
-    (code: string, customMessage?: string): TranscriptionErrorDTO => {
-      return {
-        code,
-        message: customMessage || ERROR_MESSAGES[code] || "Wystąpił nieznany błąd",
-      };
-    },
-    []
-  );
+  const createError = useCallback((code: string, customMessage?: string): TranscriptionErrorDTO => {
+    return {
+      code,
+      message: customMessage || ERROR_MESSAGES[code] || "Wystąpił nieznany błąd",
+    };
+  }, []);
 
   /**
    * Handle network/fetch errors and convert to TranscriptionErrorDTO
@@ -153,4 +144,3 @@ export function useTranscriptionErrorHandler() {
     handleHttpError,
   };
 }
-

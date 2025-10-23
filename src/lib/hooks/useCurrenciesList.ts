@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { supabaseClient } from "../../db/supabase.client";
+import { createClient } from "../../db/supabase.client";
 import type { CurrencyOption } from "../schemas/groupSchemas";
 
 interface UseCurrenciesListResult {
@@ -25,7 +25,8 @@ export function useCurrenciesList(): UseCurrenciesListResult {
         setLoading(true);
         setError(null);
 
-        const { data, error: fetchError } = await supabaseClient
+        const supabase = createClient();
+        const { data, error: fetchError } = await supabase
           .from("currencies")
           .select("code, name")
           .order("code", { ascending: true });

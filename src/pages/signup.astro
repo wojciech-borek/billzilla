@@ -1,0 +1,43 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import { SignupForm } from "@/components/auth/SignupForm";
+import { Card } from "@/components/ui/card";
+
+// UWAGA: To jest implementacja UI bez backendu
+// Middleware i logika sprawdzania sesji zostanie dodana później
+
+// Odczyt parametrów URL dla komunikatów
+const success = Astro.url.searchParams.get("success") || undefined;
+const error = Astro.url.searchParams.get("error") || undefined;
+
+// Sprawdzenie czy użytkownik jest już zalogowany
+const {
+  data: { user },
+  error: authError,
+} = await Astro.locals.supabase.auth.getUser();
+if (user && !authError) {
+  return Astro.redirect("/");
+}
+---
+
+<Layout title="Zarejestruj się | Billzilla" showHeader={true}>
+  <main class="min-h-screen bg-background flex items-center justify-center p-4 py-12">
+    <div class="w-full max-w-md">
+      <!-- Logo i nagłówek -->
+      <div class="text-center mb-8">
+        <img
+          src="/billzilla-logo.png"
+          alt="Billzilla"
+          class="h-20 w-20 mx-auto rounded-2xl transition-all duration-300 ease-out hover:scale-105"
+        />
+        <h1 class="mt-4 text-3xl font-bold tracking-tight text-foreground">Dołącz do Billzilla</h1>
+        <p class="mt-2 text-gray-600">Zacznij zarządzać wspólnymi wydatkami</p>
+      </div>
+
+      <!-- Formularz w karcie -->
+      <Card className="bg-white rounded-2xl shadow-md shadow-green-100 p-8">
+        <SignupForm successMessage={success} errorMessage={error} client:load />
+      </Card>
+    </div>
+  </main>
+</Layout>

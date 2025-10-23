@@ -2,6 +2,8 @@
  * Group service - handles business logic for group operations
  */
 
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "../../db/database.types";
 import type {
   CreateGroupCommand,
   CreateGroupResponseDTO,
@@ -16,8 +18,6 @@ import type {
   PaginatedResponse,
   GroupStatus,
 } from "../../types";
-
-import type { SupabaseClient } from "../../db/supabase.client";
 
 /**
  * Custom error for currency not found
@@ -50,7 +50,7 @@ export class TransactionError extends Error {
  * @returns Results of invitation processing (added members and created invitations)
  */
 async function handleInvitations(
-  supabase: SupabaseClient,
+  supabase: SupabaseClient<Database>,
   groupId: string,
   emails: string[],
   creatorId: string
@@ -166,7 +166,7 @@ async function handleInvitations(
  * @throws {TransactionError} If the transaction fails
  */
 export async function createGroup(
-  supabase: SupabaseClient,
+  supabase: SupabaseClient<Database>,
   command: CreateGroupCommand,
   userId: string
 ): Promise<CreateGroupResponseDTO> {
@@ -181,75 +181,38 @@ export async function createGroup(
     throw new CurrencyNotFoundError(command.base_currency_code);
   }
 
-  // Step 2-4: Create group, add creator as member, add base currency (transaction)
-  // We'll use Promise.all to execute these operations, but they need to be done carefully
-  // to ensure data consistency. In a production environment, you might want to use
-  // a database transaction or a stored procedure.
+  // Step 2-4: Create group atomically using RPC function
+  // This function runs as SECURITY INVOKER (respects RLS) but provides atomicity
+  console.log("📞 Calling RPC create_group_transaction with:", {
+    p_group_name: command.name,
+    p_base_currency_code: command.base_currency_code,
+    p_creator_id: userId,
+  });
 
-  // Create the group
-  const { data: newGroup, error: groupError } = await supabase
-    .from("groups")
-    .insert({
-      name: command.name,
-      base_currency_code: command.base_currency_code,
-      status: "active",
-    })
-    .select()
-    .single();
+  const { data: newGroupData, error: groupError } = await supabase.rpc("create_group_transaction", {
+    p_group_name: command.name,
+    p_base_currency_code: command.base_currency_code,
+    p_creator_id: userId,
+  });
 
-  if (groupError || !newGroup) {
+  console.log("📞 RPC result:", {
+    hasData: !!newGroupData,
+    dataLength: newGroupData?.length,
+    error: groupError
+      ? {
+          message: groupError.message,
+          code: groupError.code,
+          details: groupError.details,
+          hint: groupError.hint,
+        }
+      : null,
+  });
+
+  if (groupError || !newGroupData || newGroupData.length === 0) {
     throw new TransactionError(`Failed to create group: ${groupError?.message || "Unknown error"}`);
   }
 
-  try {
-    // Add creator as member and base currency in parallel
-    const [memberResult, currencyResult] = await Promise.all([
-      // Add creator as member
-      supabase
-        .from("group_members")
-        .insert({
-          group_id: newGroup.id,
-          profile_id: userId,
-          role: "creator",
-          status: "active",
-        })
-        .select()
-        .single(),
-
-      // Add base currency
-      supabase
-        .from("group_currencies")
-        .insert({
-          group_id: newGroup.id,
-          currency_code: command.base_currency_code,
-          exchange_rate: 1.0,
-        })
-        .select()
-        .single(),
-    ]);
-
-    if (memberResult.error) {
-      // Rollback: delete the group
-      await supabase.from("groups").delete().eq("id", newGroup.id);
-      throw new TransactionError(`Failed to add creator as member: ${memberResult.error.message}`);
-    }
-
-    if (currencyResult.error) {
-      // Rollback: delete the group and member
-      await Promise.all([
-        supabase.from("group_members").delete().eq("group_id", newGroup.id),
-        supabase.from("groups").delete().eq("id", newGroup.id),
-      ]);
-      throw new TransactionError(`Failed to add base currency: ${currencyResult.error.message}`);
-    }
-  } catch (error) {
-    // If it's already a TransactionError, re-throw it
-    if (error instanceof TransactionError) {
-      throw error;
-    }
-    // Otherwise, wrap it
-    throw new TransactionError(`Transaction failed: ${error instanceof Error ? error.message : "Unknown error"}`);
-  }
+  const newGroup = newGroupData[0];
 
   // Step 5: Handle invitations (best-effort, non-blocking)
   let invitationResults: InvitationResultDTO = {
@@ -284,7 +247,7 @@ export async function createGroup(
  * @returns Paginated list of groups with computed fields
  */
 export async function listGroups(
-  supabase: SupabaseClient,
+  supabase: SupabaseClient<Database>,
   userId: string,
   options: {
     status?: GroupStatus;
@@ -527,7 +490,7 @@ export async function listGroups(
  * @throws {Error} If group not found or user is not a member
  */
 export async function getGroupCurrencies(
-  supabase: SupabaseClient,
+  supabase: SupabaseClient<Database>,
   groupId: string,
   userId: string
 ): Promise<GroupCurrenciesDTO> {
@@ -608,7 +571,7 @@ export async function getGroupCurrencies(
  * @throws {Error} If group not found or user is not a member
  */
 export async function getGroupDetails(
-  supabase: SupabaseClient,
+  supabase: SupabaseClient<Database>,
   groupId: string,
   userId: string
 ): Promise<GroupDetailDTO> {

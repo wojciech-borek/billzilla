@@ -64,7 +64,7 @@ export const GET: APIRoute = async ({ params, locals }) => {
     const validationResult = taskIdValidation.safeParse(taskId);
 
     if (!validationResult.success) {
-        const errorResponse: ErrorResponseDTO = {
+      const errorResponse: ErrorResponseDTO = {
         error: {
           code: "INVALID_TASK_ID",
           message: "Invalid task ID format",

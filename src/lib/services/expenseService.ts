@@ -1,4 +1,5 @@
-import type { SupabaseClient } from "../../db/supabase.client";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "../../db/database.types";
 import type { CreateExpenseCommand, ExpenseDTO, GroupCurrency } from "../../types";
 
 export class ExpenseValidationError extends Error {
@@ -19,7 +20,7 @@ export class ExpenseNotFoundError extends Error {
 }
 
 export async function createExpense(
-  supabase: SupabaseClient,
+  supabase: SupabaseClient<Database>,
   groupId: string,
   userId: string,
   command: CreateExpenseCommand
@@ -76,9 +77,7 @@ export async function createExpense(
   }
 
   // Step 5: Validate currency is configured for the group
-  const currencyConfig = groupData.group_currencies?.find(
-    (gc: GroupCurrency) => gc.currency_code === command.currency_code
-  );
+  const currencyConfig = groupData.group_currencies?.find((gc) => gc.currency_code === command.currency_code);
 
   if (!currencyConfig) {
     throw new ExpenseValidationError(`Currency ${command.currency_code} is not configured for this group`);
@@ -172,6 +171,7 @@ export async function createExpense(
   const expenseDTO: ExpenseDTO = {
     id: completeExpense.id,
     group_id: completeExpense.group_id,
+    payer_id: completeExpense.payer_id,
     description: completeExpense.description,
     amount: completeExpense.amount,
     currency_code: completeExpense.currency_code,
@@ -180,8 +180,8 @@ export async function createExpense(
     amount_in_base_currency: amountInBaseCurrency,
     created_by: {
       id: createdByProfile.id,
-      full_name: createdByProfile.full_name,
-      avatar_url: createdByProfile.avatar_url,
+      full_name: createdByProfile.full_name ?? "",
+      avatar_url: createdByProfile.avatar_url ?? null,
     },
     splits: completeExpense.expense_splits.map((split) => {
       const splitProfile = split.profiles as unknown as {

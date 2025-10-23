@@ -1,11 +1,17 @@
-import { createClient } from "@supabase/supabase-js";
-import type { SupabaseClient as SupabaseClientBase } from "@supabase/supabase-js";
+import { createBrowserClient } from "@supabase/ssr";
 
 import type { Database } from "../db/database.types.ts";
 
-const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY;
+/**
+ * Creates a Supabase browser client for use in React components (client-side)
+ * This client handles authentication and session management automatically
+ */
+export function createClient() {
+  const url = import.meta.env.PUBLIC_SUPABASE_URL;
+  const key = import.meta.env.PUBLIC_SUPABASE_ANON_KEY;
 
-export const supabaseClient = createClient<Database>(supabaseUrl, supabaseAnonKey);
+  return createBrowserClient<Database>(url, key);
+}
 
-export type SupabaseClient = typeof supabaseClient;
+export type SupabaseClient = ReturnType<typeof createClient>;
+export type { SupabaseClient as SupabaseClientType } from "@supabase/supabase-js";

@@ -148,11 +148,15 @@ Utwórz plik `src/lib/services/openRouterService.ts` i zdefiniuj w nim klasę `O
 
 ```typescript
 // src/lib/services/openRouterService.ts
-import { z } from 'zod';
+import { z } from "zod";
 
 // Definicje niestandardowych błędów
-export class OpenRouterApiError extends Error { /* ... */ }
-export class ValidationError extends Error { /* ... */ }
+export class OpenRouterApiError extends Error {
+  /* ... */
+}
+export class ValidationError extends Error {
+  /* ... */
+}
 // ...inne błędy
 
 export class OpenRouterService {
@@ -227,15 +231,15 @@ Utwórz nowy endpoint API w Astro, który będzie korzystał z `OpenRouterServic
 
 ```typescript
 // src/pages/api/expenses/transcribe.ts
-import type { APIRoute } from 'astro';
-import { OpenRouterService } from '@/lib/services/openRouterService';
-import { expenseTranscriptionSchema } from '@/lib/schemas/expenseSchemas';
+import type { APIRoute } from "astro";
+import { OpenRouterService } from "@/lib/services/openRouterService";
+import { expenseTranscriptionSchema } from "@/lib/schemas/expenseSchemas";
 
 export const POST: APIRoute = async ({ request }) => {
   const { transcription, context } = await request.json();
 
   if (!transcription || !context) {
-    return new Response(JSON.stringify({ error: 'Missing required fields.' }), { status: 400 });
+    return new Response(JSON.stringify({ error: "Missing required fields." }), { status: 400 });
   }
 
   try {
@@ -244,13 +248,13 @@ export const POST: APIRoute = async ({ request }) => {
       transcription,
       context,
       schema: expenseTranscriptionSchema,
-      model: 'anthropic/claude-3.5-sonnet',
+      model: "anthropic/claude-3.5-sonnet",
     });
 
     return new Response(JSON.stringify(data), { status: 200 });
   } catch (error) {
     // Tutaj obsługa niestandardowych błędów i zwracanie odpowiednich statusów HTTP
-    return new Response(JSON.stringify({ error: 'Failed to process transcription.' }), { status: 500 });
+    return new Response(JSON.stringify({ error: "Failed to process transcription." }), { status: 500 });
   }
 };
 ```
