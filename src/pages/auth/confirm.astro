@@ -1,0 +1,50 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import { EmailConfirmationMessage } from "@/components/auth/EmailConfirmationMessage";
+
+// Odczyt parametrów URL dla tokenu weryfikacyjnego
+const tokenHash = Astro.url.searchParams.get("token_hash");
+const type = Astro.url.searchParams.get("type");
+const next = Astro.url.searchParams.get("next");
+
+// Sprawdź czy mamy prawidłowe parametry dla weryfikacji
+const isValidConfirmationRequest = tokenHash && type === "email";
+
+// Jeśli brak parametrów lub nieprawidłowe - wyświetl błąd
+if (!isValidConfirmationRequest) {
+  // Przekieruj na stronę logowania z błędem
+  return Astro.redirect("/login?error=invalid_confirmation_link");
+}
+
+// Jeśli użytkownik już jest zalogowany, przekieruj na dashboard
+const session = await Astro.locals.supabase.auth.getSession();
+if (session.data.session?.user) {
+  return Astro.redirect(next || "/");
+}
+---
+
+<Layout title="Potwierdzenie e-maila | Billzilla" showHeader={true}>
+  <main class="min-h-screen bg-background flex items-center justify-center p-4 py-12">
+    <div class="w-full max-w-md">
+      <!-- Logo -->
+      <div class="text-center mb-8">
+        <img
+          src="/billzilla-logo.png"
+          alt="Billzilla"
+          class="h-20 w-20 mx-auto rounded-2xl transition-all duration-300 ease-out hover:scale-105"
+        />
+        <h1 class="mt-4 text-3xl font-bold tracking-tight text-foreground">Potwierdzenie konta</h1>
+        <p class="mt-2 text-gray-600">Weryfikujemy Twój adres e-mail</p>
+      </div>
+
+      <!-- Komponent obsługi potwierdzenia -->
+      <div class="bg-white rounded-2xl shadow-md shadow-green-100 p-8">
+        <EmailConfirmationMessage
+          tokenHash={tokenHash}
+          nextUrl={next}
+          client:load
+        />
+      </div>
+    </div>
+  </main>
+</Layout>

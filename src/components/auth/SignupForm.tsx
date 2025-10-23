@@ -1,14 +1,11 @@
-import { useState, useCallback, memo, type FormEvent } from "react";
-import { AlertCircle } from "lucide-react";
+import { useCallback, memo, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
+import { FormField } from "@/components/ui/form-field";
+import { StatusMessage } from "@/components/ui/status-message";
 import { GoogleOAuthButton } from "./GoogleOAuthButton";
-import { useAuthForm, useSupabaseAuth } from "@/lib/hooks";
+import { useAuthForm, useSignup } from "@/lib/hooks";
 import { signupSchema, type SignupFormData } from "@/lib/schemas/authSchemas";
-import { getAuthErrorMessage, AUTH_SUCCESS_MESSAGES } from "@/lib/utils/authErrors";
 
 interface SignupFormProps {
   successMessage?: string;
@@ -16,187 +13,94 @@ interface SignupFormProps {
 }
 
 export const SignupForm = memo(function SignupForm({ successMessage, errorMessage }: SignupFormProps) {
-  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
-  const { formData, errors, isLoading, apiError, setIsLoading, setApiError, handleChange, validate } =
-    useAuthForm<SignupFormData>(signupSchema);
-  const { signUp } = useSupabaseAuth();
+  const { formData, errors, isLoading, handleChange, validate } = useAuthForm<SignupFormData>(signupSchema);
+  const { signup, isSuccess, error: signupError } = useSignup();
 
   const handleSubmit = useCallback(
     async (e: FormEvent<HTMLFormElement>) => {
       e.preventDefault();
       if (!validate()) return;
 
-      setIsLoading(true);
-      setApiError(null);
-      setShowSuccessMessage(false);
-
-      try {
-        const { error } = await signUp({
-          email: formData.email,
-          password: formData.password,
-          options: { data: { full_name: formData.full_name } },
-        });
-
-        if (error) {
-          setApiError(getAuthErrorMessage(error));
-          return;
-        }
-
-        if (import.meta.env.DEV) console.log("✅ Rejestracja pomyślna!");
-        setShowSuccessMessage(true);
-      } catch (err) {
-        if (import.meta.env.DEV) console.error("Błąd rejestracji:", err);
-        setApiError(getAuthErrorMessage(err));
-      } finally {
-        setIsLoading(false);
-      }
+      await signup(formData);
     },
-    [
-      formData.email,
-      formData.password,
-      formData.full_name,
-      setApiError,
-      setIsLoading,
-      setShowSuccessMessage,
-      signUp,
-      validate,
-    ]
+    [formData, signup, validate]
   );
 
   return (
     <div className="space-y-6">
-      {/* Wyświetl komunikat sukcesu z URL jeśli istnieje */}
+      {/* Status messages */}
       {successMessage && (
-        <Alert className="bg-green-50 border-green-200 text-green-800">
-          <p className="text-sm">{successMessage}</p>
-        </Alert>
+        <StatusMessage type="info" message={successMessage} />
       )}
 
-      {/* Wyświetl komunikat sukcesu po rejestracji */}
-      {showSuccessMessage && (
-        <Alert className="bg-green-50 border-green-200 text-green-800">
-          <p className="text-sm font-medium mb-2">🎉 {AUTH_SUCCESS_MESSAGES.signup}</p>
-          <p className="text-xs text-green-700">Jeśli nie widzisz e-maila, sprawdź folder spam lub spróbuj ponownie.</p>
-        </Alert>
+      {isSuccess && (
+        <StatusMessage
+          type="success"
+          title="Konto zostało utworzone pomyślnie!"
+          message="Sprawdź swoją skrzynkę e-mail i kliknij w link aktywacyjny, aby dokończyć rejestrację. Jeśli nie widzisz wiadomości, sprawdź folder spam."
+        />
       )}
 
-      {/* Wyświetl błąd z URL jeśli istnieje */}
       {errorMessage && (
-        <Alert variant="destructive" className="border-red-200 bg-red-50">
-          <AlertCircle className="h-4 w-4 text-red-600" />
-          <AlertDescription className="text-red-800">{errorMessage}</AlertDescription>
-        </Alert>
+        <StatusMessage type="error" message={errorMessage} />
       )}
 
-      {/* Wyświetl błąd API */}
-      {apiError && (
-        <Alert variant="destructive" className="border-red-200 bg-red-50">
-          <AlertCircle className="h-4 w-4 text-red-600" />
-          <AlertDescription className="text-red-800">{apiError}</AlertDescription>
-        </Alert>
+      {signupError && (
+        <StatusMessage type="error" message={signupError} />
       )}
 
-      {/* Formularz rejestracji */}
+      {/* Registration form */}
       <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Nazwa użytkownika (przyjazne pole) */}
-        <div className="space-y-2">
-          <Label htmlFor="full_name" className="text-sm font-medium text-foreground">
-            Jak mamy Cię nazywać?
-          </Label>
-          <Input
-            id="full_name"
-            type="text"
-            placeholder="np. Janusz123, Kasia, MonsterSlayer"
-            value={formData.full_name || ""}
-            onChange={(e) => handleChange("full_name", e.target.value)}
-            className="rounded-lg border-gray-200 focus:border-primary focus:ring-primary/40"
-            disabled={isLoading}
-            aria-invalid={!!errors.full_name}
-            aria-describedby={errors.full_name ? "full_name-error" : undefined}
-          />
-          {errors.full_name && (
-            <p id="full_name-error" className="text-sm text-red-600 flex items-start gap-1" role="alert">
-              <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
-              <span>{errors.full_name}</span>
-            </p>
-          )}
-          <p className="text-xs text-gray-500">Możesz podać swoje imię, pseudonim, login - co wolisz!</p>
-        </div>
+        <FormField
+          id="full_name"
+          label="Jak mamy Cię nazywać?"
+          type="text"
+          placeholder="np. Janusz123, Kasia, MonsterSlayer"
+          value={formData.full_name || ""}
+          onChange={(value) => handleChange("full_name", value)}
+          error={errors.full_name}
+          helperText="Możesz podać swoje imię, pseudonim, login - co wolisz!"
+          disabled={isLoading}
+          required
+        />
 
-        {/* Email */}
-        <div className="space-y-2">
-          <Label htmlFor="email" className="text-sm font-medium text-foreground">
-            Adres e-mail
-          </Label>
-          <Input
-            id="email"
-            type="email"
-            placeholder="twoj@email.com"
-            value={formData.email || ""}
-            onChange={(e) => handleChange("email", e.target.value)}
-            className="rounded-lg border-gray-200 focus:border-primary focus:ring-primary/40"
-            disabled={isLoading}
-            aria-invalid={!!errors.email}
-            aria-describedby={errors.email ? "email-error" : undefined}
-          />
-          {errors.email && (
-            <p id="email-error" className="text-sm text-red-600 flex items-start gap-1" role="alert">
-              <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
-              <span>{errors.email}</span>
-            </p>
-          )}
-        </div>
+        <FormField
+          id="email"
+          label="Adres e-mail"
+          type="email"
+          placeholder="twoj@email.com"
+          value={formData.email || ""}
+          onChange={(value) => handleChange("email", value)}
+          error={errors.email}
+          disabled={isLoading}
+          required
+        />
 
-        {/* Hasło */}
-        <div className="space-y-2">
-          <Label htmlFor="password" className="text-sm font-medium text-foreground">
-            Hasło
-          </Label>
-          <Input
-            id="password"
-            type="password"
-            placeholder="••••••••"
-            value={formData.password || ""}
-            onChange={(e) => handleChange("password", e.target.value)}
-            className="rounded-lg border-gray-200 focus:border-primary focus:ring-primary/40"
-            disabled={isLoading}
-            aria-invalid={!!errors.password}
-            aria-describedby={errors.password ? "password-error" : undefined}
-          />
-          {errors.password && (
-            <p id="password-error" className="text-sm text-red-600 flex items-start gap-1" role="alert">
-              <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
-              <span>{errors.password}</span>
-            </p>
-          )}
-          <p className="text-xs text-gray-500">Minimum 8 znaków, w tym cyfra i litera</p>
-        </div>
+        <FormField
+          id="password"
+          label="Hasło"
+          type="password"
+          placeholder="••••••••"
+          value={formData.password || ""}
+          onChange={(value) => handleChange("password", value)}
+          error={errors.password}
+          helperText="Minimum 8 znaków, w tym cyfra i litera"
+          disabled={isLoading}
+          required
+        />
 
-        {/* Potwierdzenie hasła */}
-        <div className="space-y-2">
-          <Label htmlFor="confirm_password" className="text-sm font-medium text-foreground">
-            Powtórz hasło
-          </Label>
-          <Input
-            id="confirm_password"
-            type="password"
-            placeholder="••••••••"
-            value={formData.confirm_password || ""}
-            onChange={(e) => handleChange("confirm_password", e.target.value)}
-            className="rounded-lg border-gray-200 focus:border-primary focus:ring-primary/40"
-            disabled={isLoading}
-            aria-invalid={!!errors.confirm_password}
-            aria-describedby={errors.confirm_password ? "confirm_password-error" : undefined}
-          />
-          {errors.confirm_password && (
-            <p id="confirm_password-error" className="text-sm text-red-600 flex items-start gap-1" role="alert">
-              <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
-              <span>{errors.confirm_password}</span>
-            </p>
-          )}
-        </div>
+        <FormField
+          id="confirm_password"
+          label="Powtórz hasło"
+          type="password"
+          placeholder="••••••••"
+          value={formData.confirm_password || ""}
+          onChange={(value) => handleChange("confirm_password", value)}
+          error={errors.confirm_password}
+          disabled={isLoading}
+          required
+        />
 
-        {/* Przycisk rejestracji */}
         <Button
           type="submit"
           disabled={isLoading}

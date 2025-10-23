@@ -1,6 +1,6 @@
 import { useState, useCallback, memo } from "react";
 import { Button } from "@/components/ui/button";
-import { useSupabaseAuth } from "@/lib/hooks";
+import { createClient } from "@/db/supabase.client";
 
 interface GoogleOAuthButtonProps {
   mode: "login" | "signup";
@@ -14,7 +14,6 @@ export const GoogleOAuthButton = memo(function GoogleOAuthButton({
   className,
 }: GoogleOAuthButtonProps) {
   const [isLoading, setIsLoading] = useState(false);
-  const { signInWithOAuth } = useSupabaseAuth();
 
   const handleGoogleLogin = useCallback(async () => {
     setIsLoading(true);
@@ -22,13 +21,14 @@ export const GoogleOAuthButton = memo(function GoogleOAuthButton({
       const callbackUrl = new URL("/auth/callback", window.location.origin);
       if (redirectTo !== "/") callbackUrl.searchParams.set("next", redirectTo);
 
-      await signInWithOAuth({ provider: "google", options: { redirectTo: callbackUrl.toString() } });
+      const supabase = createClient();
+      await supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: callbackUrl.toString() } });
     } catch (error) {
-      if (import.meta.env.DEV) console.error("Błąd OAuth:", error);
+      // Error is handled by redirecting back to login with error
     } finally {
       setIsLoading(false);
     }
-  }, [redirectTo, signInWithOAuth]);
+  }, [redirectTo]);
 
   const buttonText = mode === "login" ? "Kontynuuj z Google" : "Zarejestruj się przez Google";
 
