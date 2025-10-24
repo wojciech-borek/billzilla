@@ -4,10 +4,7 @@ import { FormField } from "@/components/ui/form-field";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { StatusMessage } from "@/components/ui/status-message";
 import { useAuthForm, usePasswordReset } from "@/lib/hooks";
-import {
-  requestPasswordResetSchema,
-  type RequestPasswordResetData,
-} from "@/lib/schemas/authSchemas";
+import { requestPasswordResetSchema, type RequestPasswordResetData } from "@/lib/schemas/authSchemas";
 import { AUTH_SUCCESS_MESSAGES } from "@/lib/utils/authErrors";
 
 interface RequestPasswordResetFormProps {
@@ -19,8 +16,14 @@ export const RequestPasswordResetForm = memo(function RequestPasswordResetForm({
 }: RequestPasswordResetFormProps) {
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
 
-  const { formData, errors, isLoading: formLoading, handleChange, validate, reset: resetForm } =
-    useAuthForm<RequestPasswordResetData>(requestPasswordResetSchema);
+  const {
+    formData,
+    errors,
+    isLoading: formLoading,
+    handleChange,
+    validate,
+    reset: resetForm,
+  } = useAuthForm<RequestPasswordResetData>(requestPasswordResetSchema);
 
   const { isLoading: resetLoading, error: resetError, success, requestReset, reset: resetReset } = usePasswordReset();
 

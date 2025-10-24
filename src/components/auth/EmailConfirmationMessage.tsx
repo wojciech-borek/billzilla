@@ -43,7 +43,6 @@ export const EmailConfirmationMessage = memo(function EmailConfirmationMessage({
       setTimeout(() => {
         window.location.href = nextUrl || "/";
       }, 3000);
-
     } catch (err) {
       setError(getAuthErrorMessage(err));
       setState("error");
@@ -77,13 +76,11 @@ export const EmailConfirmationMessage = memo(function EmailConfirmationMessage({
 
         <div>
           <h3 className="text-xl font-bold text-foreground mb-2">🎉 {AUTH_SUCCESS_MESSAGES.emailConfirmed}</h3>
-          <p className="text-sm text-gray-600 mb-4">
-            Za chwilę zostaniesz przekierowany na stronę główną aplikacji.
-          </p>
+          <p className="text-sm text-gray-600 mb-4">Za chwilę zostaniesz przekierowany na stronę główną aplikacji.</p>
         </div>
 
         <Button
-          onClick={() => window.location.href = nextUrl || "/"}
+          onClick={() => (window.location.href = nextUrl || "/")}
           className="w-full bg-primary hover:bg-primary-dark text-white rounded-xl transition-all duration-300 ease-out"
         >
           Przejdź do aplikacji
@@ -117,7 +114,7 @@ export const EmailConfirmationMessage = memo(function EmailConfirmationMessage({
 
           <Button
             variant="outline"
-            onClick={() => window.location.href = "/signup"}
+            onClick={() => (window.location.href = "/signup")}
             className="w-full rounded-xl border-2 border-gray-200 hover:border-primary transition-all duration-300 ease-out"
           >
             Powrót do rejestracji

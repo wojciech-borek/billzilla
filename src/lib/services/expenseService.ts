@@ -103,7 +103,6 @@ export async function createExpense(
     .single();
 
   if (expenseInsertError || !expenseData) {
-    console.error("Failed to create expense:", expenseInsertError);
     throw new ExpenseValidationError("Failed to create expense");
   }
 
@@ -117,7 +116,6 @@ export async function createExpense(
   const { error: splitsInsertError } = await supabase.from("expense_splits").insert(splitInserts);
 
   if (splitsInsertError) {
-    console.error("Failed to create expense splits:", splitsInsertError);
     // Clean up the expense that was created
     await supabase.from("expenses").delete().eq("id", expenseData.id);
     throw new ExpenseValidationError("Failed to create expense splits");
@@ -157,7 +155,6 @@ export async function createExpense(
     .single();
 
   if (fetchError || !completeExpense) {
-    console.error("Failed to fetch created expense:", fetchError);
     throw new ExpenseValidationError("Failed to retrieve created expense");
   }
 

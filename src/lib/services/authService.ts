@@ -9,7 +9,10 @@ import type { SignupFormData } from "../schemas/authSchemas";
  * Custom error for signup failures
  */
 export class SignupError extends Error {
-  constructor(message: string, public readonly originalError?: unknown) {
+  constructor(
+    message: string,
+    public readonly originalError?: unknown
+  ) {
     super(message);
     this.name = "SignupError";
   }
@@ -23,10 +26,7 @@ export class SignupError extends Error {
  * @returns Promise resolving when signup is successful
  * @throws SignupError if signup fails
  */
-export async function signupUser(
-  supabase: SupabaseClient,
-  userData: SignupFormData
-): Promise<void> {
+export async function signupUser(supabase: SupabaseClient, userData: SignupFormData): Promise<void> {
   try {
     const { error } = await supabase.auth.signUp({
       email: userData.email,

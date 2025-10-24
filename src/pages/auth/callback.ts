@@ -12,14 +12,6 @@ export const GET: APIRoute = async ({ url, locals, redirect }) => {
   const errorParam = url.searchParams.get("error");
   const errorDescription = url.searchParams.get("error_description");
 
-  if (import.meta.env.DEV) {
-    console.log('Auth callback: received params', {
-      code: !!code,
-      type,
-      error: errorParam,
-    });
-  }
-
   // Handle OAuth/recovery errors
   if (errorParam) {
     const encodedError = encodeURIComponent(errorDescription || errorParam);
@@ -32,14 +24,7 @@ export const GET: APIRoute = async ({ url, locals, redirect }) => {
     const { data, error } = await supabase.auth.exchangeCodeForSession(code);
 
     if (error) {
-      if (import.meta.env.DEV) {
-        console.log('Auth callback: code exchange error', error);
-      }
       return redirect(`/login?error=${encodeURIComponent(error.message)}`);
-    }
-
-    if (import.meta.env.DEV) {
-      console.log('Auth callback: code exchanged successfully, user authenticated', !!data.user);
     }
 
     // Successful authentication - validate and redirect to next page
@@ -57,9 +42,6 @@ export const GET: APIRoute = async ({ url, locals, redirect }) => {
   }
 
   // No valid parameters provided - redirect to login
-  if (import.meta.env.DEV) {
-    console.log('Auth callback: no valid parameters, redirecting to login');
-  }
   return redirect("/login?error=invalid_callback");
 };
 

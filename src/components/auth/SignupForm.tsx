@@ -29,9 +29,7 @@ export const SignupForm = memo(function SignupForm({ successMessage, errorMessag
   return (
     <div className="space-y-6">
       {/* Status messages */}
-      {successMessage && (
-        <StatusMessage type="info" message={successMessage} />
-      )}
+      {successMessage && <StatusMessage type="info" message={successMessage} />}
 
       {isSuccess && (
         <StatusMessage
@@ -41,13 +39,9 @@ export const SignupForm = memo(function SignupForm({ successMessage, errorMessag
         />
       )}
 
-      {errorMessage && (
-        <StatusMessage type="error" message={errorMessage} />
-      )}
+      {errorMessage && <StatusMessage type="error" message={errorMessage} />}
 
-      {signupError && (
-        <StatusMessage type="error" message={signupError} />
-      )}
+      {signupError && <StatusMessage type="error" message={signupError} />}
 
       {/* Registration form */}
       <form onSubmit={handleSubmit} className="space-y-4">

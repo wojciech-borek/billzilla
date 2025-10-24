@@ -1,16 +1,25 @@
-import { defineMiddleware } from "astro:middleware";
-import { isValidRedirectUrl } from "../lib/utils/redirectValidation.ts";
+import type { APIContext } from "astro";
+import { isValidRedirectUrl } from "../lib/utils/redirectValidation";
 import { createSupabaseServerClientFromCookieHeader } from "../lib/supabase.server";
 
 // Public routes that don't require authentication
-const PUBLIC_ROUTES = ["/", "/login", "/signup", "/reset-password", "/about", "/auth/callback", "/auth/confirm", "/auth/recovery"];
+const PUBLIC_ROUTES = [
+  "/",
+  "/login",
+  "/signup",
+  "/reset-password",
+  "/about",
+  "/auth/callback",
+  "/auth/confirm",
+  "/auth/recovery",
+];
 
 // Check if path matches public route (including dynamic segments)
 function isPublicRoute(pathname: string): boolean {
   return PUBLIC_ROUTES.some((route) => pathname === route || pathname.startsWith(`${route}/`));
 }
 
-export const onRequest = defineMiddleware(async (context, next) => {
+export const onRequest = async (context: APIContext, next: () => Promise<Response>) => {
   const supabase = createSupabaseServerClientFromCookieHeader(context.request.headers.get("cookie"));
   context.locals.supabase = supabase;
 
@@ -28,13 +37,11 @@ export const onRequest = defineMiddleware(async (context, next) => {
         .single();
 
       if (error) {
-        if (import.meta.env.DEV) console.error("Error fetching user profile:", error);
         context.locals.user = null;
       } else {
         context.locals.user = profile;
       }
     } catch (err) {
-      if (import.meta.env.DEV) console.error("Unexpected error fetching user profile:", err);
       context.locals.user = null;
     }
   } else {
@@ -56,4 +63,4 @@ export const onRequest = defineMiddleware(async (context, next) => {
   }
 
   return next();
-});
+};

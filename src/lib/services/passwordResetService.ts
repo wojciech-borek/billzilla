@@ -54,7 +54,7 @@ export class PasswordResetService {
       }
 
       // Handle PKCE tokens (from direct Supabase verify links)
-      if (tokens.token?.startsWith('pkce_')) {
+      if (tokens.token?.startsWith("pkce_")) {
         const { error } = await this.supabase.auth.verifyOtp({
           token_hash: authToken,
           type: "recovery",
@@ -79,9 +79,6 @@ export class PasswordResetService {
 
       return { success: true };
     } catch (err) {
-      if (import.meta.env.DEV) {
-        console.error("PasswordResetService: validation error:", err);
-      }
       return { success: false, error: getAuthErrorMessage(err) };
     }
   }
@@ -104,9 +101,6 @@ export class PasswordResetService {
 
       return { success: true };
     } catch (err) {
-      if (import.meta.env.DEV) {
-        console.error("PasswordResetService: password update error:", err);
-      }
       return { success: false, error: getAuthErrorMessage(err) };
     }
   }
@@ -118,7 +112,7 @@ export class PasswordResetService {
     try {
       // Generate proper redirect URL
       const redirectUrl = import.meta.env.DEV
-        ? 'http://localhost:3000/auth/recovery'
+        ? "http://localhost:3000/auth/recovery"
         : `${window.location.origin}/auth/recovery`;
 
       const { error } = await this.supabase.auth.resetPasswordForEmail(email, {
@@ -131,9 +125,6 @@ export class PasswordResetService {
 
       return { success: true };
     } catch (err) {
-      if (import.meta.env.DEV) {
-        console.error("PasswordResetService: request error:", err);
-      }
       return { success: false, error: getAuthErrorMessage(err) };
     }
   }

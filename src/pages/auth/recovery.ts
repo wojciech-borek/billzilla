@@ -29,9 +29,11 @@ export const GET: APIRoute = async ({ url, redirect, locals }) => {
     }
 
     if (data.session) {
-      return redirect(`/reset-password?access_token=${data.session.access_token}&refresh_token=${data.session.refresh_token}&type=recovery`);
+      return redirect(
+        `/reset-password?access_token=${data.session.access_token}&refresh_token=${data.session.refresh_token}&type=recovery`
+      );
     } else {
-      return redirect('/reset-password?error=no_session');
+      return redirect("/reset-password?error=no_session");
     }
   }
 
@@ -43,12 +45,12 @@ export const GET: APIRoute = async ({ url, redirect, locals }) => {
   // Handle recovery with tokens
   const recoveryToken = tokenHash || token;
   if (recoveryToken && type === "recovery") {
-    const paramName = tokenHash ? 'token_hash' : 'token';
+    const paramName = tokenHash ? "token_hash" : "token";
     return redirect(`/reset-password?${paramName}=${recoveryToken}&type=recovery`);
   }
 
   // No valid parameters
-  return redirect('/reset-password?error=invalid_recovery_link');
+  return redirect("/reset-password?error=invalid_recovery_link");
 };
 
 export const prerender = false;

@@ -44,11 +44,7 @@ if (session.data.session?.user) {
 
       <!-- Komponent obsługi potwierdzenia -->
       <div class="bg-white rounded-2xl shadow-md shadow-green-100 p-8">
-        <EmailConfirmationMessage
-          tokenHash={tokenHash}
-          nextUrl={next}
-          client:load
-        />
+        <EmailConfirmationMessage tokenHash={tokenHash} nextUrl={next} client:load />
       </div>
     </div>
   </main>

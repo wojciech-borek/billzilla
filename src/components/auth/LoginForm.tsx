@@ -37,7 +37,6 @@ export const LoginForm = memo(function LoginForm({ errorMessage, successMessage,
         }
         window.location.href = redirectTo;
       } catch (err) {
-        if (import.meta.env.DEV) console.error("Błąd logowania:", err);
         setApiError(getAuthErrorMessage(err));
         setIsLoading(false);
       }
@@ -50,9 +49,7 @@ export const LoginForm = memo(function LoginForm({ errorMessage, successMessage,
       {/* Wyświetl komunikat sukcesu z URL jeśli istnieje (np. po resetowaniu hasła) */}
       {successMessage === "password_changed" && (
         <Alert className="bg-green-50 border-green-200 text-green-800">
-          <AlertDescription className="text-green-800">
-            {AUTH_SUCCESS_MESSAGES.passwordChanged}
-          </AlertDescription>
+          <AlertDescription className="text-green-800">{AUTH_SUCCESS_MESSAGES.passwordChanged}</AlertDescription>
         </Alert>
       )}
 

@@ -3,10 +3,7 @@ import { Button } from "@/components/ui/button";
 import { FormField } from "@/components/ui/form-field";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useAuthForm, useSetNewPassword } from "@/lib/hooks";
-import {
-  setNewPasswordSchema,
-  type SetNewPasswordData,
-} from "@/lib/schemas/authSchemas";
+import { setNewPasswordSchema, type SetNewPasswordData } from "@/lib/schemas/authSchemas";
 
 interface SetNewPasswordFormProps {
   token?: string;
@@ -25,10 +22,19 @@ export const SetNewPasswordForm = memo(function SetNewPasswordForm({
   errorMessage,
   successMessage,
 }: SetNewPasswordFormProps) {
-  const { formData, errors, isLoading: formLoading, handleChange, validate } =
-    useAuthForm<SetNewPasswordData>(setNewPasswordSchema);
+  const {
+    formData,
+    errors,
+    isLoading: formLoading,
+    handleChange,
+    validate,
+  } = useAuthForm<SetNewPasswordData>(setNewPasswordSchema);
 
-  const { isLoading: setPasswordLoading, error: setPasswordError, setNewPassword } = useSetNewPassword({
+  const {
+    isLoading: setPasswordLoading,
+    error: setPasswordError,
+    setNewPassword,
+  } = useSetNewPassword({
     token,
     tokenHash,
     accessToken,

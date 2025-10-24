@@ -117,7 +117,6 @@ export class TranscriptionTaskService {
     const { data, error } = await supabase.from("transcription_tasks").insert(taskData).select().single();
 
     if (error || !data) {
-      console.error("Error creating transcription task:", error);
       throw new Error("Failed to create transcription task");
     }
 
@@ -139,7 +138,6 @@ export class TranscriptionTaskService {
       if (error.code === "PGRST116") {
         throw new TaskNotFoundError(taskId);
       }
-      console.error("Error fetching transcription task:", error);
       throw new Error("Failed to fetch transcription task");
     }
 
@@ -170,7 +168,6 @@ export class TranscriptionTaskService {
       .eq("id", taskId);
 
     if (error) {
-      console.error("Error updating task to completed:", error);
       throw new Error("Failed to update task status");
     }
   }
@@ -195,7 +192,6 @@ export class TranscriptionTaskService {
       .eq("id", taskId);
 
     if (error) {
-      console.error("Error updating task to failed:", error);
       throw new Error("Failed to update task status");
     }
   }
