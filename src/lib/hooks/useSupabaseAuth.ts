@@ -1,5 +1,7 @@
 import { useMemo, useCallback } from "react";
 import { createClient } from "@/db/supabase.client";
+import type { SignUpWithPasswordCredentials, SignInWithOAuthCredentials } from "@supabase/supabase-js";
+import type { UpdateUserAttributes } from "../../types";
 
 export function useSupabaseAuth() {
   const supabase = useMemo(() => createClient(), []);
@@ -12,7 +14,7 @@ export function useSupabaseAuth() {
   );
 
   const signUp = useCallback(
-    async (credentials: { email: string; password: string; options?: any }) => {
+    async (credentials: SignUpWithPasswordCredentials) => {
       return await supabase.auth.signUp(credentials);
     },
     [supabase.auth]
@@ -23,7 +25,7 @@ export function useSupabaseAuth() {
   }, [supabase.auth]);
 
   const signInWithOAuth = useCallback(
-    async (options: any) => {
+    async (options: SignInWithOAuthCredentials) => {
       return await supabase.auth.signInWithOAuth(options);
     },
     [supabase.auth]
@@ -44,7 +46,7 @@ export function useSupabaseAuth() {
   );
 
   const updateUser = useCallback(
-    async (attributes: any) => {
+    async (attributes: UpdateUserAttributes) => {
       return await supabase.auth.updateUser(attributes);
     },
     [supabase.auth]

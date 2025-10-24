@@ -6,6 +6,17 @@
 import type { APIRoute } from "astro";
 import type { AcceptInvitationResponseDTO, ErrorResponseDTO } from "../../../../types";
 
+interface InvitationWithGroup {
+  id: string;
+  email: string;
+  status: string;
+  group_id: string;
+  group: {
+    id: string;
+    name: string;
+  };
+}
+
 export const prerender = false;
 
 /**
@@ -203,7 +214,7 @@ export const POST: APIRoute = async ({ params, locals }) => {
       message: "Invitation accepted successfully",
       invitation_id: invitationId,
       group_id: invitation.group_id,
-      group_name: (invitation.group as any).name,
+      group_name: (invitation.group as { id: string; name: string }).name,
     };
 
     return new Response(JSON.stringify(response), {

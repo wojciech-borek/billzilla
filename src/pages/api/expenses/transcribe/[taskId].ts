@@ -9,7 +9,7 @@
  */
 
 import type { APIRoute } from "astro";
-import type { ErrorResponseDTO, TranscribeTaskStatusDTO } from "../../../../types";
+import type { ErrorResponseDTO, TranscribeTaskStatusDTO, ExpenseTranscriptionResult } from "../../../../types";
 import { TranscriptionTaskService, TaskNotFoundError } from "../../../../lib/services/transcriptionTaskService";
 import { z } from "zod";
 
@@ -109,12 +109,12 @@ export const GET: APIRoute = async ({ params, locals }) => {
     // Add result data if task is completed
     if (task.status === "completed" && task.result_data && task.transcription_text) {
       // Extract confidence from result_data or use default
-      const resultData = task.result_data as any;
+      const resultData = task.result_data as ExpenseTranscriptionResult;
       const confidence = resultData?.extraction_confidence ?? 0.5; // Default to 0.5 if not available
 
       response.result = {
         transcription: task.transcription_text,
-        expense_data: task.result_data as any,
+        expense_data: task.result_data as ExpenseTranscriptionResult,
         confidence,
       };
     }

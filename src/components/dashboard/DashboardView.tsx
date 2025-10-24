@@ -12,7 +12,7 @@ import { Toaster } from "../ui/sonner";
 import { Button } from "../ui/button";
 import { toast } from "sonner";
 import type { CreateGroupSuccessResult } from "../../lib/schemas/groupSchemas";
-import type { ExpenseDTO } from "../../types";
+import type { ExpenseDTO, GroupMemberDTO, GroupCurrencyDTO, GroupMemberSummaryDTO } from "../../types";
 
 interface DashboardViewProps {
   groupsLimit?: number;
@@ -36,8 +36,8 @@ export default function DashboardView({ groupsLimit = 20, currentUserId }: Dashb
   // Modal state
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [selectedExpenseGroupId, setSelectedExpenseGroupId] = useState<string | null>(null);
-  const [groupMembers, setGroupMembers] = useState<any[]>([]);
-  const [groupCurrencies, setGroupCurrencies] = useState<any[]>([]);
+  const [groupMembers, setGroupMembers] = useState<GroupMemberSummaryDTO[]>([]);
+  const [groupCurrencies, setGroupCurrencies] = useState<GroupCurrencyDTO[]>([]);
   const [isExpenseModalLoading, setIsExpenseModalLoading] = useState(false);
 
   // Pull to refresh
@@ -72,7 +72,13 @@ export default function DashboardView({ groupsLimit = 20, currentUserId }: Dashb
       }
 
       const groupData = await response.json();
-      setGroupMembers(groupData.members || []);
+      setGroupMembers((groupData.members || []).map((member: GroupMemberDTO) => ({
+        profile_id: member.profile_id,
+        full_name: member.full_name,
+        avatar_url: member.avatar_url,
+        status: member.status,
+        role: member.role,
+      })));
       setGroupCurrencies(groupData.group_currencies || []);
       setSelectedExpenseGroupId(groupId);
     } catch (error) {

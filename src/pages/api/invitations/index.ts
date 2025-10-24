@@ -75,8 +75,8 @@ export const GET: APIRoute = async ({ locals }) => {
       status: inv.status,
       created_at: inv.created_at,
       group: {
-        id: (inv.group as any).id,
-        name: (inv.group as any).name,
+        id: (inv.group as { id: string; name: string }).id,
+        name: (inv.group as { id: string; name: string }).name,
       },
     }));
 

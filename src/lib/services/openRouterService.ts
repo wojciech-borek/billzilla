@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";
+import type { OpenRouterApiResponse } from "../../types";
 
 // ============================================================================
 // Custom Error Classes
@@ -226,7 +227,7 @@ Please extract the expense details from the transcribed text using the provided 
   /**
    * Makes the HTTP request to OpenRouter API
    */
-  private async makeApiRequest(payload: object): Promise<any> {
+  private async makeApiRequest(payload: object): Promise<OpenRouterApiResponse> {
     const url = `${this.baseUrl}/chat/completions`;
 
     try {
@@ -273,7 +274,7 @@ Please extract the expense details from the transcribed text using the provided 
   /**
    * Parses and validates the API response against the provided Zod schema
    */
-  private parseAndValidateResponse<T extends z.ZodTypeAny>(apiResponse: any, schema: T): z.infer<T> {
+  private parseAndValidateResponse<T extends z.ZodTypeAny>(apiResponse: OpenRouterApiResponse, schema: T): z.infer<T> {
     // Guard clause: check response structure
     if (!apiResponse?.choices?.[0]?.message?.tool_calls?.[0]?.function) {
       throw new InvalidJsonResponseError("Invalid API response structure: missing tool_calls");

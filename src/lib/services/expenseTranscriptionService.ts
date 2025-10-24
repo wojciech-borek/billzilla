@@ -1,4 +1,4 @@
-import type { TranscribeTaskResponseDTO, TranscribeTaskStatusDTO, TranscriptionErrorDTO } from "../../types";
+import type { TranscribeTaskResponseDTO, TranscribeTaskStatusDTO, TranscriptionErrorDTO, ApiError } from "../../types";
 
 /**
  * Service for handling expense transcription API calls
@@ -145,16 +145,28 @@ export async function getTranscriptionTaskStatus(taskId: string): Promise<Transc
  * @param apiError - Error response from API
  * @returns TranscriptionErrorDTO
  */
-export function createTranscriptionError(apiError: any): TranscriptionErrorDTO {
-  if (apiError?.code && apiError?.message) {
+export function createTranscriptionError(apiError: ApiError | unknown): TranscriptionErrorDTO {
+  if (
+    typeof apiError === "object" &&
+    apiError !== null &&
+    "code" in apiError &&
+    "message" in apiError &&
+    typeof apiError.code === "string" &&
+    typeof apiError.message === "string"
+  ) {
     return {
       code: apiError.code,
       message: apiError.message,
     };
   }
 
+  const errorMessage =
+    typeof apiError === "object" && apiError !== null && "message" in apiError && typeof apiError.message === "string"
+      ? apiError.message
+      : "Unknown transcription error occurred";
+
   return {
     code: "UNKNOWN_ERROR",
-    message: apiError?.message || "Unknown transcription error occurred",
+    message: errorMessage,
   };
 }

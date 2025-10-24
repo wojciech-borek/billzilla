@@ -5,6 +5,8 @@
  * This service handles the first step of the expense transcription pipeline.
  */
 
+import type { WhisperTranscriptionResponse, TranscriptionResult } from "../../types";
+
 // ============================================================================
 // Custom Error Classes
 // ============================================================================
@@ -76,12 +78,6 @@ export interface TranscribeAudioParams {
   audioBlob: Blob;
   language?: string; // ISO 639-1 language code (e.g., 'pl', 'en')
   prompt?: string; // Optional context to guide transcription
-}
-
-export interface TranscriptionResult {
-  text: string;
-  language?: string;
-  duration?: number;
 }
 
 // ============================================================================
@@ -240,7 +236,7 @@ export class WhisperService {
   /**
    * Makes the HTTP request to OpenAI Whisper API
    */
-  private async makeApiRequest(formData: FormData): Promise<any> {
+  private async makeApiRequest(formData: FormData): Promise<WhisperTranscriptionResponse> {
     const url = `${this.baseUrl}/audio/transcriptions`;
 
     try {
@@ -285,7 +281,7 @@ export class WhisperService {
   /**
    * Parses and validates the transcription response
    */
-  private parseTranscriptionResponse(apiResponse: any): TranscriptionResult {
+  private parseTranscriptionResponse(apiResponse: WhisperTranscriptionResponse): TranscriptionResult {
     // Guard clause: check if text exists
     if (!apiResponse?.text || typeof apiResponse.text !== "string") {
       throw new InvalidTranscriptionError("Invalid API response: missing or invalid text field");

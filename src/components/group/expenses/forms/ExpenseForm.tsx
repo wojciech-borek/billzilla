@@ -142,7 +142,7 @@ export function ExpenseForm({
           <p className="text-sm text-destructive mt-1">
             {typeof formErrors.splits === "string"
               ? formErrors.splits
-              : (formErrors.splits as any)?.message || "Błąd walidacji podziału"}
+              : formErrors.splits?.message || "Błąd walidacji podziału"}
           </p>
         </div>
       )}

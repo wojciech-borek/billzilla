@@ -10,9 +10,10 @@
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "../../db/database.types";
+import type { Profile, ExpenseTranscriptionResult } from "../../types";
 import { WhisperService } from "./whisperService";
 import { OpenRouterService, type ExtractDataParams } from "./openRouterService";
-import { expenseTranscriptionSchema, type ExpenseTranscriptionResult } from "../schemas/expenseSchemas";
+import { expenseTranscriptionSchema } from "../schemas/expenseSchemas";
 
 // ============================================================================
 // Type Definitions
@@ -162,7 +163,7 @@ export class TranscriptionTaskService {
       .update({
         status: "completed" as TranscriptionTaskStatus,
         transcription_text: transcriptionText,
-        result_data: resultData as any,
+        result_data: resultData,
         completed_at: new Date().toISOString(),
       })
       .eq("id", taskId);
@@ -332,7 +333,7 @@ export class TranscriptionTaskService {
     // Step 4: Build context object
     const members = membersData
       .map((m) => {
-        const profile = m.profiles as any;
+        const profile = m.profiles as Profile | null;
         return {
           id: m.profile_id,
           name: profile?.full_name || profile?.email || "Unknown",

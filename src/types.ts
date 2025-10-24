@@ -310,11 +310,28 @@ export type ExpenseDetailDTO = ExpenseDTO & {
 };
 
 /**
+ * Expense transcription result from AI
+ * Used when AI extracts expense data from audio transcription
+ */
+export interface ExpenseTranscriptionResult {
+  description: string;
+  amount: number;
+  currency_code?: string | null;
+  expense_date?: string | null;
+  payer_id?: string | null;
+  splits: {
+    profile_id: string;
+    amount: number;
+  }[];
+  extraction_confidence?: number;
+}
+
+/**
  * Transcription result from AI
  */
 export interface TranscriptionResultDTO {
   transcription: string;
-  expense_data: CreateExpenseCommand;
+  expense_data: ExpenseTranscriptionResult;
   confidence: number;
 }
 
@@ -520,4 +537,54 @@ export interface AuthUserWithProfile {
   email: string;
   full_name: string | null; // Nazwa użytkownika (login, pseudonim, itp.)
   avatar_url: string | null;
+}
+
+/**
+ * Update user attributes for Supabase auth
+ */
+export interface UpdateUserAttributes {
+  password?: string;
+  email?: string;
+  data?: Record<string, unknown>;
+}
+
+/**
+ * Generic API error structure
+ */
+export interface ApiError {
+  code?: string;
+  message?: string;
+}
+
+/**
+ * OpenRouter API response structure
+ */
+export interface OpenRouterApiResponse {
+  choices: {
+    message: {
+      tool_calls?: {
+        function: {
+          arguments: string;
+        };
+      }[];
+    };
+  }[];
+}
+
+/**
+ * Whisper API transcription response structure
+ */
+export interface WhisperTranscriptionResponse {
+  text: string;
+  language?: string;
+  duration?: number;
+}
+
+/**
+ * Transcription result structure
+ */
+export interface TranscriptionResult {
+  text: string;
+  language?: string;
+  duration?: number;
 }

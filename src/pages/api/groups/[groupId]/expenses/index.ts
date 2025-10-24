@@ -94,12 +94,13 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
       });
     }
 
-    const command = validationResult.data as any; // Allow mutation for date conversion
-
-    // Step 5: Convert datetime-local format to ISO if needed
-    if (command.expense_date && command.expense_date.match(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/)) {
-      command.expense_date = command.expense_date + ":00.000Z";
+    // Step 5: Prepare command data, converting datetime-local format to ISO if needed
+    const commandData = validationResult.data;
+    let expenseDate = commandData.expense_date;
+    if (expenseDate && expenseDate.match(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/)) {
+      expenseDate = expenseDate + ":00.000Z";
     }
+    const command = { ...commandData, expense_date: expenseDate };
 
     // Step 6: Call service to create expense
     const expenseDTO = await createExpense(locals.supabase, groupId, locals.user.id, command);
@@ -117,7 +118,7 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
         error: {
           code: "SEMANTIC_ERROR",
           message: error.message,
-          details: error.details,
+          details: error.details as Record<string, unknown> | undefined,
         },
       };
       return new Response(JSON.stringify(errorResponse), {

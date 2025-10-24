@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { ZodSchema } from "zod";
 
-export function useAuthForm<T extends Record<string, any>>(schema: ZodSchema<T>) {
+export function useAuthForm<T extends Record<string, unknown>>(schema: ZodSchema<T>) {
   const [formData, setFormData] = useState<Partial<T>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
@@ -21,7 +21,7 @@ export function useAuthForm<T extends Record<string, any>>(schema: ZodSchema<T>)
     return true;
   };
 
-  const handleChange = (field: keyof T, value: any) => {
+  const handleChange = (field: keyof T, value: unknown) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     if (errors[field as string]) {
       setErrors((prev) => {

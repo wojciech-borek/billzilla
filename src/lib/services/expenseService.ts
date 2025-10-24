@@ -5,7 +5,7 @@ import type { CreateExpenseCommand, ExpenseDTO } from "../../types";
 export class ExpenseValidationError extends Error {
   constructor(
     message: string,
-    public details?: any
+    public details?: unknown
   ) {
     super(message);
     this.name = "ExpenseValidationError";
