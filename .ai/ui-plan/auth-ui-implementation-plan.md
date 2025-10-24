@@ -82,14 +82,15 @@ interface LoginFormProps {
 ```
 
 **Odpowiedzialności:**
-- Zarządzanie stanem formularza (email, password)
+- Zarządzanie stanem formularza przez `useAuthForm` (email, password)
 - Walidacja client-side (Zod schema)
-- Wywołanie `supabase.auth.signInWithPassword()`
+- Wywołanie `signIn` z `useSupabaseAuth`
 - Obsługa Google OAuth przez `GoogleOAuthButton`
-- Wyświetlanie błędów walidacji i API
-- Zarządzanie stanami ładowania
+- Wyświetlanie błędów walidacji, API i success messages
+- Zarządzanie stanami ładowania z animacjami
 - Przekierowanie po sukcesie (walidacja redirect URL)
 - Linki do rejestracji i resetowania hasła
+- Obsługa różnych komunikatów błędów z URL parametrów
 
 #### SignupForm.tsx
 
@@ -102,12 +103,13 @@ interface SignupFormProps {
 ```
 
 **Odpowiedzialności:**
-- Zarządzanie stanem formularza (full_name, email, password, confirm_password)
+- Zarządzanie stanem formularza przez `useAuthForm` (full_name, email, password, confirm_password)
 - Walidacja client-side (Zod schema)
-- Wywołanie `supabase.auth.signUp()`
+- Wywołanie `signup` z `useSignup` hook'a
 - Obsługa Google OAuth
-- Wyświetlanie komunikatu o wysłaniu e-maila weryfikacyjnego
-- Wyświetlanie błędów walidacji i API
+- Wyświetlanie komunikatu sukcesu o wysłaniu e-maila weryfikacyjnego
+- Wyświetlanie błędów przez `StatusMessage` komponent
+- Użycie `FormField` komponentów dla lepszej konsystencji
 - Link do logowania
 
 #### ResetPasswordForm.tsx
@@ -123,9 +125,12 @@ interface ResetPasswordFormProps {
 ```
 
 **Odpowiedzialności:**
-- Dwutorowa logika: żądanie resetu vs ustawianie nowego hasła
-- Walidacja client-side
-- Wyświetlanie błędów i komunikatów sukcesu
+- Dwutorowa logika: `RequestPasswordResetForm` vs `SetNewPasswordForm`
+- `RequestPasswordResetForm`: używa `useAuthForm` + `usePasswordReset`
+- `SetNewPasswordForm`: używa `useAuthForm` + `useSetNewPassword`
+- Walidacja client-side przez odpowiednie schematy Zod
+- Wyświetlanie błędów i komunikatów sukcesu przez `StatusMessage`
+- Obsługa różnych typów tokenów recovery
 
 #### GoogleOAuthButton.tsx
 
@@ -160,8 +165,9 @@ interface UserMenuProps {
 **Odpowiedzialności:**
 - Wyświetlanie avatara użytkownika (inicjały jeśli brak zdjęcia)
 - Wyświetlanie nazwy i email w dropdown
-- Dropdown menu z opcjami wylogowania
+- Dropdown menu z opcjami wylogowania przez `useLogout`
 - Integracja z shadcn/ui DropdownMenu
+- Obsługa stanów ładowania podczas wylogowywania
 
 ## 3. Styling i paleta kolorów
 
@@ -212,6 +218,28 @@ interface UserMenuProps {
 <Label className="text-sm font-medium text-foreground">
   Adres e-mail
 </Label>
+```
+
+#### FormField (Custom Component)
+```tsx
+<FormField
+  id="email"
+  label="Adres e-mail"
+  type="email"
+  placeholder="twoj@email.com"
+  value={formData.email || ""}
+  onChange={(value) => handleChange("email", value)}
+  error={errors.email}
+  disabled={isLoading}
+  required
+/>
+```
+
+#### StatusMessage (Custom Component)
+```tsx
+<StatusMessage type="success" message="Operacja zakończona pomyślnie!" />
+<StatusMessage type="error" message="Wystąpił błąd" />
+<StatusMessage type="info" message="Informacja dla użytkownika" />
 ```
 
 ### Layout stron auth
@@ -339,17 +367,21 @@ Wszystkie komponenty używają:
 ## 9. Obsługa błędów UI
 
 ### Błędy walidacji
-- Wyświetlane pod polami formularza (czerwony tekst)
+- Wyświetlane pod polami formularza (czerwony tekst z ikoną)
 - Natychmiastowe czyszczenie błędu przy zmianie wartości pola
+- Obsługa `aria-invalid` i `aria-describedby` dla accessibility
 
 ### Błędy API
-- Wyświetlane jako alert nad formularzem
-- Mapowane przez `getAuthErrorMessage()` na przyjazne komunikaty
+- Wyświetlane jako alert nad formularzem przez `Alert` komponent
+- Wyświetlane przez `StatusMessage` komponent w bardziej złożonych przypadkach
+- Mapowane przez `getAuthErrorMessage()` na przyjazne komunikaty w języku polskim
+- Obsługa różnych typów błędów: walidacja, API, OAuth, network
 
 ### Success messages
-- "Konto utworzone! Sprawdź swoją skrzynkę e-mail i kliknij w link aktywacyjny."
-- "Link do resetowania hasła został wysłany na Twój adres e-mail."
-- "Hasło zostało zmienione pomyślnie. Możesz się teraz zalogować."
+- **Signup Success:** "Konto zostało utworzone pomyślnie! Sprawdź swoją skrzynkę e-mail i kliknij w link aktywacyjny, aby dokończyć rejestrację. Jeśli nie widzisz wiadomości, sprawdź folder spam."
+- **Password Reset Requested:** "Link do resetowania hasła został wysłany na Twój adres e-mail."
+- **Password Changed:** "Hasło zostało zmienione pomyślnie. Możesz się teraz zalogować."
+- **Email Confirmed:** "Twój adres e-mail został potwierdzony! Możesz teraz korzystać z pełni funkcji aplikacji."
 
 ## 10. Accessibility (WCAG)
 
@@ -455,24 +487,28 @@ Wszystkie komponenty używają:
 ## 14. Etapy implementacji UI
 
 1. **Podstawowe komponenty:**
-   - Implementacja `LoginForm`, `SignupForm`, `ResetPasswordForm`
-   - Styling zgodnie z paletą kolorów
-   - Responsywność mobile-first
+   - ✅ Implementacja `LoginForm`, `SignupForm`, `RequestPasswordResetForm`, `SetNewPasswordForm`
+   - ✅ Styling zgodnie z paletą kolorów Billzilla
+   - ✅ Responsywność mobile-first
+   - ✅ Podział na mniejsze komponenty: `FormField`, `StatusMessage`
 
 2. **Zaawansowane komponenty:**
-   - `GoogleOAuthButton` z Google Brand Guidelines
-   - `UserMenu` z dropdown
-   - Loading states i animacje
+   - ✅ `GoogleOAuthButton` z Google Brand Guidelines i dynamicznym tekstem
+   - ✅ `UserMenu` z dropdown i obsługą `useLogout`
+   - ✅ Loading states z animacjami i spinnerami
+   - ✅ Custom hooks: `useAuthForm`, `useSignup`, `usePasswordReset`, `useSetNewPassword`
 
 3. **Accessibility:**
-   - Dodanie aria-labels i semantic HTML
-   - Keyboard navigation
-   - Screen reader support
+   - ✅ Dodanie aria-labels, `aria-invalid`, `aria-describedby`
+   - ✅ Keyboard navigation (Tab order, Enter submit)
+   - ✅ Screen reader support z semantic HTML
+   - ✅ Focus indicators i kontrast kolorów
 
 4. **Polishing:**
-   - Error handling UX
-   - Success states
-   - Loading overlays i toasts
+   - ✅ Kompleksowa obsługa błędów (walidacja + API + OAuth)
+   - ✅ Success states z `AUTH_SUCCESS_MESSAGES`
+   - ✅ Loading overlays i toast notifications
+   - ✅ Animacje przejść i hover effects
 
 5. **Testing:**
    - Cross-browser testing

@@ -21,7 +21,7 @@ import { defineMiddleware } from "astro:middleware";
 import { createServerClient } from "@supabase/ssr";
 import type { Database } from "../db/database.types";
 
-const PUBLIC_ROUTES = ["/login", "/signup", "/reset-password", "/about", "/auth/callback", "/auth/confirm"];
+const PUBLIC_ROUTES = ["/login", "/signup", "/reset-password", "/about", "/auth/callback", "/auth/confirm", "/auth/recovery"];
 
 function isValidRedirectUrl(url: string): boolean {
   if (!url) return false;
@@ -46,12 +46,27 @@ export const onRequest = defineMiddleware(async (context, next) => {
 
   context.locals.supabase = supabase;
 
-  const session = await supabase.auth.getSession();
-  if (session.data.session?.user) {
-    context.locals.user = {
-      id: session.data.session.user.id,
-      email: session.data.session.user.email!,
-    };
+  const {
+    data: { user: authUser },
+    error: authError,
+  } = await supabase.auth.getUser();
+
+  if (authUser && !authError) {
+    try {
+      const { data: profile, error } = await supabase
+        .from("profiles")
+        .select("id, email, full_name, avatar_url")
+        .eq("id", authUser.id)
+        .single();
+
+      if (error) {
+        context.locals.user = null;
+      } else {
+        context.locals.user = profile;
+      }
+    } catch (err) {
+      context.locals.user = null;
+    }
   } else {
     context.locals.user = null;
   }
@@ -109,16 +124,70 @@ export const GET: APIRoute = async ({ url, cookies, locals, redirect }) => {
 
   if (code) {
     const supabase = locals.supabase;
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
+    const { data, error } = await supabase.auth.exchangeCodeForSession(code);
 
     if (error) {
       return redirect(`/login?error=${encodeURIComponent(error.message)}`);
     }
 
-    return redirect(next);
+    // Successful authentication - validate and redirect to next page
+    const safeNext = isValidRedirectUrl(next) ? next : "/";
+    return redirect(safeNext);
   }
 
   return redirect("/login?error=missing_code");
+};
+
+export const prerender = false;
+```
+
+### GET /auth/recovery (Password recovery handler)
+
+**Cel:** Obsługa różnych typów tokenów recovery z e-maili resetowania hasła i przekierowanie na stronę resetowania.
+
+```typescript
+// /src/pages/auth/recovery.ts
+export const GET: APIRoute = async ({ url, redirect, locals }) => {
+  const tokenHash = url.searchParams.get("token_hash");
+  const token = url.searchParams.get("token");
+  const code = url.searchParams.get("code");
+  const accessToken = url.searchParams.get("access_token");
+  const refreshToken = url.searchParams.get("refresh_token");
+  const errorParam = url.searchParams.get("error");
+
+  // Handle errors
+  if (errorParam) {
+    return redirect(`/reset-password?error=${encodeURIComponent(errorParam)}`);
+  }
+
+  // Handle OAuth code from Supabase recovery flow
+  if (code) {
+    const supabase = locals.supabase;
+    const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+
+    if (error) {
+      return redirect(`/reset-password?error=${encodeURIComponent(error.message)}`);
+    }
+
+    if (data.session) {
+      return redirect(`/reset-password?access_token=${data.session.access_token}&refresh_token=${data.session.refresh_token}&type=recovery`);
+    }
+  }
+
+  // Handle recovery with session tokens
+  if (accessToken && refreshToken) {
+    return redirect(`/reset-password?access_token=${accessToken}&refresh_token=${refreshToken}&type=recovery`);
+  }
+
+  // Handle recovery with tokens
+  const recoveryToken = tokenHash || token;
+  if (recoveryToken && type === "recovery") {
+    const paramName = tokenHash ? 'token_hash' : 'token';
+    return redirect(`/reset-password?${paramName}=${recoveryToken}&type=recovery`);
+  }
+
+  // No valid parameters
+  return redirect('/reset-password?error=invalid_recovery_link');
 };
 
 export const prerender = false;
@@ -340,6 +409,89 @@ export function useAuthForm<T>(schema: ZodSchema<T>) {
 }
 ```
 
+### Dodatkowe Hooki Specyficzne dla Formularzy
+
+#### useSignup
+
+```typescript
+// /src/lib/hooks/useSignup.ts
+interface UseSignupReturn {
+  signup: (userData: SignupFormData) => Promise<void>;
+  isLoading: boolean;
+  error: string | null;
+  isSuccess: boolean;
+  reset: () => void;
+}
+
+export function useSignup(): UseSignupReturn {
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isSuccess, setIsSuccess] = useState(false);
+
+  const signup = useCallback(async (userData: SignupFormData): Promise<void> => {
+    setIsLoading(true);
+    setError(null);
+    setIsSuccess(false);
+
+    try {
+      const supabase = createClient();
+      await signupUser(supabase, userData);
+      setIsSuccess(true);
+    } catch (err) {
+      setError(getAuthErrorMessage(err));
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  const reset = useCallback(() => {
+    setIsLoading(false);
+    setError(null);
+    setIsSuccess(false);
+  }, []);
+
+  return {
+    signup,
+    isLoading,
+    error,
+    isSuccess,
+    reset,
+  };
+}
+```
+
+#### usePasswordReset
+
+```typescript
+// /src/lib/hooks/usePasswordReset.ts
+interface UsePasswordResetReturn {
+  isLoading: boolean;
+  error: string | null;
+  success: boolean;
+  requestReset: (email: string) => Promise<void>;
+  reset: () => void;
+}
+
+export function usePasswordReset(): UsePasswordResetReturn {
+  // Implementacja wykorzystująca passwordResetService
+}
+```
+
+#### useSetNewPassword
+
+```typescript
+// /src/lib/hooks/useSetNewPassword.ts
+interface UseSetNewPasswordReturn {
+  isLoading: boolean;
+  error: string | null;
+  setNewPassword: (password: string) => Promise<void>;
+}
+
+export function useSetNewPassword({ accessToken, refreshToken }: UseSetNewPasswordParams): UseSetNewPasswordReturn {
+  // Implementacja wykorzystująca passwordResetService
+}
+```
+
 ## 7. Utility Functions
 
 ### Mapowanie błędów Supabase
@@ -360,6 +512,14 @@ export const AUTH_ERROR_MESSAGES: Record<string, string> = {
   network_error: "Błąd połączenia. Sprawdź połączenie internetowe i spróbuj ponownie",
   server_error: "Wystąpił błąd serwera. Spróbuj ponownie za chwilę",
   unknown_error: "Wystąpił nieoczekiwany błąd. Spróbuj ponownie",
+};
+
+// Komunikaty sukcesu
+export const AUTH_SUCCESS_MESSAGES = {
+  signup: "Konto utworzone! Sprawdź swoją skrzynkę e-mail i kliknij w link aktywacyjny.",
+  passwordResetRequested: "Link do resetowania hasła został wysłany na Twój adres e-mail.",
+  passwordChanged: "Hasło zostało zmienione pomyślnie. Możesz się teraz zalogować.",
+  emailConfirmed: "Twój adres e-mail został potwierdzony! Możesz teraz korzystać z pełni funkcji aplikacji.",
 };
 
 export function getAuthErrorMessage(error: any): string {
@@ -443,9 +603,15 @@ PUBLIC_SITE_URL=http://localhost:3000
 ### Resetowanie hasła
 
 1. Użytkownik podaje e-mail w `/reset-password`
-2. `resetPasswordForEmail(email)` wysyła link
-3. Użytkownik klika link → `/reset-password?type=recovery&access_token=...`
-4. `updateUser({ password: newPassword })` ustawia nowe hasło
+2. `usePasswordReset` wywołuje `resetPasswordForEmail()` z redirect na `/auth/recovery`
+3. Użytkownik klika link → `/auth/recovery` obsługuje różne typy tokenów:
+   - `token_hash` (legacy)
+   - `token` (legacy)
+   - `code` (OAuth flow)
+   - `access_token` + `refresh_token` (session tokens)
+4. Endpoint przekierowuje na `/reset-password` z odpowiednimi parametrami
+5. `useSetNewPassword` ustawia nowe hasło używając `passwordResetService`
+6. Przekierowanie na `/login` z komunikatem sukcesu
 
 ## 10. Bezpieczeństwo
 

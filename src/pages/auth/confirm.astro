@@ -8,12 +8,17 @@ const type = Astro.url.searchParams.get("type");
 const next = Astro.url.searchParams.get("next");
 
 // Sprawdź czy mamy prawidłowe parametry dla weryfikacji
-const isValidConfirmationRequest = tokenHash && type === "email";
+const isValidConfirmationRequest = tokenHash && (type === "email" || type === "recovery");
 
 // Jeśli brak parametrów lub nieprawidłowe - wyświetl błąd
 if (!isValidConfirmationRequest) {
   // Przekieruj na stronę logowania z błędem
   return Astro.redirect("/login?error=invalid_confirmation_link");
+}
+
+// Jeśli to token recovery (reset hasła), przekieruj na stronę resetowania hasła
+if (type === "recovery") {
+  return Astro.redirect(`/reset-password?token_hash=${tokenHash}&type=recovery`);
 }
 
 // Jeśli użytkownik już jest zalogowany, przekieruj na dashboard

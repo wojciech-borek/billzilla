@@ -3,7 +3,7 @@ import { isValidRedirectUrl } from "../lib/utils/redirectValidation.ts";
 import { createSupabaseServerClientFromCookieHeader } from "../lib/supabase.server";
 
 // Public routes that don't require authentication
-const PUBLIC_ROUTES = ["/login", "/signup", "/reset-password", "/about", "/auth/callback", "/auth/confirm"];
+const PUBLIC_ROUTES = ["/", "/login", "/signup", "/reset-password", "/about", "/auth/callback", "/auth/confirm", "/auth/recovery"];
 
 // Check if path matches public route (including dynamic segments)
 function isPublicRoute(pathname: string): boolean {

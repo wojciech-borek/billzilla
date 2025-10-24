@@ -21,7 +21,14 @@ export function useSupabaseAuth() {
   }, [supabase.auth]);
 
   const resetPassword = useCallback(async (email: string) => {
-    return await supabase.auth.resetPasswordForEmail(email);
+    // Use redirectTo to send recovery links to our recovery endpoint
+    // This ensures users go to reset-password page, not auto-login to dashboard
+    const redirectUrl = import.meta.env.DEV
+      ? 'http://localhost:3000/auth/recovery'
+      : `${window.location.origin}/auth/recovery`;
+    return await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: redirectUrl,
+    });
   }, [supabase.auth]);
 
   const updateUser = useCallback(async (attributes: any) => {

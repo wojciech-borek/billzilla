@@ -122,7 +122,7 @@ enabled = true
 # in emails.
 site_url = "http://localhost:3000"
 # A list of *exact* URLs that auth providers are permitted to redirect to post authentication.
-additional_redirect_urls = ["http://127.0.0.1:3000", "http://localhost:3000"]
+additional_redirect_urls = ["http://127.0.0.1:3000", "http://localhost:3000", "http://localhost:3000/auth/callback", "http://127.0.0.1:3000/auth/callback", "http://localhost:3000/auth/recovery", "http://127.0.0.1:3000/auth/recovery"]
 # How long tokens are valid for, in seconds. Defaults to 3600 (1 hour), maximum 604,800 (1 week).
 jwt_expiry = 3600
 # Path to JWT signing key. DO NOT commit your signing keys file to git.
@@ -186,12 +186,12 @@ otp_expiry = 3600
 # Use a production-ready SMTP server
 # [auth.email.smtp]
 # enabled = true
-# host = "smtp.sendgrid.net"
-# port = 587
-# user = "apikey"
-# pass = "env(SENDGRID_API_KEY)"
-# admin_email = "admin@email.com"
-# sender_name = "Admin"
+# host = "smtp.mailtrap.io"
+# port = 2525
+# user = "test_user"
+# pass = "test_pass"
+# admin_email = "admin@billzilla.local"
+# sender_name = "Billzilla"
 
 # Uncomment to customize email template
 # [auth.email.template.invite]
@@ -276,7 +276,7 @@ client_id = ""
 # DO NOT commit your OAuth provider secret to git. Use environment variable substitution instead:
 secret = "env(SUPABASE_AUTH_EXTERNAL_APPLE_SECRET)"
 # Overrides the default auth redirectUrl.
-redirect_uri = ""
+redirect_uri = "http://localhost:3000/reset-password"
 # Overrides the default auth provider URL. Used to support self-hosted gitlab, single-tenant Azure,
 # or any other third-party OIDC providers.
 url = ""

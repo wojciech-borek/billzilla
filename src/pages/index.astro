@@ -2,6 +2,24 @@
 import Layout from "@/layouts/Layout.astro";
 import DashboardView from "@/components/dashboard/DashboardView";
 
+// Check for recovery flow parameters from URL
+const type = Astro.url.searchParams.get("type");
+const token = Astro.url.searchParams.get("token");
+const accessToken = Astro.url.searchParams.get("access_token");
+const refreshToken = Astro.url.searchParams.get("refresh_token");
+
+// If this is a recovery flow with direct token, redirect to reset-password
+if (type === "recovery" && token) {
+  const recoveryUrl = `/reset-password?type=recovery&token=${encodeURIComponent(token)}`;
+  return Astro.redirect(recoveryUrl);
+}
+
+// If this is a recovery flow with session tokens, redirect to reset-password
+if (accessToken && refreshToken) {
+  const recoveryUrl = `/reset-password?access_token=${encodeURIComponent(accessToken)}&refresh_token=${encodeURIComponent(refreshToken)}&type=recovery`;
+  return Astro.redirect(recoveryUrl);
+}
+
 // Middleware ensures user is authenticated
 const user = Astro.locals.user;
 

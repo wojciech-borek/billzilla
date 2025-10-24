@@ -16,8 +16,9 @@ if (user && !authError) {
   return Astro.redirect("/");
 }
 
-// Odczyt parametrów URL dla komunikatów błędów (np. po OAuth callback)
+// Odczyt parametrów URL dla komunikatów błędów i sukcesu
 const error = Astro.url.searchParams.get("error") || undefined;
+const success = Astro.url.searchParams.get("success") || undefined;
 
 // Odczyt i walidacja parametru redirect
 const redirectParam = Astro.url.searchParams.get("redirect");
@@ -40,7 +41,7 @@ const redirectTo = isValidRedirectUrl(redirectParam) ? redirectParam : "/";
 
       <!-- Formularz w karcie -->
       <Card className="bg-white rounded-2xl shadow-md shadow-green-100 p-8">
-        <LoginForm errorMessage={error} redirectTo={redirectTo} client:load />
+        <LoginForm errorMessage={error} successMessage={success} redirectTo={redirectTo} client:load />
       </Card>
     </div>
   </main>

@@ -54,9 +54,10 @@
 - Sesje zarządzane przez bezpieczne HTTP-only cookies
 - Automatyczne odświeżanie tokenów JWT (1 godzina życia)
 - Ochrona przed atakami: CSRF, XSS, SQL injection, brute force
-- Walidacja wszystkich redirect URL (tylko wewnętrzne ścieżki)
+- Zaawansowana walidacja wszystkich redirect URL (Open Redirect protection) - dedykowana utility function `isValidRedirectUrl()`
 - Row-Level Security (RLS) w bazie danych
 - Rate limiting na poziomie API
+- Dodatkowe sprawdzenia bezpieczeństwa w endpointach API
 
 ### Dostępność (WCAG)
 
@@ -69,10 +70,11 @@
 ### Doświadczenie użytkownika (UX)
 
 - Responsywny design (mobile-first)
-- Natychmiastowa walidacja formularzy
-- Przyjazne komunikaty błędów w języku polskim
-- Loading states podczas wszystkich operacji asynchronicznych
-- Success feedback po pomyślnych akcjach
+- Natychmiastowa walidacja formularzy z szczegółowymi komunikatami błędów
+- Przyjazne komunikaty błędów w języku polskim z mapowaniem błędów Supabase
+- Loading states podczas wszystkich operacji asynchronicznych z animacjami
+- Success feedback po pomyślnych akcjach z dedykowanymi komunikatami sukcesu
+- Animacje przejść i hover effects dla lepszej interaktywności
 - Spójny branding zgodny z Billzilla UI Guidelines
 
 ## 3. MAPA PODRÓŻY UŻYTKOWNIKA
@@ -106,11 +108,12 @@
 
 ### Struktura stron
 
-- **`/login`** - Logowanie przez e-mail/hasło lub Google OAuth
-- **`/signup`** - Rejestracja nowego użytkownika
-- **`/reset-password`** - Resetowanie hasła
-- **`/auth/confirm`** - Potwierdzenie adresu e-mail
-- **`/auth/callback`** - Callback OAuth Google
+- **`/login`** - Logowanie przez e-mail/hasło lub Google OAuth z obsługą błędów i success messages
+- **`/signup`** - Rejestracja nowego użytkownika z walidacją w czasie rzeczywistym
+- **`/reset-password`** - Resetowanie hasła z dwoma trybami: żądanie resetu i ustawianie nowego hasła
+- **`/auth/confirm`** - Potwierdzenie adresu e-mail z obsługą błędów
+- **`/auth/callback`** - Callback OAuth Google z obsługą różnych typów tokenów
+- **`/auth/recovery`** - Endpoint obsługujący recovery tokens dla resetowania hasła
 - **`/about`** - Publiczna strona informacyjna
 
 ### Flow autentykacji
@@ -145,12 +148,13 @@
 
 #### Resetowanie hasła
 
-1. Użytkownik podaje adres e-mail
-2. Wysyłanie linku resetującego przez Supabase
-3. Kliknięcie w link resetujący
-4. Ustawienie nowego hasła
-5. Aktualizacja hasła w Supabase Auth
-6. Przekierowanie na stronę logowania
+1. Użytkownik podaje adres e-mail w `/reset-password`
+2. Wysyłanie linku resetującego przez Supabase (redirect do `/auth/recovery`)
+3. Kliknięcie w link → `/auth/recovery` obsługuje różne typy tokenów (token_hash, token, code, access_token)
+4. Przekierowanie na `/reset-password` z tokenami sesji
+5. Ustawienie nowego hasła z walidacją
+6. Aktualizacja hasła w Supabase Auth
+7. Przekierowanie na stronę logowania z komunikatem sukcesu
 
 ## 5. ZGODNOŚĆ Z BILLZILLA UI GUIDELINES
 

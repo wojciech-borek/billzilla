@@ -2,28 +2,44 @@ import type { APIRoute } from "astro";
 import { isValidRedirectUrl } from "@/lib/utils/redirectValidation";
 
 /**
- * OAuth callback endpoint
- * Obsługuje callback z Google OAuth i exchange code za session
+ * Auth callback endpoint
+ * Obsługuje callback z Google OAuth oraz tokeny recovery (reset hasła)
  */
 export const GET: APIRoute = async ({ url, locals, redirect }) => {
   const code = url.searchParams.get("code");
+  const type = url.searchParams.get("type");
   const next = url.searchParams.get("next") || "/";
   const errorParam = url.searchParams.get("error");
   const errorDescription = url.searchParams.get("error_description");
 
-  // Handle OAuth errors
+  if (import.meta.env.DEV) {
+    console.log('Auth callback: received params', {
+      code: !!code,
+      type,
+      error: errorParam,
+    });
+  }
+
+  // Handle OAuth/recovery errors
   if (errorParam) {
     const encodedError = encodeURIComponent(errorDescription || errorParam);
     return redirect(`/login?error=${encodedError}`);
   }
 
-  // Exchange code for session
+  // Handle OAuth callback - exchange code for session
   if (code) {
     const supabase = locals.supabase;
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
+    const { data, error } = await supabase.auth.exchangeCodeForSession(code);
 
     if (error) {
+      if (import.meta.env.DEV) {
+        console.log('Auth callback: code exchange error', error);
+      }
       return redirect(`/login?error=${encodeURIComponent(error.message)}`);
+    }
+
+    if (import.meta.env.DEV) {
+      console.log('Auth callback: code exchanged successfully, user authenticated', !!data.user);
     }
 
     // Successful authentication - validate and redirect to next page
@@ -32,8 +48,19 @@ export const GET: APIRoute = async ({ url, locals, redirect }) => {
     return redirect(safeNext);
   }
 
-  // No code provided - redirect to login
-  return redirect("/login?error=missing_code");
+  // Recovery links are now handled by /auth/recovery endpoint
+
+  // Handle email confirmation callback - redirect to confirm page
+  const tokenHash = url.searchParams.get("token_hash");
+  if (tokenHash && type === "email") {
+    return redirect(`/auth/confirm?token_hash=${tokenHash}&type=email&next=${encodeURIComponent(next)}`);
+  }
+
+  // No valid parameters provided - redirect to login
+  if (import.meta.env.DEV) {
+    console.log('Auth callback: no valid parameters, redirecting to login');
+  }
+  return redirect("/login?error=invalid_callback");
 };
 
 export const prerender = false;

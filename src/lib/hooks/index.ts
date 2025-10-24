@@ -25,3 +25,5 @@ export { useAuthForm } from "./useAuthForm";
 export { useSignup } from "./useSignup";
 export { useSupabaseAuth } from "./useSupabaseAuth";
 export { useLogout } from "./useLogout";
+export { usePasswordReset } from "./usePasswordReset";
+export { useSetNewPassword } from "./useSetNewPassword";
