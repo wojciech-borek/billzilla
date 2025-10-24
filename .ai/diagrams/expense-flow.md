@@ -95,8 +95,8 @@ flowchart TD
     H --> I["Wyślij audio do API"]
     I --> J["Przetwarzanie transkrypcji"]
     J --> K{"Status"}
-    K -->|"Sukces" L["Wyciągnij dane z transkrypcji"]
-    K -->|"Błąd" M["Wyświetl błąd transkrypcji"]
+    K -->|"Sukces"| L["Wyciągnij dane z transkrypcji"]
+    K -->|"Błąd"| M["Wyświetl błąd transkrypcji"]
 
     L --> N["Wypełnij formularz automatycznie"]
     N --> O["Pozwól użytkownikowi edytować"]

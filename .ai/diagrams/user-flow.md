@@ -187,7 +187,7 @@ flowchart TD
     N --> CC["Pokaż zadłużenia"]
     CC --> DD{"Rozliczyć?"}
     DD -->|"Tak"| EE["Rozlicz dług"]
-    DD -->|"Nie" J
+    DD -->|"Nie"| J
 
     EE --> FF["Wybierz osobę"]
     FF --> GG["Kwota rozliczenia"]
