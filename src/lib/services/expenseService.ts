@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "../../db/database.types";
-import type { CreateExpenseCommand, ExpenseDTO, GroupCurrency } from "../../types";
+import type { CreateExpenseCommand, ExpenseDTO } from "../../types";
 
 export class ExpenseValidationError extends Error {
   constructor(

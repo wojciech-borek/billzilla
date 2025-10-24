@@ -74,7 +74,7 @@ export function useAudioRecorder(): UseAudioRecorderResult {
       };
 
       // Handle recording errors
-      mediaRecorder.onerror = (event) => {
+      mediaRecorder.onerror = () => {
         setState((prev) => ({
           ...prev,
           isRecording: false,

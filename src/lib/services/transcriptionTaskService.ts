@@ -10,7 +10,7 @@
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "../../db/database.types";
-import { WhisperService, type TranscribeAudioParams } from "./whisperService";
+import { WhisperService } from "./whisperService";
 import { OpenRouterService, type ExtractDataParams } from "./openRouterService";
 import { expenseTranscriptionSchema, type ExpenseTranscriptionResult } from "../schemas/expenseSchemas";
 

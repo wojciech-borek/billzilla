@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type {
@@ -10,7 +10,6 @@ import type {
 } from "../../types";
 import { createExpenseFormSchema, type CreateExpenseFormValues } from "../schemas/expenseSchemas";
 
-type SplitMethod = "equal" | "custom";
 
 interface ExpenseFormState {
   isSubmitting: boolean;

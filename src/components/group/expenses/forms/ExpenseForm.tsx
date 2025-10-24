@@ -1,9 +1,8 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Loader2, Mic, AlertTriangle } from "lucide-react";
 
-import { createExpenseFormSchema, type CreateExpenseFormValues } from "@/lib/schemas/expenseSchemas";
+import { type CreateExpenseFormValues } from "@/lib/schemas/expenseSchemas";
 import { useExpenseForm } from "@/lib/hooks/useExpenseForm";
 import { ExpenseBasicInfo } from "./ExpenseBasicInfo";
 import { ExpenseSplitSection } from "./ExpenseSplitSection";

@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import type { TranscriptionResultDTO, TranscriptionErrorDTO, TranscribeTaskResponseDTO } from "../../types";
+import type { TranscriptionErrorDTO, TranscribeTaskResponseDTO } from "../../types";
 import { useAudioRecorder } from "./useAudioRecorder";
 import { useTranscriptionErrorHandler } from "./useTranscriptionErrorHandler";
 

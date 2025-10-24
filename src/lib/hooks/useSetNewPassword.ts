@@ -53,7 +53,7 @@ export function useSetNewPassword({
         // Redirect to login with success message
         window.location.href = "/login?success=password_changed";
         return true;
-      } catch (err) {
+      } catch {
         setError("Wystąpił nieoczekiwany błąd");
         return false;
       } finally {
