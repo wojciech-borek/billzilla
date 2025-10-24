@@ -129,7 +129,7 @@ export const POST: APIRoute = async ({ params, locals }) => {
       status: 200,
       headers: { "Content-Type": "application/json" },
     });
-  } catch (error) {
+  } catch {
     const errorResponse: ErrorResponseDTO = {
       error: {
         code: "INTERNAL_ERROR",

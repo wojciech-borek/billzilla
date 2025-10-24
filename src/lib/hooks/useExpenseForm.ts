@@ -7,6 +7,7 @@ import type {
   GroupMemberSummaryDTO,
   GroupCurrencyDTO,
   ErrorResponseDTO,
+  ExpenseTranscriptionResult,
 } from "../../types";
 import { createExpenseFormSchema, type CreateExpenseFormValues } from "../schemas/expenseSchemas";
 
@@ -25,7 +26,7 @@ type UseExpenseFormResult = ExpenseFormState & {
     isValid: boolean;
   };
   handleSubmit: (groupId: string) => Promise<ExpenseDTO>;
-  populateFromTranscription: (data: CreateExpenseCommand) => void;
+  populateFromTranscription: (data: ExpenseTranscriptionResult) => void;
   reset: () => void;
 };
 
@@ -235,7 +236,7 @@ export function useExpenseForm(
 
   // Populate form with data from voice transcription
   const populateFromTranscription = useCallback(
-    (data: CreateExpenseCommand) => {
+    (data: ExpenseTranscriptionResult) => {
       try {
         // Validate required fields (only truly required ones)
         if (!data.description?.trim()) {

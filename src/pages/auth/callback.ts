@@ -21,7 +21,7 @@ export const GET: APIRoute = async ({ url, locals, redirect }) => {
   // Handle OAuth callback - exchange code for session
   if (code) {
     const supabase = locals.supabase;
-    const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+    const { error } = await supabase.auth.exchangeCodeForSession(code);
 
     if (error) {
       return redirect(`/login?error=${encodeURIComponent(error.message)}`);

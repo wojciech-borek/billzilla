@@ -57,7 +57,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     let formData: FormData;
     try {
       formData = await request.formData();
-    } catch (error) {
+    } catch {
       const errorResponse: ErrorResponseDTO = {
         error: {
           code: "INVALID_REQUEST",
@@ -205,7 +205,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
         groupContext,
         userId: locals.user.id,
       })
-      .catch((error) => {
+      .catch(() => {
         // Errors are already handled in processTask (updates task status to failed)
         // Just log for debugging
       });

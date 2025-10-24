@@ -56,8 +56,6 @@ export function ExpenseForm({
   } = useExpenseForm(groupMembers, groupCurrencies, currentUserId, initialData);
 
   const {
-    register,
-    control,
     handleSubmit,
     formState: { errors, isValid },
   } = form;
@@ -66,7 +64,7 @@ export function ExpenseForm({
     try {
       const expense = await submitExpense(groupId);
       await onSubmit(expense);
-    } catch (error) {
+    } catch {
       // Error is handled in the hook
     }
   };
