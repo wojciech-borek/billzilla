@@ -72,13 +72,15 @@ export default function DashboardView({ groupsLimit = 20, currentUserId }: Dashb
       }
 
       const groupData = await response.json();
-      setGroupMembers((groupData.members || []).map((member: GroupMemberDTO) => ({
-        profile_id: member.profile_id,
-        full_name: member.full_name,
-        avatar_url: member.avatar_url,
-        status: member.status,
-        role: member.role,
-      })));
+      setGroupMembers(
+        (groupData.members || []).map((member: GroupMemberDTO) => ({
+          profile_id: member.profile_id,
+          full_name: member.full_name,
+          avatar_url: member.avatar_url,
+          status: member.status,
+          role: member.role,
+        }))
+      );
       setGroupCurrencies(groupData.group_currencies || []);
       setSelectedExpenseGroupId(groupId);
     } catch (error) {

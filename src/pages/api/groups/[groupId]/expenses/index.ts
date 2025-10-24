@@ -111,7 +111,6 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
       headers: { "Content-Type": "application/json" },
     });
   } catch (error) {
-
     // Handle known error types
     if (error instanceof ExpenseValidationError) {
       const errorResponse: ErrorResponseDTO = {

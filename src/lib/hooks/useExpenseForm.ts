@@ -10,7 +10,6 @@ import type {
 } from "../../types";
 import { createExpenseFormSchema, type CreateExpenseFormValues } from "../schemas/expenseSchemas";
 
-
 interface ExpenseFormState {
   isSubmitting: boolean;
   submitError: string | null;
@@ -238,7 +237,6 @@ export function useExpenseForm(
   const populateFromTranscription = useCallback(
     (data: CreateExpenseCommand) => {
       try {
-
         // Validate required fields (only truly required ones)
         if (!data.description?.trim()) {
           throw new Error("Brak opisu w danych z transkrypcji");
@@ -257,7 +255,6 @@ export function useExpenseForm(
         const expense_date = data.expense_date || new Date().toISOString().slice(0, 16);
         const payer_id = data.payer_id || defaultPayerId || groupMembers[0]?.profile_id;
 
-      
         // Validate payer is a member of the group (after applying defaults)
         if (payer_id) {
           const payerExists = groupMembers.some((member) => member.profile_id === payer_id);

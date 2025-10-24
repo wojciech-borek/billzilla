@@ -222,7 +222,6 @@ export const POST: APIRoute = async ({ request, locals }) => {
       headers: { "Content-Type": "application/json" },
     });
   } catch (error) {
-
     // Handle specific error types
     if (error instanceof TaskProcessingError) {
       const errorResponse: ErrorResponseDTO = {
