@@ -1,4 +1,4 @@
-import { useMemo, useCallback, useState, useEffect } from "react";
+import { useCallback, useState } from "react";
 import { useGroupsList } from "./hooks/useGroupsList";
 import { useInvitationsList } from "./hooks/useInvitationsList";
 import { usePullToRefresh } from "./hooks/usePullToRefresh";
@@ -88,7 +88,7 @@ export default function DashboardView({ groupsLimit = 20, currentUserId }: Dashb
     setGroupCurrencies([]);
   };
 
-  const handleExpenseSuccess = async (expense: ExpenseDTO) => {
+  const handleExpenseSuccess = async () => {
     // Refetch groups to update balances
     await groupsQuery.refetch();
     handleExpenseModalClose();
@@ -131,7 +131,7 @@ export default function DashboardView({ groupsLimit = 20, currentUserId }: Dashb
           )}
 
           {/* Groups Section */}
-          <GroupsSection query={groupsQuery} onAddExpense={handleAddExpense} onCreateGroup={handleCreateGroup} />
+          <GroupsSection query={groupsQuery} onAddExpense={handleAddExpense} />
         </div>
       </div>
 

@@ -23,7 +23,7 @@ export const GoogleOAuthButton = memo(function GoogleOAuthButton({
 
       const supabase = createClient();
       await supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: callbackUrl.toString() } });
-    } catch (error) {
+    } catch {
       // Error is handled by redirecting back to login with error
     } finally {
       setIsLoading(false);

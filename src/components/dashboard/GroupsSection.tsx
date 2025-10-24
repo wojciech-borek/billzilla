@@ -9,16 +9,14 @@ interface GroupsSectionProps {
     loadMore: () => Promise<void>;
     hasMore: boolean;
   };
-  onChanged?: () => void;
   onAddExpense?: (groupId: string) => void;
-  onCreateGroup?: () => void;
 }
 
 /**
  * Groups section component
  * Displays user's groups in a grid with loading, error states and infinite scroll
  */
-export default function GroupsSection({ query, onChanged, onAddExpense, onCreateGroup }: GroupsSectionProps) {
+export default function GroupsSection({ query, onAddExpense }: GroupsSectionProps) {
   const { observerTarget } = useInfiniteScroll({
     onLoadMore: query.loadMore,
     hasMore: query.hasMore,

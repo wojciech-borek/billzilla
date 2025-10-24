@@ -25,7 +25,7 @@ export const RequestPasswordResetForm = memo(function RequestPasswordResetForm({
     reset: resetForm,
   } = useAuthForm<RequestPasswordResetData>(requestPasswordResetSchema);
 
-  const { isLoading: resetLoading, error: resetError, success, requestReset, reset: resetReset } = usePasswordReset();
+  const { isLoading: resetLoading, error: resetError, requestReset, reset: resetReset } = usePasswordReset();
 
   const isLoading = formLoading || resetLoading;
 
@@ -48,11 +48,6 @@ export const RequestPasswordResetForm = memo(function RequestPasswordResetForm({
     [formData, validate, requestReset, resetForm]
   );
 
-  const handleReset = useCallback(() => {
-    setShowSuccessMessage(false);
-    resetForm();
-    resetReset();
-  }, [resetForm, resetReset]);
 
   return (
     <div className="space-y-6">

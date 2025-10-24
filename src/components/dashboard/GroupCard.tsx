@@ -14,7 +14,7 @@ interface GroupCardProps {
  * Displays group information with balance, members, and quick actions
  * Prefetches group data on hover for faster navigation
  */
-export default function GroupCard({ group, onOpen, onAddExpense }: GroupCardProps) {
+export default function GroupCard({ group, onAddExpense }: GroupCardProps) {
   const handleCardClick = () => {
     window.location.href = `/groups/${group.id}`;
   };
