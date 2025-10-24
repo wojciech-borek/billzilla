@@ -238,7 +238,6 @@ export function useExpenseForm(
   const populateFromTranscription = useCallback(
     (data: CreateExpenseCommand) => {
       try {
-        console.log("📋 Populating form from transcription:", data);
 
         // Validate required fields (only truly required ones)
         if (!data.description?.trim()) {
@@ -258,14 +257,7 @@ export function useExpenseForm(
         const expense_date = data.expense_date || new Date().toISOString().slice(0, 16);
         const payer_id = data.payer_id || defaultPayerId || groupMembers[0]?.profile_id;
 
-        console.log("🔧 Using values:", {
-          currency_code,
-          expense_date,
-          payer_id,
-          payer_from_data: data.payer_id,
-          default_payer: defaultPayerId,
-        });
-
+      
         // Validate payer is a member of the group (after applying defaults)
         if (payer_id) {
           const payerExists = groupMembers.some((member) => member.profile_id === payer_id);
@@ -303,8 +295,6 @@ export function useExpenseForm(
         form.setValue("expense_date", expense_date, { shouldValidate: true });
         form.setValue("payer_id", payer_id, { shouldValidate: true });
         form.setValue("splits", validSplits, { shouldValidate: true });
-
-        console.log("✅ Form populated successfully");
 
         // Manually trigger validation to update isValid state
         setTimeout(() => {

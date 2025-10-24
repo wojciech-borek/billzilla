@@ -179,11 +179,7 @@ export async function createGroup(
 
   // Step 2-4: Create group atomically using RPC function
   // This function runs as SECURITY INVOKER (respects RLS) but provides atomicity
-  console.log("📞 Calling RPC create_group_transaction with:", {
-    p_group_name: command.name,
-    p_base_currency_code: command.base_currency_code,
-    p_creator_id: userId,
-  });
+
 
   const { data: newGroupData, error: groupError } = await supabase.rpc("create_group_transaction", {
     p_group_name: command.name,
@@ -191,18 +187,6 @@ export async function createGroup(
     p_creator_id: userId,
   });
 
-  console.log("📞 RPC result:", {
-    hasData: !!newGroupData,
-    dataLength: newGroupData?.length,
-    error: groupError
-      ? {
-          message: groupError.message,
-          code: groupError.code,
-          details: groupError.details,
-          hint: groupError.hint,
-        }
-      : null,
-  });
 
   if (groupError || !newGroupData || newGroupData.length === 0) {
     throw new TransactionError(`Failed to create group: ${groupError?.message || "Unknown error"}`);
