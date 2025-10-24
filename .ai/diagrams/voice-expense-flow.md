@@ -101,8 +101,8 @@ flowchart TD
 
     class START,A,B,C,D,E,F,G,H,I,J,K,L,M,O,Q,R,S,U,W,END process
     class N,T decision
-    class action
-    class success
+    class U action
+    class END success
     class P,X,Y error
 ```
 

@@ -86,7 +86,6 @@ flowchart TD
 
     class START,B,D,F,G,H,J,L,M,N auth
     class A,C,O,P,Q,R,S,T,U,V,W,X,Y,Z navigation
-    class group
     class BB,EE,FF,GG,HH,II,KK,LL,MM,NN,OO,PP,QQ,RR expense
     class CC,SS,TT,UU,VV,WW,XX,YY settlement
     class E,I,AA,JJ decision
@@ -201,7 +200,6 @@ flowchart TD
     classDef decision fill:#fce4ec,stroke:#880e4f,stroke-width:2px
 
     class DASHBOARD,A,B,C,D,E,F,G,H,I,J navigation
-    class group
     class L,M,N,O,P,Q,R,S,T,U,W,X,Y,Z,AA,BB expense
     class CC,DD,EE,FF,GG,HH,II settlement
     class K,V decision
@@ -252,7 +250,7 @@ flowchart TD
     class START,A,B,C,D,F,H,I,J,M,N,O,P,Q,S,U,V,W process
     class D,Q validation
     class E,R decision
-    class action
+    class F,S,U action
     class K,L email
     class G,T error
 ```
