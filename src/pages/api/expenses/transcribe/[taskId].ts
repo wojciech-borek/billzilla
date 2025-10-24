@@ -109,12 +109,12 @@ export const GET: APIRoute = async ({ params, locals }) => {
     // Add result data if task is completed
     if (task.status === "completed" && task.result_data && task.transcription_text) {
       // Extract confidence from result_data or use default
-      const resultData = task.result_data as ExpenseTranscriptionResult;
+      const resultData = task.result_data as unknown as ExpenseTranscriptionResult;
       const confidence = resultData?.extraction_confidence ?? 0.5; // Default to 0.5 if not available
 
       response.result = {
         transcription: task.transcription_text,
-        expense_data: task.result_data as ExpenseTranscriptionResult,
+        expense_data: task.result_data as unknown as ExpenseTranscriptionResult,
         confidence,
       };
     }
