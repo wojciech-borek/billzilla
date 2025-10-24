@@ -132,8 +132,6 @@ export const GET: APIRoute = async ({ params, locals }) => {
       headers: { "Content-Type": "application/json" },
     });
   } catch (error) {
-    console.error("Error in GET /api/expenses/transcribe/:taskId:", error);
-
     // Handle unexpected errors
     const errorResponse: ErrorResponseDTO = {
       error: {

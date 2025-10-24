@@ -189,7 +189,6 @@ export function useTranscriptionPolling({
       } catch (err) {
         if (!isMounted) return false;
 
-        console.error("Polling error:", err);
         const transcriptionError: TranscriptionErrorDTO = {
           code: "POLLING_ERROR",
           message: "Błąd podczas sprawdzania statusu",

@@ -66,7 +66,6 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
     try {
       requestBody = await request.json();
     } catch (error) {
-      console.error("JSON parse error:", error);
       const errorResponse: ErrorResponseDTO = {
         error: {
           code: "INVALID_JSON",
@@ -111,7 +110,6 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
       headers: { "Content-Type": "application/json" },
     });
   } catch (error) {
-    console.error("Error creating expense:", error);
 
     // Handle known error types
     if (error instanceof ExpenseValidationError) {
@@ -142,8 +140,6 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
     }
 
     // Handle unexpected errors
-    console.error("Unexpected error in expense creation:", error);
-    console.error("Stack trace:", error instanceof Error ? error.stack : "No stack trace");
     const errorResponse: ErrorResponseDTO = {
       error: {
         code: "INTERNAL_SERVER_ERROR",

@@ -89,7 +89,6 @@ export function VoiceInputButton({
       await startRecording();
     } catch (error) {
       // Error is handled in the hook
-      console.error("Failed to start recording:", error);
     }
   }, [isRecording, isProcessing, disabled, startRecording]);
 
@@ -108,7 +107,6 @@ export function VoiceInputButton({
       // VoiceTranscriptionStatus component to show and handle polling
       await uploadAudio(audioBlob, groupId);
     } catch (error) {
-      console.error("Failed to stop recording:", error);
       toast.error("Błąd podczas zatrzymywania nagrywania");
       reset();
     }

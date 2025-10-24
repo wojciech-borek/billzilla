@@ -144,7 +144,6 @@ export class WhisperService {
       return result;
     } catch (error) {
       // Log the error for debugging purposes
-      console.error("Error in WhisperService:", error);
 
       // Re-throw custom errors as-is
       if (

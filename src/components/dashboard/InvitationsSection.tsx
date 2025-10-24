@@ -33,7 +33,6 @@ export default function InvitationsSection({ query, onChanged }: InvitationsSect
 
     if (result.success) {
       // Show success toast (optional - could use a toast library)
-      console.log("Zaproszenie zaakceptowane");
       // Notify parent to refetch groups
       onChanged?.();
     } else {
@@ -60,7 +59,6 @@ export default function InvitationsSection({ query, onChanged }: InvitationsSect
 
     if (result.success) {
       // Show success toast (optional)
-      console.log("Zaproszenie odrzucone");
     } else {
       // Show error on the card
       setErrors((prev) => new Map(prev).set(id, result.error || "Nieznany błąd"));

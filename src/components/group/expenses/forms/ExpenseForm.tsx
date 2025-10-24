@@ -69,7 +69,6 @@ export function ExpenseForm({
       await onSubmit(expense);
     } catch (error) {
       // Error is handled in the hook
-      console.error("Form submission error:", error);
     }
   };
 
@@ -81,7 +80,6 @@ export function ExpenseForm({
         // Call parent callback
         onTranscriptionComplete?.(result);
       } catch (error) {
-        console.error("Error populating form from transcription:", error);
         // Still call parent callback to show error
         if (onTranscriptionError) {
           onTranscriptionError({
@@ -95,17 +93,6 @@ export function ExpenseForm({
   );
 
   const formErrors = { ...errors, ...fieldErrors };
-
-  // Debug: log validation state
-  React.useEffect(() => {
-    console.log("🔍 Form validation state:", {
-      isValid,
-      isSubmitting,
-      splitValidation,
-      errors,
-      fieldErrors,
-    });
-  }, [isValid, isSubmitting, splitValidation, errors, fieldErrors]);
 
   return (
     <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-6">

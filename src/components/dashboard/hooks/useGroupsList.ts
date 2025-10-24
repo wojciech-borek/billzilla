@@ -90,7 +90,6 @@ export function useGroupsList({ status = "active", limit = 20 }: UseGroupsListPa
           error: null,
         }));
       } catch (error) {
-        console.error("Error fetching groups:", error);
         setState((prev) => ({
           ...prev,
           loading: false,

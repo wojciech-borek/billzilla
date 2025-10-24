@@ -59,12 +59,6 @@ export function useTranscriptionErrorHandler() {
       const message = getErrorMessage(error);
       const retryable = canRetry(error);
 
-      console.error("Transcription error:", {
-        code: error.code,
-        message,
-        retryable,
-      });
-
       // Show toast notification if requested (default: true)
       if (options?.showToast !== false) {
         if (retryable) {

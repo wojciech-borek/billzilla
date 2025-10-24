@@ -56,7 +56,6 @@ export const GET: APIRoute = async ({ locals }) => {
       .order("created_at", { ascending: false });
 
     if (error) {
-      console.error("Error fetching invitations:", error);
       const errorResponse: ErrorResponseDTO = {
         error: {
           code: "DATABASE_ERROR",
@@ -86,7 +85,6 @@ export const GET: APIRoute = async ({ locals }) => {
       headers: { "Content-Type": "application/json" },
     });
   } catch (error) {
-    console.error("Unexpected error in GET /api/invitations:", error);
     const errorResponse: ErrorResponseDTO = {
       error: {
         code: "INTERNAL_ERROR",

@@ -60,7 +60,6 @@ export function useInvitationsList(): InvitationsQueryState & {
         error: null,
       });
     } catch (error) {
-      console.error("Error fetching invitations:", error);
       setState((prev) => ({
         ...prev,
         loading: false,
@@ -98,7 +97,6 @@ export function useInvitationsList(): InvitationsQueryState & {
 
       return { success: true };
     } catch (error) {
-      console.error("Error accepting invitation:", error);
       return {
         success: false,
         error: error instanceof Error ? error.message : "Unknown error occurred",
@@ -135,7 +133,6 @@ export function useInvitationsList(): InvitationsQueryState & {
 
       return { success: true };
     } catch (error) {
-      console.error("Error declining invitation:", error);
       return {
         success: false,
         error: error instanceof Error ? error.message : "Unknown error occurred",

@@ -82,7 +82,6 @@ export function AddExpenseModal({
 
       toast.success("Wydatek rozpoznany! Sprawdź dane i zatwierdź.");
     } catch (error) {
-      console.error("Error handling transcription result:", error);
       toast.error("Błąd podczas przetwarzania rozpoznanego wydatku");
     }
   };

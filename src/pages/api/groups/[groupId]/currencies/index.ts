@@ -63,8 +63,6 @@ export const GET: APIRoute = async ({ params, locals }) => {
       headers: { "Content-Type": "application/json" },
     });
   } catch (error) {
-    console.error("Error fetching group currencies:", error);
-
     // Handle specific error cases
     if (error instanceof Error) {
       if (error.message.includes("not found") || error.message.includes("not a member")) {

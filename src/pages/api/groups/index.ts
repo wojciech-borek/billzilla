@@ -88,7 +88,6 @@ export const GET: APIRoute = async ({ url, locals }) => {
     });
   } catch (error) {
     // Handle unexpected errors
-    console.error("Unexpected error in GET /api/groups:", error);
     const errorResponse: ErrorResponseDTO = {
       error: {
         code: "INTERNAL_SERVER_ERROR",
@@ -228,7 +227,6 @@ export const POST: APIRoute = async ({ request, locals }) => {
     }
 
     // Handle unexpected errors
-    console.error("Unexpected error in POST /api/groups:", error);
     const errorResponse: ErrorResponseDTO = {
       error: {
         code: "INTERNAL_SERVER_ERROR",

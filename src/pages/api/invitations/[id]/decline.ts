@@ -61,7 +61,6 @@ export const POST: APIRoute = async ({ params, locals }) => {
       .single();
 
     if (fetchError || !invitation) {
-      console.error("Error fetching invitation:", fetchError);
       const errorResponse: ErrorResponseDTO = {
         error: {
           code: "INVITATION_NOT_FOUND",
@@ -109,7 +108,6 @@ export const POST: APIRoute = async ({ params, locals }) => {
       .eq("id", invitationId);
 
     if (updateError) {
-      console.error("Error declining invitation:", updateError);
       const errorResponse: ErrorResponseDTO = {
         error: {
           code: "DATABASE_ERROR",
@@ -132,7 +130,6 @@ export const POST: APIRoute = async ({ params, locals }) => {
       headers: { "Content-Type": "application/json" },
     });
   } catch (error) {
-    console.error("Unexpected error in POST /api/invitations/:id/decline:", error);
     const errorResponse: ErrorResponseDTO = {
       error: {
         code: "INTERNAL_ERROR",

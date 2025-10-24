@@ -16,7 +16,6 @@ export function useLogout() {
       const { error } = await supabase.auth.signOut();
 
       if (error) {
-        console.error("Błąd podczas wylogowania:", error);
         setIsLoggingOut(false);
         return { success: false, error };
       }
@@ -25,7 +24,6 @@ export function useLogout() {
       window.location.href = "/login";
       return { success: true, error: null };
     } catch (err) {
-      console.error("Nieoczekiwany błąd podczas wylogowania:", err);
       setIsLoggingOut(false);
       return { success: false, error: err };
     }

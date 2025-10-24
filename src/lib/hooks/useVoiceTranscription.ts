@@ -83,8 +83,6 @@ export function useVoiceTranscription(): UseVoiceTranscriptionResult {
       await audioRecorder.startRecording();
       setState((prev) => ({ ...prev, isRecording: true }));
     } catch (error) {
-      console.error("Failed to start recording:", error);
-
       // Convert audio recorder error to transcription error format
       const transcriptionError = errorHandler.createError("MICROPHONE_ERROR", audioRecorder.error || undefined);
 
@@ -105,8 +103,6 @@ export function useVoiceTranscription(): UseVoiceTranscriptionResult {
 
       return audioBlob;
     } catch (error) {
-      console.error("Failed to stop recording:", error);
-
       const transcriptionError = errorHandler.createError("RECORDING_ERROR");
 
       setState((prev) => ({

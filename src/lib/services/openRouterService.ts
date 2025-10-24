@@ -120,7 +120,6 @@ export class OpenRouterService {
       return validatedData;
     } catch (error) {
       // Log the error for debugging purposes
-      console.error("Error in OpenRouterService:", error);
 
       // Re-throw custom errors as-is
       if (

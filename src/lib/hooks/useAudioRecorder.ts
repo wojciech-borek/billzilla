@@ -75,7 +75,6 @@ export function useAudioRecorder(): UseAudioRecorderResult {
 
       // Handle recording errors
       mediaRecorder.onerror = (event) => {
-        console.error("MediaRecorder error:", event);
         setState((prev) => ({
           ...prev,
           isRecording: false,
@@ -106,7 +105,6 @@ export function useAudioRecorder(): UseAudioRecorderResult {
         setState((prev) => ({ ...prev, duration: prev.duration + 1 }));
       }, 1000);
     } catch (error) {
-      console.error("Failed to start recording:", error);
       const errorMessage = error instanceof Error ? error.message : "Nieznany błąd";
 
       let userFriendlyMessage = "Nie udało się uzyskać dostępu do mikrofonu";

@@ -62,7 +62,6 @@ export const GET: APIRoute = async ({ params, locals }) => {
       headers: { "Content-Type": "application/json" },
     });
   } catch (error) {
-    console.error("Error fetching group:", error);
     const errorResponse: ErrorResponseDTO = {
       error: {
         code: "INTERNAL_SERVER_ERROR",

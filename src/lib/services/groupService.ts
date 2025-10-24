@@ -73,7 +73,6 @@ async function handleInvitations(
     });
 
     if (profilesError) {
-      console.error("Error fetching profiles for invitations:", profilesError);
       return result;
     }
 
@@ -108,7 +107,6 @@ async function handleInvitations(
             };
           });
         } else if (membersError) {
-          console.error("Error adding members to group:", membersError);
         }
       }
     }
@@ -138,11 +136,9 @@ async function handleInvitations(
           status: inv.status,
         }));
       } else if (invitationsError) {
-        console.error("Error creating invitations:", invitationsError);
       }
     }
   } catch (error) {
-    console.error("Unexpected error in handleInvitations:", error);
   }
 
   return result;
@@ -272,7 +268,6 @@ export async function listGroups(
     .range(offset, offset + limit - 1);
 
   if (groupsError) {
-    console.error("Error fetching user groups:", groupsError);
     throw new Error("Failed to fetch groups");
   }
 
@@ -284,7 +279,6 @@ export async function listGroups(
     .eq("status", status);
 
   if (countError) {
-    console.error("Error counting groups:", countError);
     throw new Error("Failed to count groups");
   }
 
@@ -322,7 +316,6 @@ export async function listGroups(
     .eq("status", "active");
 
   if (membersError) {
-    console.error("Error fetching group members:", membersError);
     throw new Error("Failed to fetch group members");
   }
 
@@ -355,7 +348,6 @@ export async function listGroups(
     .eq("created_by", userId);
 
   if (expensesError) {
-    console.error("Error fetching user expenses:", expensesError);
     throw new Error("Failed to fetch user expenses");
   }
 
@@ -375,7 +367,6 @@ export async function listGroups(
     .in("expenses.group_id", groupIds);
 
   if (splitsError) {
-    console.error("Error fetching user splits:", splitsError);
     throw new Error("Failed to fetch user splits");
   }
 
@@ -387,7 +378,6 @@ export async function listGroups(
     .or(`payer_id.eq.${userId},payee_id.eq.${userId}`);
 
   if (settlementsError) {
-    console.error("Error fetching settlements:", settlementsError);
     throw new Error("Failed to fetch settlements");
   }
 
@@ -398,7 +388,6 @@ export async function listGroups(
     .in("group_id", groupIds);
 
   if (currenciesError) {
-    console.error("Error fetching group currencies:", currenciesError);
     throw new Error("Failed to fetch group currencies");
   }
 
@@ -526,7 +515,6 @@ export async function getGroupCurrencies(
     .order("currency_code");
 
   if (currenciesError) {
-    console.error("Error fetching group currencies:", currenciesError);
     throw new Error("Failed to fetch group currencies");
   }
 
@@ -628,7 +616,6 @@ export async function getGroupDetails(
     .order("joined_at", { ascending: true });
 
   if (membersError) {
-    console.error("Error fetching group members:", membersError);
     throw new Error("Failed to fetch group members");
   }
 
@@ -661,7 +648,6 @@ export async function getGroupDetails(
     .order("currency_code");
 
   if (currenciesError) {
-    console.error("Error fetching group currencies:", currenciesError);
     throw new Error("Failed to fetch group currencies");
   }
 
@@ -688,7 +674,6 @@ export async function getGroupDetails(
     .order("created_at", { ascending: false });
 
   if (invitationsError) {
-    console.error("Error fetching pending invitations:", invitationsError);
     // Don't throw - invitations are optional
   }
 

@@ -72,7 +72,6 @@ export const POST: APIRoute = async ({ params, locals }) => {
       .single();
 
     if (fetchError || !invitation) {
-      console.error("Error fetching invitation:", fetchError);
       const errorResponse: ErrorResponseDTO = {
         error: {
           code: "INVITATION_NOT_FOUND",
@@ -123,7 +122,6 @@ export const POST: APIRoute = async ({ params, locals }) => {
 
     if (memberCheckError && memberCheckError.code !== "PGRST116") {
       // PGRST116 = no rows returned
-      console.error("Error checking existing membership:", memberCheckError);
       const errorResponse: ErrorResponseDTO = {
         error: {
           code: "DATABASE_ERROR",
@@ -144,7 +142,6 @@ export const POST: APIRoute = async ({ params, locals }) => {
         .eq("id", invitationId);
 
       if (updateError) {
-        console.error("Error updating invitation status:", updateError);
         const errorResponse: ErrorResponseDTO = {
           error: {
             code: "DATABASE_ERROR",
@@ -167,7 +164,6 @@ export const POST: APIRoute = async ({ params, locals }) => {
       });
 
       if (memberError) {
-        console.error("Error adding user to group:", memberError);
         const errorResponse: ErrorResponseDTO = {
           error: {
             code: "DATABASE_ERROR",
@@ -187,7 +183,6 @@ export const POST: APIRoute = async ({ params, locals }) => {
         .eq("id", invitationId);
 
       if (updateError) {
-        console.error("Error updating invitation status:", updateError);
         // Try to rollback the group membership addition
         await supabase.from("group_members").delete().eq("group_id", invitation.group_id).eq("profile_id", user.id);
 
@@ -216,7 +211,6 @@ export const POST: APIRoute = async ({ params, locals }) => {
       headers: { "Content-Type": "application/json" },
     });
   } catch (error) {
-    console.error("Unexpected error in POST /api/invitations/:id/accept:", error);
     const errorResponse: ErrorResponseDTO = {
       error: {
         code: "INTERNAL_ERROR",

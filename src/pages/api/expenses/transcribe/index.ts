@@ -58,7 +58,6 @@ export const POST: APIRoute = async ({ request, locals }) => {
     try {
       formData = await request.formData();
     } catch (error) {
-      console.error("Failed to parse form data:", error);
       const errorResponse: ErrorResponseDTO = {
         error: {
           code: "INVALID_REQUEST",
@@ -209,7 +208,6 @@ export const POST: APIRoute = async ({ request, locals }) => {
       .catch((error) => {
         // Errors are already handled in processTask (updates task status to failed)
         // Just log for debugging
-        console.error("Async task processing error:", error);
       });
 
     // Step 9: Return task response immediately
@@ -224,7 +222,6 @@ export const POST: APIRoute = async ({ request, locals }) => {
       headers: { "Content-Type": "application/json" },
     });
   } catch (error) {
-    console.error("Error in POST /api/expenses/transcribe:", error);
 
     // Handle specific error types
     if (error instanceof TaskProcessingError) {

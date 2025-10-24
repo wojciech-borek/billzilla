@@ -76,7 +76,6 @@ export default function DashboardView({ groupsLimit = 20, currentUserId }: Dashb
       setGroupCurrencies(groupData.group_currencies || []);
       setSelectedExpenseGroupId(groupId);
     } catch (error) {
-      console.error("Error loading group data:", error);
       toast.error("Nie udało się załadować danych grupy");
     } finally {
       setIsExpenseModalLoading(false);
