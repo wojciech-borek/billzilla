@@ -21,7 +21,7 @@ export function useLogout() {
       }
 
       // Przekierowanie na stronę logowania
-      window.location.href = "/login";
+      window.location.assign("/login");
       return { success: true, error: null };
     } catch (err) {
       setIsLoggingOut(false);

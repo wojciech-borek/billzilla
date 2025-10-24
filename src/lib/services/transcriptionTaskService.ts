@@ -163,7 +163,7 @@ export class TranscriptionTaskService {
       .update({
         status: "completed" as TranscriptionTaskStatus,
         transcription_text: transcriptionText,
-        result_data: resultData,
+        result_data: JSON.parse(JSON.stringify(resultData)),
         completed_at: new Date().toISOString(),
       })
       .eq("id", taskId);

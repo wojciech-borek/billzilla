@@ -24,7 +24,7 @@ export default function GroupsSection({ query, onAddExpense }: GroupsSectionProp
     enabled: true,
   });
   const handleOpenGroup = (id: string) => {
-    window.location.href = `/groups/${id}`;
+    window.location.assign(`/groups/${id}`);
   };
 
   const handleRetry = () => {

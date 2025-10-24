@@ -41,7 +41,7 @@ export const EmailConfirmationMessage = memo(function EmailConfirmationMessage({
 
       // Automatyczne przekierowanie po krótkiej chwili
       setTimeout(() => {
-        window.location.href = nextUrl || "/";
+        window.location.assign(nextUrl || "/");
       }, 3000);
     } catch (err) {
       setError(getAuthErrorMessage(err));
@@ -80,7 +80,7 @@ export const EmailConfirmationMessage = memo(function EmailConfirmationMessage({
         </div>
 
         <Button
-          onClick={() => (window.location.href = nextUrl || "/")}
+          onClick={() => window.location.assign(nextUrl || "/")}
           className="w-full bg-primary hover:bg-primary-dark text-white rounded-xl transition-all duration-300 ease-out"
         >
           Przejdź do aplikacji
@@ -114,7 +114,7 @@ export const EmailConfirmationMessage = memo(function EmailConfirmationMessage({
 
           <Button
             variant="outline"
-            onClick={() => (window.location.href = "/signup")}
+            onClick={() => window.location.assign("/signup")}
             className="w-full rounded-xl border-2 border-gray-200 hover:border-primary transition-all duration-300 ease-out"
           >
             Powrót do rejestracji
