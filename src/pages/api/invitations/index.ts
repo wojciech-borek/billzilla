@@ -77,12 +77,6 @@ export const GET: APIRoute = async ({ locals }) => {
       .select("id, name")
       .in("id", groupIds);
 
-    console.log("Groups query result:", { data: groups, error: groupsError });
-
-    if (groupsError) {
-      console.error("Failed to fetch groups for invitations:", groupsError);
-      // Continue with empty groups - we'll handle missing groups gracefully
-    }
 
     // Create a map of group data
     const groupMap = new Map(groups?.map(g => [g.id, g]) || []);
@@ -92,7 +86,6 @@ export const GET: APIRoute = async ({ locals }) => {
       .filter((inv) => {
         const group = groupMap.get(inv.group_id);
         if (!group) {
-          console.warn(`Group not found for invitation ${inv.id}, skipping`);
           return false;
         }
         return true;
@@ -116,7 +109,6 @@ export const GET: APIRoute = async ({ locals }) => {
       headers: { "Content-Type": "application/json" },
     });
   } catch (error) {
-    console.error("Error in /api/invitations:", error);
     const errorResponse: ErrorResponseDTO = {
       error: {
         code: "INTERNAL_ERROR",
