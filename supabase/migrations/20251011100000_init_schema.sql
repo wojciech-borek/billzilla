@@ -194,6 +194,16 @@ create policy "allow_update_own_profile" on public.profiles for update
 create policy "allow_read_own_groups" on public.groups for select
   to authenticated
   using (is_group_member(id, (select auth.uid())));
+create policy "allow_read_invited_groups" on public.groups for select
+  to authenticated
+  using (
+    exists (
+      select 1 from public.invitations i
+      where i.group_id = groups.id
+      and i.email = (select p.email from public.profiles p where p.id = (select auth.uid()))
+      and i.status = 'pending'
+    )
+  );
 create policy "allow_insert_for_authenticated" on public.groups for insert
   to authenticated
   with check (true);
@@ -210,9 +220,18 @@ create policy "allow_all_for_group_members" on public.group_currencies for all
   with check (is_group_member(group_id, (select auth.uid())));
 
 -- policies: invitations
+create policy "allow_read_for_invited_users" on public.invitations for select
+  to authenticated
+  using (
+    -- Allow users to read invitations where their email matches
+    email = (select p.email from public.profiles p where p.id = (select auth.uid()))
+  );
 create policy "allow_read_for_group_members" on public.invitations for select
   to authenticated
-  using (is_group_member(group_id, (select auth.uid())));
+  using (
+    -- Allow group members to read invitations for their groups
+    is_group_member(group_id, (select auth.uid()))
+  );
 
 -- policies: expenses
 create policy "allow_read_for_group_members" on public.expenses for select
