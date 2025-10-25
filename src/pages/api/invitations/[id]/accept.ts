@@ -123,20 +123,30 @@ export const POST: APIRoute = async ({ params, locals }) => {
       });
     }
 
-    // Check if user is already a member of the group
-    const { data: existingMember, error: memberCheckError } = await supabase
-      .from("group_members")
-      .select("profile_id")
-      .eq("group_id", invitation.group_id)
-      .eq("profile_id", user.id)
-      .single();
+    // Use the atomic function to accept invitation and add user to group
+    console.log("Calling accept_invitation_transaction with:", {
+      invitation_id: invitationId,
+      user_id: user.id,
+      user_email: user.email,
+      invitation_email: invitation.email,
+      invitation_status: invitation.status
+    });
 
-    if (memberCheckError && memberCheckError.code !== "PGRST116") {
-      // PGRST116 = no rows returned
+    const { data: result, error: functionError } = await supabase
+      .rpc("accept_invitation_transaction", {
+        p_invitation_id: invitationId,
+        p_user_id: user.id,
+      });
+
+    console.log("Function call result:", { success: !functionError, error: functionError, data: result });
+
+    if (functionError) {
       const errorResponse: ErrorResponseDTO = {
         error: {
           code: "DATABASE_ERROR",
-          message: "Failed to check group membership",
+          message: "Failed to accept invitation",
+          details: functionError.message,
+          code_details: functionError.code
         },
       };
       return new Response(JSON.stringify(errorResponse), {
@@ -145,76 +155,11 @@ export const POST: APIRoute = async ({ params, locals }) => {
       });
     }
 
-    if (existingMember) {
-      // User is already a member, just mark invitation as accepted
-      const { error: updateError } = await supabase
-        .from("invitations")
-        .update({ status: "accepted" })
-        .eq("id", invitationId);
-
-      if (updateError) {
-        const errorResponse: ErrorResponseDTO = {
-          error: {
-            code: "DATABASE_ERROR",
-            message: "Failed to update invitation status",
-          },
-        };
-        return new Response(JSON.stringify(errorResponse), {
-          status: 500,
-          headers: { "Content-Type": "application/json" },
-        });
-      }
-    } else {
-      // Add user to group and mark invitation as accepted
-      // First add user to group
-      const { error: memberError } = await supabase.from("group_members").insert({
-        group_id: invitation.group_id,
-        profile_id: user.id,
-        role: "member",
-        status: "active",
-      });
-
-      if (memberError) {
-        const errorResponse: ErrorResponseDTO = {
-          error: {
-            code: "DATABASE_ERROR",
-            message: "Failed to add user to group",
-          },
-        };
-        return new Response(JSON.stringify(errorResponse), {
-          status: 500,
-          headers: { "Content-Type": "application/json" },
-        });
-      }
-
-      // Then mark invitation as accepted
-      const { error: updateError } = await supabase
-        .from("invitations")
-        .update({ status: "accepted" })
-        .eq("id", invitationId);
-
-      if (updateError) {
-        // Try to rollback the group membership addition
-        await supabase.from("group_members").delete().eq("group_id", invitation.group_id).eq("profile_id", user.id);
-
-        const errorResponse: ErrorResponseDTO = {
-          error: {
-            code: "DATABASE_ERROR",
-            message: "Failed to update invitation status",
-          },
-        };
-        return new Response(JSON.stringify(errorResponse), {
-          status: 500,
-          headers: { "Content-Type": "application/json" },
-        });
-      }
-    }
-
     const response: AcceptInvitationResponseDTO = {
       message: "Invitation accepted successfully",
-      invitation_id: invitationId,
-      group_id: invitation.group_id,
-      group_name: (invitation.group as { id: string; name: string }).name,
+      invitation_id: result[0].invitation_id,
+      group_id: result[0].group_id,
+      group_name: result[0].group_name,
     };
 
     return new Response(JSON.stringify(response), {
