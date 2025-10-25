@@ -70,7 +70,6 @@ export const createGroupFormSchema = z.object({
         .toLowerCase()
     )
     .max(20, "Możesz zaprosić maksymalnie 20 osób")
-    .optional()
     .default([])
     .refine(
       (emails) => {

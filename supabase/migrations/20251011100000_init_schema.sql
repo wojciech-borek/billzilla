@@ -250,3 +250,143 @@ create policy "allow_all_for_group_members" on public.settlements for all
   to authenticated
   using (is_group_member(group_id, (select auth.uid())))
   with check (is_group_member(group_id, (select auth.uid())));
+
+
+-- =============================================
+-- Group creation transaction function
+-- =============================================
+-- comment: Atomic function to create groups with member invitations
+-- This function handles the complete group creation process including
+-- adding existing users as members and creating invitations for non-users
+
+CREATE OR REPLACE FUNCTION public.create_group_transaction(
+  p_group_name TEXT,
+  p_base_currency_code VARCHAR(3),
+  p_creator_id UUID,
+  p_invite_emails TEXT[] DEFAULT NULL
+)
+RETURNS TABLE (
+  id UUID,
+  created_at TIMESTAMPTZ,
+  name TEXT,
+  base_currency_code VARCHAR(3),
+  status public.group_status,
+  added_members JSONB,
+  created_invitations JSONB
+)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_group_id UUID;
+  v_created_at TIMESTAMPTZ;
+  v_existing_profiles UUID[];
+  v_added_members JSONB := '[]'::jsonb;
+  v_created_invitations JSONB := '[]'::jsonb;
+  v_profile_record RECORD;
+BEGIN
+  -- Security checks for SECURITY DEFINER function
+  -- Verify that JWT is present (user is authenticated)
+  IF auth.jwt() IS NULL THEN
+    RAISE EXCEPTION 'Authentication required: JWT token not found';
+  END IF;
+
+  -- Verify that the caller is authenticated and matches the creator_id
+  IF auth.uid() IS NULL THEN
+    RAISE EXCEPTION 'Authentication required: User not authenticated';
+  END IF;
+
+  -- Verify that the caller is the same as p_creator_id
+  IF auth.uid() != p_creator_id THEN
+    RAISE EXCEPTION 'Unauthorized: cannot create group for another user (auth.uid=%, p_creator_id=%)', auth.uid(), p_creator_id;
+  END IF;
+
+  -- Verify that the currency exists
+  IF NOT EXISTS (SELECT 1 FROM public.currencies WHERE code = p_base_currency_code) THEN
+    RAISE EXCEPTION 'Currency % does not exist', p_base_currency_code;
+  END IF;
+
+  -- Insert the group
+  INSERT INTO public.groups (name, base_currency_code, status)
+  VALUES (p_group_name, p_base_currency_code, 'active')
+  RETURNING groups.id, groups.created_at
+  INTO v_group_id, v_created_at;
+
+  -- Add creator as a member
+  INSERT INTO public.group_members (group_id, profile_id, role, status)
+  VALUES (v_group_id, p_creator_id, 'creator', 'active');
+
+  -- Add base currency with exchange rate 1.0
+  INSERT INTO public.group_currencies (group_id, currency_code, exchange_rate)
+  VALUES (v_group_id, p_base_currency_code, 1.0);
+
+  -- Handle invitations if provided
+  IF p_invite_emails IS NOT NULL AND array_length(p_invite_emails, 1) > 0 THEN
+    -- Find existing profiles for invite emails
+    SELECT array_agg(p.id)
+    INTO v_existing_profiles
+    FROM public.profiles p
+    WHERE p.email = ANY(p_invite_emails);
+
+    -- Add existing users as members (excluding creator)
+    IF v_existing_profiles IS NOT NULL THEN
+      FOR v_profile_record IN
+        SELECT p.id, p.email, p.full_name
+        FROM public.profiles p
+        WHERE p.id = ANY(v_existing_profiles) AND p.id != p_creator_id
+      LOOP
+        -- Add as member
+        INSERT INTO public.group_members (group_id, profile_id, role, status)
+        VALUES (v_group_id, v_profile_record.id, 'member', 'active');
+
+        -- Add to result
+        v_added_members := v_added_members || jsonb_build_object(
+          'profile_id', v_profile_record.id,
+          'email', v_profile_record.email,
+          'full_name', v_profile_record.full_name,
+          'status', 'active'
+        );
+      END LOOP;
+    END IF;
+
+    -- Create invitations for non-existing users
+    INSERT INTO public.invitations (group_id, email, status)
+    SELECT v_group_id, email, 'pending'::public.invitation_status
+    FROM unnest(p_invite_emails) AS email
+    WHERE email NOT IN (
+      SELECT p.email FROM public.profiles p WHERE p.id = ANY(v_existing_profiles)
+    );
+
+    -- Get the created invitations for result
+    SELECT jsonb_agg(
+      jsonb_build_object(
+        'id', i.id,
+        'email', i.email,
+        'status', i.status
+      )
+    )
+    INTO v_created_invitations
+    FROM public.invitations i
+    WHERE i.group_id = v_group_id AND i.status = 'pending';
+  END IF;
+
+  -- Return the created group with invitation results
+  RETURN QUERY
+  SELECT
+    v_group_id,
+    v_created_at,
+    p_group_name,
+    p_base_currency_code,
+    'active'::public.group_status,
+    v_added_members,
+    v_created_invitations;
+END;
+$$;
+
+-- Grant execute permission to authenticated users
+GRANT EXECUTE ON FUNCTION public.create_group_transaction(TEXT, VARCHAR(3), UUID, TEXT[]) TO authenticated;
+
+-- Add comment
+COMMENT ON FUNCTION public.create_group_transaction IS
+  'Creates a new group with the specified creator and handles member invitations atomically. Runs as SECURITY DEFINER (bypasses RLS, validates auth internally).'

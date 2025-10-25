@@ -39,109 +39,6 @@ export class TransactionError extends Error {
   }
 }
 
-/**
- * Handles invitation processing for a group
- * This function operates in "best-effort" mode - failures don't rollback group creation
- *
- * @param supabase - Supabase client instance
- * @param groupId - ID of the group to invite members to
- * @param emails - Array of email addresses to process
- * @param creatorId - ID of the group creator (to avoid adding them again)
- * @returns Results of invitation processing (added members and created invitations)
- */
-async function handleInvitations(
-  supabase: SupabaseClient<Database>,
-  groupId: string,
-  emails: string[],
-  creatorId: string
-): Promise<InvitationResultDTO> {
-  const result: InvitationResultDTO = {
-    added_members: [],
-    created_invitations: [],
-  };
-
-  if (!emails || emails.length === 0) {
-    return result;
-  }
-
-  try {
-    // Step 1: Find existing users by email using RPC function to bypass RLS
-    // This is necessary because RLS policy only allows reading profiles of users
-    // in the same group, but invitees are not yet in the group
-    const { data: existingProfiles, error: profilesError } = await supabase.rpc("find_profiles_by_emails", {
-      email_list: emails,
-    });
-
-    if (profilesError) {
-      return result;
-    }
-
-    // Step 2: Add existing users to the group (excluding the creator)
-    if (existingProfiles && existingProfiles.length > 0) {
-      // Filter out the creator - they're already added to the group
-      const profilesToAdd = existingProfiles.filter((profile) => profile.id !== creatorId);
-
-      if (profilesToAdd.length > 0) {
-        const membersToAdd = profilesToAdd.map((profile) => ({
-          group_id: groupId,
-          profile_id: profile.id,
-          role: "member" as GroupRole,
-          status: "active" as const,
-        }));
-
-        const { data: addedMembers, error: membersError } = await supabase
-          .from("group_members")
-          .insert(membersToAdd)
-          .select("profile_id, status")
-          .returns<{ profile_id: string; status: "active" | "inactive" }[]>();
-
-        if (!membersError && addedMembers) {
-          // Map the added members with their profile information
-          result.added_members = addedMembers.map((member) => {
-            const profile = existingProfiles.find((p) => p.id === member.profile_id);
-            return {
-              profile_id: member.profile_id,
-              email: profile?.email || "",
-              full_name: profile?.full_name || null,
-              status: member.status,
-            };
-          });
-        } else if (membersError) {
-        }
-      }
-    }
-
-    // Step 3: Find emails without accounts
-    const existingEmails = new Set(existingProfiles?.map((p) => p.email) || []);
-    const emailsWithoutAccounts = emails.filter((email) => !existingEmails.has(email));
-
-    // Step 4: Create invitations for emails without accounts
-    if (emailsWithoutAccounts.length > 0) {
-      const invitationsToCreate = emailsWithoutAccounts.map((email) => ({
-        group_id: groupId,
-        email: email,
-        status: "pending" as const,
-      }));
-
-      const { data: createdInvitations, error: invitationsError } = await supabase
-        .from("invitations")
-        .insert(invitationsToCreate)
-        .select("id, email, status")
-        .returns<{ id: string; email: string; status: "pending" | "accepted" | "declined" }[]>();
-
-      if (!invitationsError && createdInvitations) {
-        result.created_invitations = createdInvitations.map((inv) => ({
-          id: inv.id,
-          email: inv.email,
-          status: inv.status,
-        }));
-      } else if (invitationsError) {
-      }
-    }
-  } catch (error) {}
-
-  return result;
-}
 
 /**
  * Creates a new group with the creator as the first member
@@ -176,13 +73,14 @@ export async function createGroup(
     throw new CurrencyNotFoundError(command.base_currency_code);
   }
 
-  // Step 2-4: Create group atomically using RPC function
-  // This function runs as SECURITY INVOKER (respects RLS) but provides atomicity
+  // Step 2-5: Create group atomically using RPC function
+  // This function runs as SECURITY DEFINER (bypasses RLS) and handles invitations atomically
 
   const { data: newGroupData, error: groupError } = await supabase.rpc("create_group_transaction", {
     p_group_name: command.name,
     p_base_currency_code: command.base_currency_code,
     p_creator_id: userId,
+    p_invite_emails: command.invite_emails || undefined,
   });
 
   if (groupError || !newGroupData || newGroupData.length === 0) {
@@ -191,15 +89,20 @@ export async function createGroup(
 
   const newGroup = newGroupData[0];
 
-  // Step 5: Handle invitations (best-effort, non-blocking)
-  let invitationResults: InvitationResultDTO = {
-    added_members: [],
-    created_invitations: [],
+  // Parse invitation results from the database function
+  const invitationResults: InvitationResultDTO = {
+    added_members: Array.isArray(newGroup.added_members) ? newGroup.added_members.map((member: any) => ({
+      profile_id: member.profile_id,
+      email: member.email,
+      full_name: member.full_name,
+      status: member.status,
+    })) : [],
+    created_invitations: Array.isArray(newGroup.created_invitations) ? newGroup.created_invitations.map((inv: any) => ({
+      id: inv.id,
+      email: inv.email,
+      status: inv.status,
+    })) : [],
   };
-
-  if (command.invite_emails && command.invite_emails.length > 0) {
-    invitationResults = await handleInvitations(supabase, newGroup.id, command.invite_emails, userId);
-  }
 
   // Return the complete response
   return {
