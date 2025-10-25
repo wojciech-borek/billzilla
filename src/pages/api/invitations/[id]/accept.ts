@@ -145,8 +145,7 @@ export const POST: APIRoute = async ({ params, locals }) => {
         error: {
           code: "DATABASE_ERROR",
           message: "Failed to accept invitation",
-          details: functionError.message,
-          code_details: functionError.code
+          details: { message: functionError.message, code: functionError.code }
         },
       };
       return new Response(JSON.stringify(errorResponse), {
