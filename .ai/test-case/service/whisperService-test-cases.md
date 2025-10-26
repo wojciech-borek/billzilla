@@ -1,434 +1,411 @@
-# WhisperService Unit Test Cases
+# Test Cases dla WhisperService
 
-## Error Classes Module
+**Plik źródłowy:** `src/lib/services/whisperService.ts`  
+**Data generowania:** 26 października 2025  
+**Liczba test cases:** 24
 
-### UT-ERROR-001
-**Nazwa testu:** should_create_WhisperConfigurationError_with_custom_message_when_constructed  
-**Moduł / funkcja:** WhisperConfigurationError.constructor  
-**Cel testu:** Verify error creation with custom message and name  
-**Wejście / dane testowe:** message = "API key missing"  
-**Setup / izolacja:** None required  
-**Kroki testowe:** Arrange: Create error instance; Act: Check properties; Assert: message and name match  
-**Oczekiwany rezultat:** error.message === "API key missing", error.name === "WhisperConfigurationError"  
+## UT-WHISPER-CONSTRUCTOR - Testy konstruktora
+
+### UT-WHISPER-CONSTRUCTOR-01
+**Nazwa testu:** `should_initialize_successfully_when_api_key_provided_in_config`  
+**Moduł / funkcja:** `WhisperService.constructor`  
+**Cel testu:** Weryfikacja poprawnego inicjalizacji serwisu gdy klucz API jest przekazany w konfiguracji  
+**Wejście / dane testowe:** `config = { apiKey: "test-api-key" }`  
+**Setup / izolacja:** Mockowanie `import.meta.env.OPENAI_API_KEY` na undefined  
+**Kroki testowe (Arrange → Act → Assert):**  
+1. Przygotuj konfigurację z prawidłowym kluczem API  
+2. Utwórz nową instancję WhisperService  
+3. Sprawdź czy instancja została utworzona bez błędów  
+**Oczekiwany rezultat:** Instancja WhisperService zostaje utworzona pomyślnie  
+**Priorytet:** Wysoki  
+**Edge cases:** -  
+**Notatki / uwagi:** Test podstawowej funkcjonalności konstruktora
+
+### UT-WHISPER-CONSTRUCTOR-02
+**Nazwa testu:** `should_initialize_successfully_when_api_key_provided_in_environment`  
+**Moduł / funkcja:** `WhisperService.constructor`  
+**Cel testu:** Weryfikacja poprawnego inicjalizacji serwisu gdy klucz API jest dostępny w zmiennych środowiskowych  
+**Wejście / dane testowe:** `config = {}`, `import.meta.env.OPENAI_API_KEY = "env-api-key"`  
+**Setup / izolacja:** Mockowanie zmiennych środowiskowych  
+**Kroki testowe (Arrange → Act → Assert):**  
+1. Skonfiguruj zmienne środowiskowe z kluczem API  
+2. Utwórz nową instancję WhisperService bez konfiguracji  
+3. Sprawdź czy instancja została utworzona bez błędów  
+**Oczekiwany rezultat:** Instancja WhisperService zostaje utworzona pomyślnie  
+**Priorytet:** Wysoki  
+**Edge cases:** -  
+**Notatki / uwagi:** Test alternatywnego źródła klucza API
+
+### UT-WHISPER-CONSTRUCTOR-03
+**Nazwa testu:** `should_throw_WhisperConfigurationError_when_no_api_key_available`  
+**Moduł / funkcja:** `WhisperService.constructor`  
+**Cel testu:** Weryfikacja rzucania błędu konfiguracji gdy klucz API nie jest dostępny  
+**Wejście / dane testowe:** `config = {}`, brak `OPENAI_API_KEY`  
+**Setup / izolacja:** Mockowanie pustych zmiennych środowiskowych  
+**Kroki testowe (Arrange → Act → Assert):**  
+1. Upewnij się że zmienne środowiskowe nie zawierają klucza API  
+2. Spróbuj utworzyć nową instancję WhisperService  
+3. Sprawdź czy został rzucony WhisperConfigurationError  
+**Oczekiwany rezultat:** Rzucenie `WhisperConfigurationError` z odpowiednią wiadomością  
+**Priorytet:** Wysoki  
+**Edge cases:** -  
+**Notatki / uwagi:** Krytyczny test walidacji konfiguracji
+
+## UT-WHISPER-VALIDATE-AUDIO - Testy walidacji pliku audio
+
+### UT-WHISPER-VALIDATE-AUDIO-01
+**Nazwa testu:** `should_pass_validation_when_audio_file_valid`  
+**Moduł / funkcja:** `WhisperService.validateAudioFile`  
+**Cel testu:** Weryfikacja pozytywnej walidacji prawidłowego pliku audio  
+**Wejście / dane testowe:** `audioBlob` o rozmiarze 1MB z typem "audio/wav"  
+**Setup / izolacja:** Utworzenie poprawnego Blob audio  
+**Kroki testowe (Arrange → Act → Assert):**  
+1. Przygotuj prawidłowy plik audio  
+2. Wywołaj metodę validateAudioFile  
+3. Sprawdź czy nie zostały rzucone błędy  
+**Oczekiwany rezultat:** Metoda kończy się bez błędów  
+**Priorytet:** Wysoki  
+**Edge cases:** -  
+**Notatki / uwagi:** Test podstawowej walidacji
+
+### UT-WHISPER-VALIDATE-AUDIO-02
+**Nazwa testu:** `should_throw_InvalidAudioFileError_when_file_too_large`  
+**Moduł / funkcja:** `WhisperService.validateAudioFile`  
+**Cel testu:** Weryfikacja rzucania błędu gdy plik audio przekracza maksymalny rozmiar  
+**Wejście / dane testowe:** `audioBlob` o rozmiarze 30MB  
+**Setup / izolacja:** Utworzenie zbyt dużego Blob audio  
+**Kroki testowe (Arrange → Act → Assert):**  
+1. Przygotuj plik audio przekraczający limit 25MB  
+2. Wywołaj metodę validateAudioFile  
+3. Sprawdź czy został rzucony InvalidAudioFileError  
+**Oczekiwany rezultat:** Rzucenie `InvalidAudioFileError` z informacją o przekroczonym rozmiarze  
+**Priorytet:** Wysoki  
+**Edge cases:** Dokładnie 25MB + 1 bajt  
+**Notatki / uwagi:** Test granicznych warunków rozmiaru pliku
+
+### UT-WHISPER-VALIDATE-AUDIO-03
+**Nazwa testu:** `should_throw_InvalidAudioFileError_when_unsupported_format`  
+**Moduł / funkcja:** `WhisperService.validateAudioFile`  
+**Cel testu:** Weryfikacja rzucania błędu dla nieobsługiwanego formatu audio  
+**Wejście / dane testowe:** `audioBlob` z typem "audio/aac"  
+**Setup / izolacja:** Utworzenie Blob z nieobsługiwanym typem MIME  
+**Kroki testowe (Arrange → Act → Assert):**  
+1. Przygotuj plik audio w nieobsługiwanym formacie  
+2. Wywołaj metodę validateAudioFile  
+3. Sprawdź czy został rzucony InvalidAudioFileError  
+**Oczekiwany rezultat:** Rzucenie `InvalidAudioFileError` z listą obsługiwanych formatów  
+**Priorytet:** Wysoki  
+**Edge cases:** Typ MIME bez prefiksu "audio/", puste type  
+**Notatki / uwagi:** Test walidacji formatów audio
+
+### UT-WHISPER-VALIDATE-AUDIO-04
+**Nazwa testu:** `should_pass_validation_when_supported_format_variations`  
+**Moduł / funkcja:** `WhisperService.isSupportedFormat`  
+**Cel testu:** Weryfikacja rozpoznawania różnych wariacji obsługiwanych formatów  
+**Wejście / dane testowe:** Typy MIME: "audio/mpeg", "audio/mp3", "audio/wav;codecs=opus"  
+**Setup / izolacja:** Test różnych wariacji typów MIME  
+**Kroki testowe (Arrange → Act → Assert):**  
+1. Przetestuj różne obsługiwane typy MIME  
+2. Wywołaj metodę isSupportedFormat dla każdego  
+3. Sprawdź czy wszystkie zwracają true  
+**Oczekiwany rezultat:** Wszystkie obsługiwane formaty są rozpoznawane  
 **Priorytet:** Średni  
-**Edge cases:** Empty string message, null message  
-**Notatki / uwagi:** Simple constructor test, no external dependencies  
+**Edge cases:** Typy z dodatkowymi parametrami kodeków  
+**Notatki / uwagi:** Test elastyczności rozpoznawania formatów
 
-### UT-ERROR-002
-**Nazwa testu:** should_create_WhisperApiError_with_status_and_message_when_constructed  
-**Moduł / funkcja:** WhisperApiError.constructor  
-**Cel testu:** Verify error creation with status code and API message  
-**Wejście / dane testowe:** status = 401, apiMessage = "Invalid API key"  
-**Setup / izolacja:** None required  
-**Kroki testowe:** Arrange: Create error instance; Act: Check properties; Assert: status, message and name match  
-**Oczekiwany rezultat:** error.status === 401, error.apiMessage === "Invalid API key", error.message contains both  
+## UT-WHISPER-PREPARE-DATA - Testy przygotowania danych
+
+### UT-WHISPER-PREPARE-DATA-01
+**Nazwa testu:** `should_create_correct_FormData_with_basic_params`  
+**Moduł / funkcja:** `WhisperService.prepareFormData`  
+**Cel testu:** Weryfikacja poprawnego tworzenia FormData z podstawowymi parametrami  
+**Wejście / dane testowe:** `audioBlob` WAV, brak dodatkowych parametrów  
+**Setup / izolacja:** Utworzenie podstawowego obiektu parametrów  
+**Kroki testowe (Arrange → Act → Assert):**  
+1. Przygotuj parametry z podstawowym plikiem audio  
+2. Wywołaj metodę prepareFormData  
+3. Sprawdź zawartość FormData (file, model, response_format)  
+**Oczekiwany rezultat:** FormData zawiera prawidłowe pola i wartości  
+**Priorytet:** Wysoki  
+**Edge cases:** -  
+**Notatki / uwagi:** Test podstawowej funkcjonalności przygotowania danych
+
+### UT-WHISPER-PREPARE-DATA-02
+**Nazwa testu:** `should_include_optional_language_parameter_when_provided`  
+**Moduł / funkcja:** `WhisperService.prepareFormData`  
+**Cel testu:** Weryfikacja uwzględniania opcjonalnego parametru języka  
+**Wejście / dane testowe:** `language: "pl"`  
+**Setup / izolacja:** Parametry zawierające język polski  
+**Kroki testowe (Arrange → Act → Assert):**  
+1. Przygotuj parametry z ustawionym językiem  
+2. Wywołaj metodę prepareFormData  
+3. Sprawdź czy FormData zawiera pole "language" z wartością "pl"  
+**Oczekiwany rezultat:** Parametr języka jest włączony do FormData  
 **Priorytet:** Średni  
-**Edge cases:** Status 500, empty apiMessage  
-**Notatki / uwagi:** Tests error formatting with status codes  
+**Edge cases:** -  
+**Notatki / uwagi:** Test parametrów opcjonalnych
 
-### UT-ERROR-003
-**Nazwa testu:** should_create_WhisperNetworkError_with_custom_message_when_constructed  
-**Moduł / funkcja:** WhisperNetworkError.constructor  
-**Cel testu:** Verify network error creation  
-**Wejście / dane testowe:** message = "Connection timeout"  
-**Setup / izolacja:** None required  
-**Kroki testowe:** Arrange: Create error instance; Act: Check properties; Assert: message and name match  
-**Oczekiwany rezultat:** error.message === "Connection timeout", error.name === "WhisperNetworkError"  
+### UT-WHISPER-PREPARE-DATA-03
+**Nazwa testu:** `should_include_optional_prompt_parameter_when_provided`  
+**Moduł / funkcja:** `WhisperService.prepareFormData`  
+**Cel testu:** Weryfikacja uwzględniania opcjonalnego parametru kontekstu  
+**Wejście / dane testowe:** `prompt: "Transkrypcja paragonu fiskalnego"`  
+**Setup / izolacja:** Parametry zawierające prompt kontekstowy  
+**Kroki testowe (Arrange → Act → Assert):**  
+1. Przygotuj parametry z ustawionym promptem  
+2. Wywołaj metodę prepareFormData  
+3. Sprawdź czy FormData zawiera pole "prompt" z prawidłową wartością  
+**Oczekiwany rezultat:** Parametr prompt jest włączony do FormData  
 **Priorytet:** Średni  
-**Edge cases:** Empty message, very long message  
-**Notatki / uwagi:** Basic error constructor test  
+**Edge cases:** -  
+**Notatki / uwagi:** Test kontekstu dla lepszej transkrypcji
 
-### UT-ERROR-004
-**Nazwa testu:** should_create_InvalidAudioFileError_with_custom_message_when_constructed  
-**Moduł / funkcja:** InvalidAudioFileError.constructor  
-**Cel testu:** Verify audio file error creation  
-**Wejście / dane testowe:** message = "Unsupported format: audio/unknown"  
-**Setup / izolacja:** None required  
-**Kroki testowe:** Arrange: Create error instance; Act: Check properties; Assert: message and name match  
-**Oczekiwany rezultat:** error.message === "Unsupported format: audio/unknown", error.name === "InvalidAudioFileError"  
+### UT-WHISPER-PREPARE-DATA-04
+**Nazwa testu:** `should_use_correct_file_extension_for_different_formats`  
+**Moduł / funkcja:** `WhisperService.getFileExtension`  
+**Cel testu:** Weryfikacja mapowania typów MIME na prawidłowe rozszerzenia plików  
+**Wejście / dane testowe:** Różne typy MIME: "audio/mp3", "audio/wav", "audio/ogg"  
+**Setup / izolacja:** Test mapowania rozszerzeń  
+**Kroki testowe (Arrange → Act → Assert):**  
+1. Przetestuj metodę getFileExtension dla różnych typów MIME  
+2. Sprawdź zwracane rozszerzenia  
+3. Porównaj z oczekiwanymi wartościami  
+**Oczekiwany rezultat:** Każde rozszerzenie odpowiada typowi MIME  
 **Priorytet:** Średni  
-**Edge cases:** Empty message  
-**Notatki / uwagi:** Audio-specific error test  
+**Edge cases:** Nieznany typ MIME zwraca domyślne "webm"  
+**Notatki / uwagi:** Test mapowania formatów plików
 
-### UT-ERROR-005
-**Nazwa testu:** should_create_InvalidTranscriptionError_with_custom_message_when_constructed  
-**Moduł / funkcja:** InvalidTranscriptionError.constructor  
-**Cel testu:** Verify transcription error creation  
-**Wejście / dane testowe:** message = "Empty transcription result"  
-**Setup / izolacja:** None required  
-**Kroki testowe:** Arrange: Create error instance; Act: Check properties; Assert: message and name match  
-**Oczekiwany rezultat:** error.message === "Empty transcription result", error.name === "InvalidTranscriptionError"  
+## UT-WHISPER-API-REQUEST - Testy żądań API
+
+### UT-WHISPER-API-REQUEST-01
+**Nazwa testu:** `should_return_successful_response_when_api_call_succeeds`  
+**Moduł / funkcja:** `WhisperService.makeApiRequest`  
+**Cel testu:** Weryfikacja obsługi prawidłowej odpowiedzi API  
+**Wejście / dane testowe:** Mock odpowiedzi HTTP 200 z prawidłową strukturą JSON  
+**Setup / izolacja:** Mockowanie fetch API  
+**Kroki testowe (Arrange → Act → Assert):**  
+1. Przygotuj mock odpowiedzi API z sukcesem  
+2. Wywołaj metodę makeApiRequest  
+3. Sprawdź zwrócony obiekt odpowiedzi  
+**Oczekiwany rezultat:** Zwrócenie sparsowanego obiektu odpowiedzi  
+**Priorytet:** Wysoki  
+**Edge cases:** -  
+**Notatki / uwagi:** Test ścieżki sukcesu API
+
+### UT-WHISPER-API-REQUEST-02
+**Nazwa testu:** `should_throw_WhisperApiError_when_api_returns_error_status`  
+**Moduł / funkcja:** `WhisperService.makeApiRequest`  
+**Cel testu:** Weryfikacja rzucania błędu API przy błędnych statusach HTTP i parsowania wiadomości błędu  
+**Wejście / dane testowe:** Mock odpowiedzi HTTP 400 z błędem zawierającym pole "error.message"  
+**Setup / izolacja:** Mockowanie błędnej odpowiedzi API z JSON error.message  
+**Kroki testowe (Arrange → Act → Assert):**  
+1. Przygotuj mock błędnej odpowiedzi API (400 Bad Request) z polem error.message  
+2. Wywołaj metodę makeApiRequest i sprawdź rzucenie WhisperApiError  
+3. Wywołaj metodę ponownie i sprawdź szczegóły wiadomości błędu  
+4. Sprawdź właściwości błędu (status, apiMessage)  
+**Oczekiwany rezultat:** Rzucenie `WhisperApiError` z prawidłowym statusem i sparsowaną wiadomością z API  
+**Priorytet:** Wysoki  
+**Edge cases:** Statusy 401, 403, 429, 500, niepoprawny JSON w odpowiedzi błędu  
+**Notatki / uwagi:** Test obsługi błędów API i parsowania szczegółowych wiadomości
+
+### UT-WHISPER-API-REQUEST-03
+**Nazwa testu:** `should_throw_WhisperNetworkError_when_fetch_fails`  
+**Moduł / funkcja:** `WhisperService.makeApiRequest`  
+**Cel testu:** Weryfikacja rzucania błędu sieci przy problemach z połączeniem  
+**Wejście / dane testowe:** Symulacja błędu fetch (network error)  
+**Setup / izolacja:** Mockowanie fetch aby rzucał błąd sieci  
+**Kroki testowe (Arrange → Act → Assert):**  
+1. Przygotuj mock fetch rzucający NetworkError  
+2. Wywołaj metodę makeApiRequest i sprawdź rzucenie WhisperNetworkError  
+3. Wywołaj metodę ponownie i sprawdź szczegóły wiadomości błędu  
+**Oczekiwany rezultat:** Rzucenie `WhisperNetworkError` z opisem problemu sieci  
+**Priorytet:** Wysoki  
+**Edge cases:** Timeout, DNS resolution failure  
+**Notatki / uwagi:** Test odporności na problemy sieci
+
+## UT-WHISPER-PARSE-RESPONSE - Testy parsowania odpowiedzi
+
+### UT-WHISPER-PARSE-RESPONSE-01
+**Nazwa testu:** `should_return_valid_TranscriptionResult_when_response_complete`  
+**Moduł / funkcja:** `WhisperService.parseTranscriptionResponse`  
+**Cel testu:** Weryfikacja parsowania prawidłowej odpowiedzi transkrypcji  
+**Wejście / dane testowe:** Obiekt odpowiedzi z text, language i duration  
+**Setup / izolacja:** Przygotowanie kompletnego obiektu odpowiedzi  
+**Kroki testowe (Arrange → Act → Assert):**  
+1. Przygotuj prawidłową odpowiedź API  
+2. Wywołaj metodę parseTranscriptionResponse  
+3. Sprawdź zwrócony obiekt TranscriptionResult  
+**Oczekiwany rezultat:** Obiekt z text, language i duration  
+**Priorytet:** Wysoki  
+**Edge cases:** -  
+**Notatki / uwagi:** Test parsowania prawidłowej odpowiedzi
+
+### UT-WHISPER-PARSE-RESPONSE-02
+**Nazwa testu:** `should_throw_InvalidTranscriptionError_when_text_missing`  
+**Moduł / funkcja:** `WhisperService.parseTranscriptionResponse`  
+**Cel testu:** Weryfikacja rzucania błędu gdy brakuje pola text  
+**Wejście / dane testowe:** Obiekt odpowiedzi bez pola text  
+**Setup / izolacja:** Odpowiedź API bez wymaganego pola  
+**Kroki testowe (Arrange → Act → Assert):**  
+1. Przygotuj odpowiedź bez pola text  
+2. Wywołaj metodę parseTranscriptionResponse  
+3. Sprawdź czy został rzucony InvalidTranscriptionError  
+**Oczekiwany rezultat:** Rzucenie `InvalidTranscriptionError` z informacją o brakującym polu  
+**Priorytet:** Wysoki  
+**Edge cases:** null, undefined, pusty string  
+**Notatki / uwagi:** Test walidacji obowiązkowych pól
+
+### UT-WHISPER-PARSE-RESPONSE-03
+**Nazwa testu:** `should_throw_InvalidTranscriptionError_when_text_empty_after_trim`  
+**Moduł / funkcja:** `WhisperService.parseTranscriptionResponse`  
+**Cel testu:** Weryfikacja rzucania błędu gdy tekst po przycięciu jest pusty  
+**Wejście / dane testowe:** Obiekt z text zawierającym tylko białe znaki  
+**Setup / izolacja:** Odpowiedź z pustym tekstem po trim()  
+**Kroki testowe (Arrange → Act → Assert):**  
+1. Przygotuj odpowiedź z pustym tekstem (tylko spacje/taby)  
+2. Wywołaj metodę parseTranscriptionResponse  
+3. Sprawdź czy został rzucony InvalidTranscriptionError  
+**Oczekiwany rezultat:** Rzucenie `InvalidTranscriptionError` z informacją o pustym tekście  
+**Priorytet:** Wysoki  
+**Edge cases:** Tekst składający się tylko z białych znaków  
+**Notatki / uwagi:** Test walidacji niepustego tekstu
+
+## UT-WHISPER-TRANSCRIBE-AUDIO - Testy głównej metody
+
+### UT-WHISPER-TRANSCRIBE-AUDIO-01
+**Nazwa testu:** `should_return_transcription_successfully_when_all_steps_succeed`  
+**Moduł / funkcja:** `WhisperService.transcribeAudio`  
+**Cel testu:** Weryfikacja pełnego przepływu transkrypcji audio  
+**Wejście / dane testowe:** Prawidłowy plik audio WAV  
+**Setup / izolacja:** Mockowanie wszystkich zależności (walidacja, API, parsowanie)  
+**Kroki testowe (Arrange → Act → Assert):**  
+1. Przygotuj prawidłowy plik audio  
+2. Zamockuj wszystkie wewnętrzne metody  
+3. Wywołaj metodę transcribeAudio  
+4. Sprawdź zwrócony wynik transkrypcji  
+**Oczekiwany rezultat:** Zwrócenie poprawnego obiektu TranscriptionResult  
+**Priorytet:** Wysoki  
+**Edge cases:** -  
+**Notatki / uwagi:** Test end-to-end transkrypcji
+
+### UT-WHISPER-TRANSCRIBE-AUDIO-02
+**Nazwa testu:** `should_rethrow_InvalidAudioFileError_from_validation`  
+**Moduł / funkcja:** `WhisperService.transcribeAudio`  
+**Cel testu:** Weryfikacja propagacji błędów walidacji pliku audio z testowaniem typu i wiadomości  
+**Wejście / dane testowe:** Nieprawidłowy plik audio (zbyt duży)  
+**Setup / izolacja:** Ustawienie validateAudioFile aby rzucał błąd  
+**Kroki testowe (Arrange → Act → Assert):**  
+1. Przygotuj nieprawidłowy plik audio  
+2. Wywołaj metodę transcribeAudio i sprawdź rzucenie InvalidAudioFileError  
+3. Utwórz nową instancję i sprawdź szczegóły wiadomości błędu  
+**Oczekiwany rezultat:** Rzucenie `InvalidAudioFileError` z prawidłowym typem i wiadomością  
+**Priorytet:** Wysoki  
+**Edge cases:** Wszystkie typy błędów walidacji  
+**Notatki / uwagi:** Test propagacji błędów walidacji z pełną weryfikacją
+
+### UT-WHISPER-TRANSCRIBE-AUDIO-03
+**Nazwa testu:** `should_rethrow_WhisperApiError_from_api_request`  
+**Moduł / funkcja:** `WhisperService.transcribeAudio`  
+**Cel testu:** Weryfikacja propagacji błędów API z testowaniem typu i wiadomości  
+**Wejście / dane testowe:** Prawidłowy plik, błąd API  
+**Setup / izolacja:** Mock makeApiRequest aby rzucał WhisperApiError  
+**Kroki testowe (Arrange → Act → Assert):**  
+1. Przygotuj prawidłowy plik audio  
+2. Zamockuj błąd API i sprawdź rzucenie WhisperApiError  
+3. Utwórz nową instancję i sprawdź szczegóły wiadomości błędu  
+**Oczekiwany rezultat:** Rzucenie `WhisperApiError` z prawidłowym typem i wiadomością  
+**Priorytet:** Wysoki  
+**Edge cases:** -  
+**Notatki / uwagi:** Test propagacji błędów API z pełną weryfikacją
+
+### UT-WHISPER-TRANSCRIBE-AUDIO-04
+**Nazwa testu:** `should_wrap_unexpected_errors_in_generic_Error`  
+**Moduł / funkcja:** `WhisperService.transcribeAudio`  
+**Cel testu:** Weryfikacja obsługi nieoczekiwanych błędów z testowaniem typu i wiadomości  
+**Wejście / dane testowe:** Dowolny plik audio  
+**Setup / izolacja:** Mock jednej z metod aby rzucała nieoczekiwany błąd  
+**Kroki testowe (Arrange → Act → Assert):**  
+1. Przygotuj plik audio  
+2. Zamockuj metodę aby rzucała nieznany błąd i sprawdź rzucenie generycznego Error  
+3. Utwórz nową instancję i sprawdź szczegóły wiadomości błędu  
+**Oczekiwany rezultat:** Rzucenie generycznego `Error` z prawidłowym typem i opisem nieoczekiwanego błędu  
 **Priorytet:** Średni  
-**Edge cases:** Empty message  
-**Notatki / uwagi:** Transcription-specific error test  
+**Edge cases:** Błędy typu string, object, null  
+**Notatki / uwagi:** Test odporności na nieoczekiwane błędy z pełną weryfikacją
 
-## Constructor Module
+## UT-WHISPER-ERROR-CLASSES - Testy klas błędów
 
-### UT-CONSTRUCTOR-001
-**Nazwa testu:** should_initialize_service_successfully_when_api_key_provided_in_config  
-**Moduł / funkcja:** WhisperService.constructor  
-**Cel testu:** Verify service initialization with API key from config  
-**Wejście / dane testowe:** config = { apiKey: "sk-test123" }  
-**Setup / izolacja:** None required  
-**Kroki testowe:** Arrange: Create config object; Act: Instantiate service; Assert: No exception thrown  
-**Oczekiwany rezultat:** Service instance created without errors  
-**Priorytet:** Wysoki  
-**Edge cases:** Very long API key, API key with special characters  
-**Notatki / uwagi:** Critical for service initialization  
+### UT-WHISPER-ERROR-CLASSES-01
+**Nazwa testu:** `should_create_WhisperConfigurationError_with_message`  
+**Moduł / funkcja:** `WhisperConfigurationError`  
+**Cel testu:** Weryfikacja tworzenia instancji błędu konfiguracji  
+**Wejście / dane testowe:** `message = "Test configuration error"`  
+**Setup / izolacja:** Utworzenie instancji błędu  
+**Kroki testowe (Arrange → Act → Assert):**  
+1. Utwórz nową instancję WhisperConfigurationError  
+2. Sprawdź właściwości instancji  
+3. Porównaj z oczekiwanymi wartościami  
+**Oczekiwany rezultat:** Instancja z prawidłową wiadomością i nazwą klasy  
+**Priorytet:** Niski  
+**Edge cases:** -  
+**Notatki / uwagi:** Test podstawowej funkcjonalności klasy błędu
 
-### UT-CONSTRUCTOR-002
-**Nazwa testu:** should_initialize_service_successfully_when_api_key_from_environment  
-**Moduł / funkcja:** WhisperService.constructor  
-**Cel testu:** Verify service initialization with API key from environment  
-**Wejście / dane testowe:** config = {}, import.meta.env.OPENAI_API_KEY = "sk-env456"  
-**Setup / izolacja:** Mock import.meta.env.OPENAI_API_KEY  
-**Kroki testowe:** Arrange: Mock env variable; Act: Instantiate service; Assert: No exception thrown  
-**Oczekiwany rezultat:** Service instance created without errors  
-**Priorytet:** Wysoki  
-**Edge cases:** Environment variable undefined initially  
-**Notatki / uwagi:** Depends on environment mocking in tests  
+### UT-WHISPER-ERROR-CLASSES-02
+**Nazwa testu:** `should_create_WhisperApiError_with_status_and_message`  
+**Moduł / funkcja:** `WhisperApiError`  
+**Cel testu:** Weryfikacja tworzenia instancji błędu API z statusem HTTP  
+**Wejście / dane testowe:** `status = 400, apiMessage = "Bad Request"`  
+**Setup / izolacja:** Utworzenie instancji błędu z parametrami  
+**Kroki testowe (Arrange → Act → Assert):**  
+1. Utwórz nową instancję WhisperApiError  
+2. Sprawdź status i wiadomość  
+3. Sprawdź nazwę klasy  
+**Oczekiwany rezultat:** Instancja z statusem, wiadomością i nazwą klasy  
+**Priorytet:** Niski  
+**Edge cases:** -  
+**Notatki / uwagi:** Test klasy błędu API
 
-### UT-CONSTRUCTOR-003
-**Nazwa testu:** should_throw_WhisperConfigurationError_when_no_api_key_available  
-**Moduł / funkcja:** WhisperService.constructor  
-**Cel testu:** Verify error when no API key is provided  
-**Wejście / dane testowe:** config = {}, import.meta.env.OPENAI_API_KEY = undefined  
-**Setup / izolacja:** Mock import.meta.env.OPENAI_API_KEY as undefined  
-**Kroki testowe:** Arrange: Clear API key sources; Act: Try to instantiate service; Assert: WhisperConfigurationError thrown  
-**Oczekiwany rezultat:** WhisperConfigurationError with message "OPENAI_API_KEY is not set in environment variables."  
-**Priorytet:** Wysoki  
-**Edge cases:** Config has empty string API key  
-**Notatki / uwagi:** Critical error path for service initialization  
+### UT-WHISPER-ERROR-CLASSES-03
+**Nazwa testu:** `should_create_WhisperNetworkError_with_message`  
+**Moduł / funkcja:** `WhisperNetworkError`  
+**Cel testu:** Weryfikacja tworzenia instancji błędu sieci  
+**Wejście / dane testowe:** `message = "Network timeout"`  
+**Setup / izolacja:** Utworzenie instancji błędu  
+**Kroki testowe (Arrange → Act → Assert):**  
+1. Utwórz nową instancję WhisperNetworkError  
+2. Sprawdź wiadomość i nazwę klasy  
+3. Sprawdź czy rozszerza Error  
+**Oczekiwany rezultat:** Prawidłowa instancja błędu sieci  
+**Priorytet:** Niski  
+**Edge cases:** -  
+**Notatki / uwagi:** Test klasy błędu sieci
 
-## validateAudioFile Method
+### UT-WHISPER-ERROR-CLASSES-04
+**Nazwa testu:** `should_create_InvalidAudioFileError_with_message`  
+**Moduł / funkcja:** `InvalidAudioFileError`  
+**Cel testu:** Weryfikacja tworzenia instancji błędu nieprawidłowego pliku audio  
+**Wejście / dane testowe:** `message = "Unsupported format"`  
+**Setup / izolacja:** Utworzenie instancji błędu  
+**Kroki testowe (Arrange → Act → Assert):**  
+1. Utwórz nową instancję InvalidAudioFileError  
+2. Sprawdź wiadomość i nazwę klasy  
+3. Sprawdź czy rozszerza Error  
+**Oczekiwany rezultat:** Prawidłowa instancja błędu pliku audio  
+**Priorytet:** Niski  
+**Edge cases:** -  
+**Notatki / uwagi:** Test klasy błędu pliku audio
 
-### UT-VALIDATE-001
-**Nazwa testu:** should_pass_validation_when_audio_file_meets_requirements  
-**Moduł / funkcja:** WhisperService.validateAudioFile  
-**Cel testu:** Verify valid audio file passes validation  
-**Wejście / dane testowe:** audioBlob = new Blob(['test'], { type: 'audio/wav' }), size = 1MB  
-**Setup / izolacja:** Create service instance, mock audio blob  
-**Kroki testowe:** Arrange: Create valid audio blob; Act: Call validateAudioFile; Assert: No exception thrown  
-**Oczekiwany rezultat:** Method completes without throwing  
-**Priorytet:** Wysoki  
-**Edge cases:** Minimum size file (1 byte), maximum allowed size (25MB - 1 byte)  
-**Notatki / uwagi:** Core validation logic  
-
-### UT-VALIDATE-002
-**Nazwa testu:** should_throw_InvalidAudioFileError_when_file_too_large  
-**Moduł / funkcja:** WhisperService.validateAudioFile  
-**Cel testu:** Verify error for oversized audio files  
-**Wejście / dane testowe:** audioBlob.size = 26 * 1024 * 1024 (26MB), type = 'audio/wav'  
-**Setup / izolacja:** Create service instance, mock oversized blob  
-**Kroki testowe:** Arrange: Create oversized blob; Act: Call validateAudioFile; Assert: InvalidAudioFileError thrown  
-**Oczekiwany rezultat:** InvalidAudioFileError with message containing size limits  
-**Priorytet:** Wysoki  
-**Edge cases:** Exactly 25MB + 1 byte, very large files  
-**Notatki / uwagi:** Size limit enforcement  
-
-### UT-VALIDATE-003
-**Nazwa testu:** should_throw_InvalidAudioFileError_when_unsupported_format  
-**Moduł / funkcja:** WhisperService.validateAudioFile  
-**Cel testu:** Verify error for unsupported audio formats  
-**Wejście / dane testowe:** audioBlob.type = 'audio/unknown', size = 1MB  
-**Setup / izolacja:** Create service instance, mock blob with unsupported type  
-**Kroki testowe:** Arrange: Create blob with unsupported MIME type; Act: Call validateAudioFile; Assert: InvalidAudioFileError thrown  
-**Oczekiwany rezultat:** InvalidAudioFileError with message listing supported formats  
-**Priorytet:** Wysoki  
-**Edge cases:** Empty type string, partially matching type (e.g., 'audio/wav-extra')  
-**Notatki / uwagi:** Format validation logic  
-
-### UT-VALIDATE-004
-**Nazwa testu:** should_pass_validation_when_audio_type_empty_but_size_valid  
-**Moduł / funkcja:** WhisperService.validateAudioFile  
-**Cel testu:** Verify validation passes when MIME type is empty but size is valid  
-**Wejście / dane testowe:** audioBlob.type = '', size = 1MB  
-**Setup / izolacja:** Create service instance, mock blob with empty type  
-**Kroki testowe:** Arrange: Create blob with empty type; Act: Call validateAudioFile; Assert: No exception thrown  
-**Oczekiwany rezultat:** Method completes without throwing  
-**Priorytet:** Średni  
-**Edge cases:** Null type, undefined type  
-**Notatki / uwagi:** Edge case for missing MIME type  
-
-## isSupportedFormat Method
-
-### UT-FORMAT-001
-**Nazwa testu:** should_return_true_when_format_supported  
-**Moduł / funkcja:** WhisperService.isSupportedFormat  
-**Cel testu:** Verify supported format detection  
-**Wejście / dane testowe:** mimeType = 'audio/wav'  
-**Setup / izolacja:** Create service instance  
-**Kroki testowe:** Arrange: Use supported MIME type; Act: Call isSupportedFormat; Assert: Returns true  
-**Oczekiwany rezultat:** true  
-**Priorytet:** Średni  
-**Edge cases:** All supported formats from supportedFormats array  
-**Notatki / uwagi:** Format checking logic  
-
-### UT-FORMAT-002
-**Nazwa testu:** should_return_false_when_format_not_supported  
-**Moduł / funkcja:** WhisperService.isSupportedFormat  
-**Cel testu:** Verify unsupported format detection  
-**Wejście / dane testowe:** mimeType = 'audio/unknown'  
-**Setup / izolacja:** Create service instance  
-**Kroki testowe:** Arrange: Use unsupported MIME type; Act: Call isSupportedFormat; Assert: Returns false  
-**Oczekiwany rezultat:** false  
-**Priorytet:** Średni  
-**Edge cases:** Video formats, text formats, empty string  
-**Notatki / uwagi:** Negative case for format checking  
-
-### UT-FORMAT-003
-**Nazwa testu:** should_return_true_when_format_partially_matches_supported  
-**Moduł / funkcja:** WhisperService.isSupportedFormat  
-**Cel testu:** Verify partial format matching (contains/includes logic)  
-**Wejście / dane testowe:** mimeType = 'audio/wav;codecs=opus'  
-**Setup / izolacja:** Create service instance  
-**Kroki testowe:** Arrange: Use MIME type with parameters; Act: Call isSupportedFormat; Assert: Returns true  
-**Oczekiwany rezultat:** true (due to includes check)  
-**Priorytet:** Średni  
-**Edge cases:** Various parameter combinations  
-**Notatki / uwagi:** Tests the includes logic in format checking  
-
-## prepareFormData Method
-
-### UT-PREPARE-001
-**Nazwa testu:** should_create_FormData_with_required_fields_when_minimal_params  
-**Moduł / funkcja:** WhisperService.prepareFormData  
-**Cel testu:** Verify FormData creation with required fields  
-**Wejście / dane testowe:** params = { audioBlob: new Blob(['test'], { type: 'audio/wav' }) }  
-**Setup / izolacja:** Create service instance, mock audio blob  
-**Kroki testowe:** Arrange: Create minimal params; Act: Call prepareFormData; Assert: FormData contains required fields  
-**Oczekiwany rezultat:** FormData has 'file', 'model', 'response_format' fields  
-**Priorytet:** Wysoki  
-**Edge cases:** Empty blob  
-**Notatki / uwagi:** Core FormData preparation  
-
-### UT-PREPARE-002
-**Nazwa testu:** should_include_language_when_provided  
-**Moduł / funkcja:** WhisperService.prepareFormData  
-**Cel testu:** Verify language parameter inclusion  
-**Wejście / dane testowe:** params = { audioBlob: blob, language: 'pl' }  
-**Setup / izolacja:** Create service instance, mock blob  
-**Kroki testowe:** Arrange: Include language param; Act: Call prepareFormData; Assert: FormData contains language  
-**Oczekiwany rezultat:** FormData has 'language' field with value 'pl'  
-**Priorytet:** Średni  
-**Edge cases:** Empty language string, invalid language code  
-**Notatki / uwagi:** Optional parameter handling  
-
-### UT-PREPARE-003
-**Nazwa testu:** should_include_prompt_when_provided  
-**Moduł / funkcja:** WhisperService.prepareFormData  
-**Cel testu:** Verify prompt parameter inclusion  
-**Wejście / dane testowe:** params = { audioBlob: blob, prompt: 'medical transcription' }  
-**Setup / izolacja:** Create service instance, mock blob  
-**Kroki testowe:** Arrange: Include prompt param; Act: Call prepareFormData; Assert: FormData contains prompt  
-**Oczekiwany rezultat:** FormData has 'prompt' field with value 'medical transcription'  
-**Priorytet:** Średni  
-**Edge cases:** Empty prompt, very long prompt  
-**Notatki / uwagi:** Optional parameter handling  
-
-### UT-PREPARE-004
-**Nazwa testu:** should_use_correct_file_extension_based_on_mime_type  
-**Moduł / funkcja:** WhisperService.prepareFormData  
-**Cel testu:** Verify file extension mapping from MIME type  
-**Wejście / dane testowe:** params = { audioBlob: blob with type 'audio/mp3' }  
-**Setup / izolacja:** Create service instance, mock blob with specific type  
-**Kroki testowe:** Arrange: Use different MIME types; Act: Call prepareFormData; Assert: File appended with correct extension  
-**Oczekiwany rezultat:** File appended as 'audio.mp3' for mp3 type  
-**Priorytet:** Średni  
-**Edge cases:** All MIME types from extensionMap, unknown MIME type (defaults to webm)  
-**Notatki / uwagi:** Depends on getFileExtension method  
-
-## getFileExtension Method
-
-### UT-EXTENSION-001
-**Nazwa testu:** should_return_correct_extension_for_known_mime_types  
-**Moduł / funkcja:** WhisperService.getFileExtension  
-**Cel testu:** Verify MIME type to extension mapping  
-**Wejście / dane testowe:** mimeType = 'audio/wav'  
-**Setup / izolacja:** Create service instance  
-**Kroki testowe:** Arrange: Use known MIME type; Act: Call getFileExtension; Assert: Returns correct extension  
-**Oczekiwany rezultat:** 'wav'  
-**Priorytet:** Średni  
-**Edge cases:** All entries from extensionMap  
-**Notatki / uwagi:** Static mapping test  
-
-### UT-EXTENSION-002
-**Nazwa testu:** should_return_webm_as_default_for_unknown_mime_types  
-**Moduł / funkcja:** WhisperService.getFileExtension  
-**Cel testu:** Verify default extension for unknown types  
-**Wejście / dane testowe:** mimeType = 'audio/unknown'  
-**Setup / izolacja:** Create service instance  
-**Kroki testowe:** Arrange: Use unknown MIME type; Act: Call getFileExtension; Assert: Returns default extension  
-**Oczekiwany rezultat:** 'webm'  
-**Priorytet:** Średni  
-**Edge cases:** Empty string, null, undefined  
-**Notatki / uwagi:** Default fallback behavior  
-
-## makeApiRequest Method
-
-### UT-API-001
-**Nazwa testu:** should_return_parsed_response_when_api_call_successful  
-**Moduł / funkcja:** WhisperService.makeApiRequest  
-**Cel testu:** Verify successful API call handling  
-**Wejście / dane testowe:** Mock response with status 200, body { text: "Hello world" }  
-**Setup / izolacja:** Mock fetch to return successful response  
-**Kroki testowe:** Arrange: Mock fetch with success response; Act: Call makeApiRequest; Assert: Returns parsed response  
-**Oczekiwany rezultat:** Returns the parsed JSON response object  
-**Priorytet:** Wysoki  
-**Edge cases:** Different response structures  
-**Notatki / uwagi:** Requires fetch mocking  
-
-### UT-API-002
-**Nazwa testu:** should_throw_WhisperApiError_when_api_returns_error_status  
-**Moduł / funkcja:** WhisperService.makeApiRequest  
-**Cel testu:** Verify API error status handling  
-**Wejście / dane testowe:** Mock response with status 401, error message "Invalid API key"  
-**Setup / izolacja:** Mock fetch to return error response  
-**Kroki testowe:** Arrange: Mock fetch with error response; Act: Call makeApiRequest; Assert: WhisperApiError thrown  
-**Oczekiwany rezultat:** WhisperApiError with correct status and message  
-**Priorytet:** Wysoki  
-**Edge cases:** Status codes 400, 403, 429, 500, malformed error response  
-**Notatki / uwagi:** Error response parsing  
-
-### UT-API-003
-**Nazwa testu:** should_throw_WhisperNetworkError_when_fetch_fails  
-**Moduł / funkcja:** WhisperService.makeApiRequest  
-**Cel testu:** Verify network failure handling  
-**Wejście / dane testowe:** Mock fetch to throw network error  
-**Setup / izolacja:** Mock fetch to reject with network error  
-**Kroki testowe:** Arrange: Mock fetch rejection; Act: Call makeApiRequest; Assert: WhisperNetworkError thrown  
-**Oczekiwany rezultat:** WhisperNetworkError with network error message  
-**Priorytet:** Wysoki  
-**Edge cases:** Timeout errors, DNS resolution failures  
-**Notatki / uwagi:** Network failure simulation  
-
-## parseTranscriptionResponse Method
-
-### UT-PARSE-001
-**Nazwa testu:** should_return_TranscriptionResult_when_response_valid  
-**Moduł / funkcja:** WhisperService.parseTranscriptionResponse  
-**Cel testu:** Verify valid response parsing  
-**Wejście / dane testowe:** apiResponse = { text: "Hello world", language: "en", duration: 2.5 }  
-**Setup / izolacja:** Create service instance  
-**Kroki testowe:** Arrange: Create valid response object; Act: Call parseTranscriptionResponse; Assert: Returns TranscriptionResult  
-**Oczekiwany rezultat:** { text: "Hello world", language: "en", duration: 2.5 }  
-**Priorytet:** Wysoki  
-**Edge cases:** Response with missing optional fields  
-**Notatki / uwagi:** Core response parsing  
-
-### UT-PARSE-002
-**Nazwa testu:** should_throw_InvalidTranscriptionError_when_text_missing  
-**Moduł / funkcja:** WhisperService.parseTranscriptionResponse  
-**Cel testu:** Verify error for missing text field  
-**Wejście / dane testowe:** apiResponse = { language: "en" } (no text field)  
-**Setup / izolacja:** Create service instance  
-**Kroki testowe:** Arrange: Create response without text; Act: Call parseTranscriptionResponse; Assert: InvalidTranscriptionError thrown  
-**Oczekiwany rezultat:** InvalidTranscriptionError with message about missing text field  
-**Priorytet:** Wysoki  
-**Edge cases:** Null text, undefined text, non-string text  
-**Notatki / uwagi:** Text field validation  
-
-### UT-PARSE-003
-**Nazwa testu:** should_throw_InvalidTranscriptionError_when_text_empty_after_trim  
-**Moduł / funkcja:** WhisperService.parseTranscriptionResponse  
-**Cel testu:** Verify error for empty/whitespace text  
-**Wejście / dane testowe:** apiResponse = { text: "   " }  
-**Setup / izolacja:** Create service instance  
-**Kroki testowe:** Arrange: Create response with whitespace-only text; Act: Call parseTranscriptionResponse; Assert: InvalidTranscriptionError thrown  
-**Oczekiwany rezultat:** InvalidTranscriptionError with message about empty text  
-**Priorytet:** Wysoki  
-**Edge cases:** Text with only tabs/newlines, mixed whitespace  
-**Notatki / uwagi:** Text content validation  
-
-### UT-PARSE-004
-**Nazwa testu:** should_trim_whitespace_from_transcription_text  
-**Moduł / funkcja:** WhisperService.parseTranscriptionResponse  
-**Cel testu:** Verify text trimming behavior  
-**Wejście / dane testowe:** apiResponse = { text: "  Hello world  " }  
-**Setup / izolacja:** Create service instance  
-**Kroki testowe:** Arrange: Create response with padded text; Act: Call parseTranscriptionResponse; Assert: Text is trimmed  
-**Oczekiwany rezultat:** { text: "Hello world", ... }  
-**Priorytet:** Średni  
-**Edge cases:** Leading whitespace, trailing whitespace, mixed  
-**Notatki / uwagi:** Text normalization  
-
-## transcribeAudio Method (Integration)
-
-### UT-INTEGRATION-001
-**Nazwa testu:** should_return_transcription_result_when_all_steps_succeed  
-**Moduł / funkcja:** WhisperService.transcribeAudio  
-**Cel testu:** Verify complete successful transcription flow  
-**Wejście / dane testowe:** Valid audio blob, mock successful API response  
-**Setup / izolacja:** Mock all dependencies (fetch, blob validation)  
-**Kroki testowe:** Arrange: Setup mocks for success path; Act: Call transcribeAudio; Assert: Returns expected result  
-**Oczekiwany rezultat:** TranscriptionResult with transcribed text  
-**Priorytet:** Wysoki  
-**Edge cases:** Different audio formats, with/without language/prompt  
-**Notatki / uwagi:** Full integration test, requires comprehensive mocking  
-
-### UT-INTEGRATION-002
-**Nazwa testu:** should_rethrow_InvalidAudioFileError_from_validation  
-**Moduł / funkcja:** WhisperService.transcribeAudio  
-**Cel testu:** Verify validation errors bubble up correctly  
-**Wejście / dane testowe:** Invalid audio blob (too large)  
-**Setup / izolacja:** Create service instance  
-**Kroki testowe:** Arrange: Use invalid blob; Act: Call transcribeAudio; Assert: InvalidAudioFileError thrown  
-**Oczekiwany rezultat:** Same InvalidAudioFileError from validateAudioFile  
-**Priorytet:** Wysoki  
-**Edge cases:** Different validation failures  
-**Notatki / uwagi:** Error propagation testing  
-
-### UT-INTEGRATION-003
-**Nazwa testu:** should_rethrow_WhisperApiError_from_api_request  
-**Moduł / funkcja:** WhisperService.transcribeAudio  
-**Cel testu:** Verify API errors bubble up correctly  
-**Wejście / dane testowe:** Valid blob, mock API error response  
-**Setup / izolacja:** Mock fetch to return API error  
-**Kroki testowe:** Arrange: Mock API failure; Act: Call transcribeAudio; Assert: WhisperApiError thrown  
-**Oczekiwany rezultat:** Same WhisperApiError from makeApiRequest  
-**Priorytet:** Wysoki  
-**Edge cases:** Different HTTP status codes  
-**Notatki / uwagi:** Error propagation testing  
-
-### UT-INTEGRATION-004
-**Nazwa testu:** should_rethrow_WhisperNetworkError_from_api_request  
-**Moduł / funkcja:** WhisperService.transcribeAudio  
-**Cel testu:** Verify network errors bubble up correctly  
-**Wejście / dane testowe:** Valid blob, mock network failure  
-**Setup / izolacja:** Mock fetch to throw network error  
-**Kroki testowe:** Arrange: Mock network failure; Act: Call transcribeAudio; Assert: WhisperNetworkError thrown  
-**Oczekiwany rezultat:** Same WhisperNetworkError from makeApiRequest  
-**Priorytet:** Wysoki  
-**Edge cases:** Different network failure types  
-**Notatki / uwagi:** Error propagation testing  
-
-### UT-INTEGRATION-005
-**Nazwa testu:** should_rethrow_InvalidTranscriptionError_from_parsing  
-**Moduł / funkcja:** WhisperService.transcribeAudio  
-**Cel testu:** Verify parsing errors bubble up correctly  
-**Wejście / dane testowe:** Valid blob, mock API response with invalid data  
-**Setup / izolacja:** Mock fetch to return response without text  
-**Kroki testowe:** Arrange: Mock invalid API response; Act: Call transcribeAudio; Assert: InvalidTranscriptionError thrown  
-**Oczekiwany rezultat:** Same InvalidTranscriptionError from parseTranscriptionResponse  
-**Priorytet:** Wysoki  
-**Edge cases:** Empty text, malformed response  
-**Notatki / uwagi:** Error propagation testing  
-
-### UT-INTEGRATION-006
-**Nazwa testu:** should_wrap_unexpected_errors_in_generic_Error  
-**Moduł / funkcja:** WhisperService.transcribeAudio  
-**Cel testu:** Verify unexpected errors are wrapped properly  
-**Wejście / dane testowe:** Valid blob, mock unexpected error in dependencies  
-**Setup / izolacja:** Mock a method to throw unexpected error  
-**Kroki testowe:** Arrange: Mock unexpected error; Act: Call transcribeAudio; Assert: Generic Error thrown  
-**Oczekiwany rezultat:** Error with message containing "Unexpected error in WhisperService"  
-**Priorytet:** Średni  
-**Edge cases:** Different types of unexpected errors  
-**Notatki / uwagi:** Error handling robustness  
-
-## Summary
-
-Najważniejsze moduły do pokrycia unit testami to:
-- **transcribeAudio** (metoda publiczna) - główny punkt wejścia serwisu, wymaga kompleksowych testów integracyjnych i obsługi błędów
-- **validateAudioFile** - krytyczna walidacja wejścia, powinna mieć pełne pokrycie przypadków brzegowych
-- **makeApiRequest** - obsługa komunikacji z API zewnętrznym, kluczowe dla niezawodności serwisu
+### UT-WHISPER-ERROR-CLASSES-05
+**Nazwa testu:** `should_create_InvalidTranscriptionError_with_message`  
+**Moduł / funkcja:** `InvalidTranscriptionError`  
+**Cel testu:** Weryfikacja tworzenia instancji błędu nieprawidłowej transkrypcji  
+**Wejście / dane testowe:** `message = "Empty transcription"`  
+**Setup / izolacja:** Utworzenie instancji błędu  
+**Kroki testowe (Arrange → Act → Assert):**  
+1. Utwórz nową instancję InvalidTranscriptionError  
+2. Sprawdź wiadomość i nazwę klasy  
+3. Sprawdź czy rozszerza Error  
+**Oczekiwany rezultat:** Prawidłowa instancja błędu transkrypcji  
+**Priorytet:** Niski  
+**Edge cases:** -  
+**Notatki / uwagi:** Test klasy błędu transkrypcji

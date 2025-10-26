@@ -9,6 +9,7 @@ import {
   CurrencyNotFoundError,
   TransactionError,
 } from "@/lib/services/groupService";
+import { createMockCreateGroupCommand } from "./testHelpers";
 
 // Mock Supabase
 vi.mock("@supabase/supabase-js", () => ({
@@ -55,11 +56,7 @@ describe("GroupService", () => {
     it("should_create_group_successfully_when_valid_currency_and_data", async () => {
       // Arrange
       const mockSupabaseClient = mockSupabase as any;
-      const command = {
-        name: "Test Group",
-        base_currency_code: "USD",
-        invite_emails: ["user1@test.com", "user2@test.com"],
-      };
+      const command = createMockCreateGroupCommand();
       const userId = "user-123";
 
       // Mock currency validation success
@@ -142,11 +139,10 @@ describe("GroupService", () => {
     it("should_throw_currency_not_found_when_invalid_base_currency", async () => {
       // Arrange
       const mockSupabaseClient = mockSupabase as any;
-      const command = {
-        name: "Test Group",
+      const command = createMockCreateGroupCommand({
         base_currency_code: "INVALID",
         invite_emails: [],
-      };
+      });
       const userId = "user-123";
 
       // Mock currency validation failure
@@ -170,11 +166,9 @@ describe("GroupService", () => {
     it("should_throw_transaction_error_when_rpc_fails", async () => {
       // Arrange
       const mockSupabaseClient = mockSupabase as any;
-      const command = {
-        name: "Test Group",
-        base_currency_code: "USD",
+      const command = createMockCreateGroupCommand({
         invite_emails: [],
-      };
+      });
       const userId = "user-123";
 
       // Mock currency validation success
