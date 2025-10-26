@@ -1,0 +1,37 @@
+---
+description: E2E testing with Playwright
+globs: 
+alwaysApply: false
+---
+
+## TESTING
+
+# Playwright E2E Testing: Guidelines
+
+## 1. Konfiguracja i Zakres
+
+1.  **Testowanie Cross-Browser:** Testy muszą działać na minimalnym zestawie przeglądarek: **Chromium, Firefox i WebKit** (Safari).
+2.  **Izolacja Testów:** Używaj **kontekstów przeglądarki** dla każdego testu, aby zapewnić pełną izolację (unikalne sesje).
+3.  **Równoległe Wykonywanie:** Zawsze konfiguruj i wykorzystuj **równoległe wykonywanie testów** (`workers`) w celu skrócenia czasu wykonania.
+
+## 2. Architektura Kodu
+
+1.  **Page Object Model (POM):** Implementuj **Page Object Model** w folderze `./e2e/page-objects` jako obowiązkowy wzorzec dla wszystkich interakcji z UI.
+2.  **Struktura AAA:** Każdy test powinien przestrzegać struktury **Arrange, Act, Assert** (Przygotowanie, Akcja, Asercja).
+3.  **Playwright Fixtures:** Preferuj **Fixtures** (`test.extend`) zamiast prostych hooków do zarządzania złożonym stanem i zależnościami (setup/teardown).
+
+## 3. Niezawodność i Locatory
+
+1.  **Priorytet Locatorów:** Wybieraj elementy za pomocą **wbudowanych, zorientowanych na użytkownika locatorów** Playwright (np. `getByRole`, `getByText`, `getByLabel`).
+2.  **Unikanie Kruchości:** Unikaj selektorów opartych na strukturze DOM (głębokie ścieżki CSS/XPath) na rzecz bardziej odpornych locatorów.
+3.  **Testowanie Hybrydowe (API):** Wykorzystaj **testy API** (fixture `request`) do szybkiego przygotowania danych (Arrange) i weryfikacji stanu backendu, minimalizując niepotrzebne kroki w UI.
+
+## 4. Asercje i Walidacja
+
+1.  **Specyficzne Asercje:** Używaj **specyficznych matchers Playwright** (np. `toBeVisible`, `toHaveText`) dla asercji elementów.
+2.  **Weryfikacja Wizualna:** Używaj **`expect(page).toHaveScreenshot()`** do implementacji testów regresji wizualnej krytycznych widoków i komponentów.
+
+## 5. Narzędzia i Debugowanie
+
+1.  **Trace Viewer:** Po każdym niepowodzeniu testu, wykorzystuj **Trace Viewer** do post-mortem analizy i debugowania.
+2.  **Codegen:** Narzędzie `codegen` jest dozwolone **wyłącznie do prototypowania** i szybkiego określania selektorów. Wygenerowany kod musi zostać zrefaktoryzowany zgodnie z zasadami POM.
