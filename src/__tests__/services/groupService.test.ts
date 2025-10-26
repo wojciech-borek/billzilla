@@ -156,9 +156,7 @@ describe("GroupService", () => {
       });
 
       // Act & Assert
-      await expect(createGroup(mockSupabaseClient, command, userId)).rejects.toThrow(
-        CurrencyNotFoundError
-      );
+      await expect(createGroup(mockSupabaseClient, command, userId)).rejects.toThrow(CurrencyNotFoundError);
 
       expect(mockSupabaseClient.from).toHaveBeenCalledWith("currencies");
       expect(mockSupabaseClient.select).toHaveBeenCalledWith("code");
@@ -192,9 +190,7 @@ describe("GroupService", () => {
       });
 
       // Act & Assert
-      await expect(createGroup(mockSupabaseClient, command, userId)).rejects.toThrow(
-        TransactionError
-      );
+      await expect(createGroup(mockSupabaseClient, command, userId)).rejects.toThrow(TransactionError);
 
       expect(mockSupabaseClient.from).toHaveBeenCalledWith("currencies");
       expect(mockSupabaseClient.select).toHaveBeenCalledWith("code");
@@ -215,7 +211,8 @@ describe("GroupService", () => {
       // Arrange
       const mockSupabaseClient = {
         ...mockSupabase,
-        from: vi.fn()
+        from: vi
+          .fn()
           .mockReturnValueOnce({
             select: vi.fn(() => ({
               eq: vi.fn(() => ({
@@ -265,7 +262,8 @@ describe("GroupService", () => {
 
       const mockSupabaseClient = {
         ...mockSupabase,
-        from: vi.fn()
+        from: vi
+          .fn()
           // Groups query
           .mockReturnValueOnce({
             select: vi.fn(() => ({
@@ -409,7 +407,8 @@ describe("GroupService", () => {
 
       const mockSupabaseClient = {
         ...mockSupabase,
-        from: vi.fn()
+        from: vi
+          .fn()
           // Groups query
           .mockReturnValueOnce({
             select: vi.fn(() => ({
@@ -552,7 +551,8 @@ describe("GroupService", () => {
 
       const mockSupabaseClient = {
         ...mockSupabase,
-        from: vi.fn()
+        from: vi
+          .fn()
           // Groups query fails
           .mockReturnValueOnce({
             select: vi.fn(() => ({
@@ -571,9 +571,7 @@ describe("GroupService", () => {
       } as any;
 
       // Act & Assert
-      await expect(listGroups(mockSupabaseClient, userId, options)).rejects.toThrow(
-        "Failed to fetch groups"
-      );
+      await expect(listGroups(mockSupabaseClient, userId, options)).rejects.toThrow("Failed to fetch groups");
 
       expect(mockSupabaseClient.from).toHaveBeenCalledWith("groups");
     });
@@ -1030,24 +1028,24 @@ describe("GroupService", () => {
   });
 
   describe("CurrencyNotFoundError", () => {
-      it("should_create_currency_not_found_error_with_correct_message", () => {
-        // Arrange & Act
-        const error = new CurrencyNotFoundError("XYZ");
+    it("should_create_currency_not_found_error_with_correct_message", () => {
+      // Arrange & Act
+      const error = new CurrencyNotFoundError("XYZ");
 
-        // Assert
-        expect(error.name).toBe("CurrencyNotFoundError");
-        expect(error.message).toBe("Currency with code 'XYZ' does not exist");
-      });
-    });
-
-    describe("TransactionError", () => {
-      it("should_create_transaction_error_with_custom_message", () => {
-        // Arrange & Act
-        const error = new TransactionError("Database connection failed");
-
-        // Assert
-        expect(error.name).toBe("TransactionError");
-        expect(error.message).toBe("Database connection failed");
-      });
+      // Assert
+      expect(error.name).toBe("CurrencyNotFoundError");
+      expect(error.message).toBe("Currency with code 'XYZ' does not exist");
     });
   });
+
+  describe("TransactionError", () => {
+    it("should_create_transaction_error_with_custom_message", () => {
+      // Arrange & Act
+      const error = new TransactionError("Database connection failed");
+
+      // Assert
+      expect(error.name).toBe("TransactionError");
+      expect(error.message).toBe("Database connection failed");
+    });
+  });
+});

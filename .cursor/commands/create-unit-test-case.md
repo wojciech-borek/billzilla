@@ -6,7 +6,9 @@ Zadanie: Przeanalizuj plik "{input}" i wygeneruj listę **testów jednostkowych*
 
 Wejście: podaj nazwę pliku
 
-Dla każdego testu zwróć wynik w języku polskim **jednolitym szablonie test case** (Markdown). Szablon musi zawierać:
+1. Na początku pliku Markdown dodaj informację i scieżkę, którego pliku dotyczą test case’y.
+
+2. Dla każdego testu zwróć wynik w języku polskim **jednolitym szablonie test case** (Markdown). Szablon musi zawierać:
 - **ID** (np. `UT-<moduł>-<numer>`)
 - **Nazwa testu** (czytelna, konwencja: `should_<expected>_when_<condition>`)
 - **Moduł / funkcja** (gdzie test się odnosi)
@@ -19,6 +21,6 @@ Dla każdego testu zwróć wynik w języku polskim **jednolitym szablonie test c
 - **Edge cases**
 - **Notatki / uwagi**
 
-Wyjście: zapisz plik markdown w folderze @.ai/test-case z nazwa generowanego serwisu test cases pogrupowaną według modułów (Markdown). Daj też krótkie (1–2 zdania) podsumowanie w języku polskim, które moduły są najważniejsze do pokrycia unit testami. 
+Wyjście: zapisz plik markdown w jezyku polskim w folderze @.ai/test-case z nazwa generowanego serwisu test cases pogrupowaną według modułów (Markdown). Daj też krótkie (1–2 zdania) podsumowanie w języku polskim, które moduły są najważniejsze do pokrycia unit testami. 
 
 Uwaga: Nie dodawaj ogólnych zasad testowania — skup się wyłącznie na generowaniu konkretnych test case’ów i ich danych/oczekiwanych rezultatach.

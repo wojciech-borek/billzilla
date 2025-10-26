@@ -206,6 +206,6 @@
 
 **Notatki / uwagi**: Testuje sprawdzenie instanceof błędu w bloku catch
 
-## Summary
+## Podsumowanie
 
-Najważniejsze moduły do pokrycia unit testami to funkcja `signupUser` (wysoki priorytet - 4 testy) oraz klasa `SignupError` (średni priorytet - 2 testy). Funkcja `signupUser` wymaga kompleksowego pokrycia ze względu na interakcje z zewnętrznym API Supabase i obsługę błędów.
+Najważniejsze moduły do pokrycia unit testami to funkcja `signupUser` (7 testów) oraz klasa `SignupError` (2 testy). Funkcja `signupUser` wymaga szczególnej uwagi ze względu na integrację z zewnętrznym API Supabase i wielopoziomową obsługę błędów.
