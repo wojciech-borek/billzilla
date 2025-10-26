@@ -1,193 +1,112 @@
-# useLogout Hook - Unit Test Cases
+# Test Cases dla Hook useLogout
 
-## UT-LOGOUT-001
-**Nazwa testu:** should_return_logout_function_and_initial_loading_state_when_hook_initialized
+**Plik źródłowy:** `src/lib/hooks/useLogout.ts`
 
-**Moduł / funkcja:** useLogout hook initialization
+## Test Case'y
 
-**Cel testu:** Verify that the hook returns the logout function and initial isLoggingOut state
-
-**Wejście / dane testowe:** Brak
-
-**Setup / izolacja:** Mock useSupabaseAuth hook to return a mock supabase client
-
+### UT-USELOGOUT-001
+**Nazwa testu:** should_return_success_and_redirect_when_signOut_succeeds
+**Moduł / funkcja:** useLogout.logout
+**Cel testu:** Sprawdzenie poprawnego działania w przypadku pomyślnego wylogowania
+**Wejście / dane testowe:** Mock supabase.auth.signOut zwracający { error: null }
+**Setup / izolacja:** Użycie helpera createLogoutTestFixture i renderHookAndLogout z testHelpers.ts
 **Kroki testowe (Arrange → Act → Assert):**
-- Arrange: Mock useSupabaseAuth to return mock supabase client
-- Act: Call useLogout() hook
-- Assert: Verify returned object contains logout function and isLoggingOut equals false
+1. Wywołaj helper renderHookAndLogout z { error: null }
+2. Sprawdź czy zwrócony obiekt zawiera { success: true, error: null }
+3. Sprawdź czy window.location.assign("/login") został wywołany
+**Oczekiwany rezultat:** Funkcja zwraca { success: true, error: null } i przekierowuje na /login
+**Priorytet:** Wysoki
+**Edge cases:** -
+**Notatki / uwagi:** Test podstawowej ścieżki sukcesu używający wspólnych helperów
 
-**Oczekiwany rezultat:** Hook returns object with logout function and isLoggingOut: false
-
-**Priorytet:** High
-
-**Edge cases:** Hook called multiple times should return consistent structure
-
-**Notatki / uwagi:** Basic initialization test to ensure hook structure is correct
-
-## UT-LOGOUT-002
-**Nazwa testu:** should_successfully_logout_and_redirect_when_signout_succeeds
-
-**Moduł / funkcja:** logout function - successful logout flow
-
-**Cel testu:** Verify successful logout sets loading state, calls signOut, redirects to login, and returns success
-
-**Wejście / dane testowe:** Mock supabase.auth.signOut returns { error: null }
-
-**Setup / izolacja:** Mock useSupabaseAuth, mock window.location.assign, spy on setIsLoggingOut
-
+### UT-USELOGOUT-002 & UT-USELOGOUT-003 (Parameterized)
+**Nazwa testu:** Error handling scenarios (parameterized)
+**Moduł / funkcja:** useLogout.logout
+**Cel testu:** Sprawdzenie obsługi błędów i wyjątków podczas wylogowania
+**Wejście / dane testowe:** Parametryzowane scenariusze błędów używające createLogoutTestFixture
+**Setup / izolacja:** Użycie helperów createLogoutTestFixture i renderHookAndLogout z testHelpers.ts
 **Kroki testowe (Arrange → Act → Assert):**
-- Arrange: Mock supabase.auth.signOut to resolve with { error: null }, spy on window.location.assign
-- Act: Call logout() function
-- Assert: Verify setIsLoggingOut called with true initially, signOut called, window.location.assign called with "/login", returns { success: true, error: null }
+1. Inicjalizacja z parametrami scenariusza błędu używając renderHookAndLogout
+2. Sprawdź czy supabase.auth.signOut() został wywołany
+3. Sprawdź czy stan isLoggingOut został zresetowany na false
+4. Sprawdź czy zwrócony obiekt zawiera oczekiwany wynik błędu
+**Oczekiwany rezultat:** Funkcja zwraca błąd/wyjątek i resetuje stan isLoggingOut na false
 
-**Oczekiwany rezultat:** Loading set to true, signOut called, redirect to /login, success returned
+**Scenariusze parametrowe:**
+- **UT-USELOGOUT-002**: signOut zwraca błąd `{ error: { message: "Sign out failed" } }`
+  *Oczekiwany rezultat:* `{ success: false, error: { message: "Sign out failed" } }`
+- **UT-USELOGOUT-003**: signOut rzuca wyjątek `Promise.reject(new Error("Network error"))`
+  *Oczekiwany rezultat:* `{ success: false, error: new Error("Network error") }`
 
-**Priorytet:** High
+**Priorytet:** Wysoki
+**Edge cases:** Różne typy błędów Supabase, network errors, timeout exceptions
+**Notatki / uwagi:** Parametryzowany test łączący scenariusze błędów z użyciem wspólnych helperów dla lepszej konserwacji
 
-**Edge cases:** Verify loading state not reset on success (redirect happens before reset)
+### UT-USELOGOUT-004
+**Nazwa testu:** should_initialize_with_isLoggingOut_false  
+**Moduł / funkcja:** useLogout (stan początkowy)  
+**Cel testu:** Sprawdzenie stanu początkowego hook  
+**Wejście / dane testowe:** Brak  
+**Setup / izolacja:** Standardowe renderHook bez specjalnych mocków  
+**Kroki testowe (Arrange → Act → Assert):**  
+1. Zainicjalizuj hook  
+2. Sprawdź wartość isLoggingOut  
+**Oczekiwany rezultat:** isLoggingOut równa się false  
+**Priorytet:** Średni  
+**Edge cases:** -  
+**Notatki / uwagi:** Test stanu początkowego
 
-**Notatki / uwagi:** Tests the complete happy path of logout functionality
-
-## UT-LOGOUT-003
-**Nazwa testu:** should_handle_signout_error_and_reset_loading_state
-
-**Moduł / funkcja:** logout function - error handling from supabase
-
-**Cel testu:** Verify logout handles supabase errors properly by resetting loading and returning error
-
-**Wejście / dane testowe:** Mock supabase.auth.signOut returns { error: new Error("Sign out failed") }
-
-**Setup / izolacja:** Mock useSupabaseAuth, spy on setIsLoggingOut
-
+### UT-USELOGOUT-005
+**Nazwa testu:** should_use_supabase_from_useSupabaseAuth
+**Moduł / funkcja:** useLogout (zależność)
+**Cel testu:** Sprawdzenie użycia poprawnego supabase client
+**Wejście / dane testowe:** Mock useSupabaseAuth zwracający specyficzny supabase client
+**Setup / izolacja:** Użycie helperów createMockAuthSupabaseClient i createMockUseSupabaseAuth z testHelpers.ts
 **Kroki testowe (Arrange → Act → Assert):**
-- Arrange: Mock supabase.auth.signOut to resolve with { error: mockError }, spy on setIsLoggingOut
-- Act: Call logout() function
-- Assert: Verify setIsLoggingOut called with true then false, signOut called, returns { success: false, error: mockError }, no redirect
+1. Zainicjalizuj hook z mockowanym useSupabaseAuth używając helperów
+2. Wywołaj funkcję logout
+3. Sprawdź czy użyty supabase to ten z useSupabaseAuth
+**Oczekiwany rezultat:** Hook używa supabase z useSupabaseAuth
+**Priorytet:** Średni
+**Edge cases:** -
+**Notatki / uwagi:** Test integracji z useSupabaseAuth używający wspólnych helperów
 
-**Oczekiwany rezultat:** Loading set to true then false, error returned, no redirect
+### UT-USELOGOUT-006
+**Nazwa testu:** should_memoize_logout_function  
+**Moduł / funkcja:** useLogout.logout (useCallback)  
+**Cel testu:** Sprawdzenie memoizacji funkcji logout  
+**Wejście / dane testowe:** Wielokrotne renderowanie hook  
+**Setup / izolacja:** Standardowe renderHook bez specjalnych mocków  
+**Kroki testowe (Arrange → Act → Assert):**  
+1. Zainicjalizuj hook  
+2. Pobierz referencję do funkcji logout  
+3. Re-render hook z tymi samymi zależnościami  
+4. Sprawdź czy ta sama referencja funkcji została zwrócona  
+**Oczekiwany rezultat:** Funkcja logout jest memoizowana przez useCallback  
+**Priorytet:** Średni  
+**Edge cases:** Zmiana supabase client  
+**Notatki / uwagi:** Test optymalizacji React
 
-**Priorytet:** High
-
-**Edge cases:** Different types of error objects from supabase
-
-**Notatki / uwagi:** Tests error handling from the supabase auth.signOut method
-
-## UT-LOGOUT-004
-**Nazwa testu:** should_handle_exceptions_and_reset_loading_state
-
-**Moduł / funkcja:** logout function - exception handling
-
-**Cel testu:** Verify logout catches and handles exceptions thrown during signOut
-
-**Wejście / dane testowe:** Mock supabase.auth.signOut throws an exception
-
-**Setup / izolacja:** Mock useSupabaseAuth, spy on setIsLoggingOut
-
+### UT-USELOGOUT-007
+**Nazwa testu:** should_set_isLoggingOut_true_at_start_of_logout
+**Moduł / funkcja:** useLogout.logout
+**Cel testu:** Sprawdzenie ustawiania stanu loading na początku operacji
+**Wejście / dane testowe:** Mock supabase.auth.signOut (wolne wykonanie)
+**Setup / izolacja:** Użycie helperów createMockAuthSupabaseClient i createMockUseSupabaseAuth z testHelpers.ts
 **Kroki testowe (Arrange → Act → Assert):**
-- Arrange: Mock supabase.auth.signOut to throw new Error("Network error"), spy on setIsLoggingOut
-- Act: Call logout() function in try-catch
-- Assert: Verify setIsLoggingOut called with true then false, returns { success: false, error: thrownError }, no redirect
+1. Zainicjalizuj hook z mockowanym useSupabaseAuth
+2. Wywołaj funkcję logout
+3. Sprawdź czy isLoggingOut został ustawiony synchronicznie na true
+**Oczekiwany rezultat:** isLoggingOut ustawiony na true przed wywołaniem async operacji
+**Priorytet:** Średni
+**Edge cases:** -
+**Notatki / uwagi:** Test UX - natychmiastowe wskazanie ładowania używający wspólnych helperów
 
-**Oczekiwany rezultat:** Loading set to true then false, exception caught and returned as error
+## Podsumowanie
 
-**Priorytet:** High
+Najważniejsze moduły do pokrycia unit testami to funkcja logout z obsługą sukcesu i błędów, oraz stan isLoggingOut dla prawidłowej indykacji ładowania. Szczególną uwagę należy zwrócić na asynchroniczne operacje i obsługę błędów.
 
-**Edge cases:** Different types of exceptions (network errors, auth errors, etc.)
-
-**Notatki / uwagi:** Tests exception safety and proper cleanup of loading state
-
-## UT-LOGOUT-005
-**Nazwa testu:** should_maintain_loading_state_during_async_operation
-
-**Moduł / funkcja:** logout function - loading state management
-
-**Cel testu:** Verify loading state is properly managed during the async logout operation
-
-**Wejście / dane testowe:** Mock supabase.auth.signOut with delayed resolution
-
-**Setup / izolacja:** Mock useSupabaseAuth with async signOut, spy on setIsLoggingOut
-
-**Kroki testowe (Arrange → Act → Assert):**
-- Arrange: Mock supabase.auth.signOut to resolve after delay with { error: null }, spy on setIsLoggingOut calls
-- Act: Call logout() function
-- Assert: Verify setIsLoggingOut called with true immediately, then false after signOut resolves
-
-**Oczekiwany rezultat:** Loading state true during operation, false after completion
-
-**Priorytet:** Medium
-
-**Edge cases:** Very slow network, timeout scenarios
-
-**Notatki / uwagi:** Ensures loading state provides proper user feedback during logout
-
-## UT-LOGOUT-006
-**Nazwa testu:** should_use_stable_callback_reference_based_on_supabase_dependency
-
-**Moduł / funkcja:** useCallback dependency management
-
-**Cel testu:** Verify logout function reference stability based on supabase dependency
-
-**Wejście / dane testowe:** Multiple hook renders with same/different supabase instances
-
-**Setup / izolacja:** Mock useSupabaseAuth with different supabase instances
-
-**Kroki testowe (Arrange → Act → Assert):**
-- Arrange: Render hook twice with same supabase mock, then with different supabase mock
-- Act: Compare logout function references between renders
-- Assert: Verify logout function reference stable when supabase same, changes when supabase changes
-
-**Oczekiwany rezultat:** Callback stable when dependency unchanged, new reference when dependency changes
-
-**Priorytet:** Medium
-
-**Edge cases:** Supabase client recreation, auth state changes
-
-**Notatki / uwagi:** Tests React optimization with useCallback dependency array
-
-## UT-LOGOUT-007
-**Nazwa testu:** should_not_redirect_on_error_conditions
-
-**Moduł / funkcja:** logout function - redirect logic
-
-**Cel testu:** Verify redirect only happens on successful logout, not on errors
-
-**Wejście / dane testowe:** Mock supabase.auth.signOut returns error
-
-**Setup / izolacja:** Mock useSupabaseAuth, spy on window.location.assign
-
-**Kroki testowe (Arrange → Act → Assert):**
-- Arrange: Mock supabase.auth.signOut to return error, spy on window.location.assign
-- Act: Call logout() function
-- Assert: Verify window.location.assign never called, error returned instead
-
-**Oczekiwany rezultat:** No redirect on logout failure
-
-**Priorytet:** Medium
-
-**Edge cases:** Network errors, auth service unavailable
-
-**Notatki / uwagi:** Ensures user stays on current page when logout fails, allowing retry or error display
-
-## UT-LOGOUT-008
-**Nazwa testu:** should_handle_multiple_concurrent_logout_calls
-
-**Moduł / funkcja:** logout function - concurrent operations
-
-**Cel testu:** Verify behavior when logout is called multiple times concurrently
-
-**Wejście / dane testowe:** Multiple simultaneous logout calls
-
-**Setup / izolacja:** Mock useSupabaseAuth with async signOut, spy on setIsLoggingOut
-
-**Kroki testowe (Arrange → Act → Assert):**
-- Arrange: Mock slow supabase.auth.signOut, spy on setIsLoggingOut
-- Act: Call logout() multiple times concurrently
-- Assert: Verify loading state managed properly, multiple signOut calls handled gracefully
-
-**Oczekiwany rezultat:** Each call manages its own loading state independently
-
-**Priorytet:** Low
-
-**Edge cases:** Race conditions between multiple logout attempts
-
-**Notatki / uwagi:** Tests robustness against user clicking logout multiple times
+**Ulepszenia po refaktoryzacji:**
+- Wprowadzono wspólne helpery w testHelpers.ts (createMockAuthSupabaseClient, createMockUseSupabaseAuth, createLogoutTestFixture)
+- Parametryzowane testy dla scenariuszy błędów zmniejszające duplikację kodu
+- Ujednolicona struktura testów z użyciem wspólnych helperów dla lepszej konserwacji

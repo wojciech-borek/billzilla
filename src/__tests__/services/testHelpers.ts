@@ -608,3 +608,81 @@ export const createExpenseSelectFailureScenario = () => ({
   expenseSelect: { data: null, error: { message: "Select failed" } },
   expenseSplitsInsert: { error: null },
 });
+
+// Auth-specific mock helpers
+export const createMockAuthSupabaseClient = (authOverrides: Partial<any> = {}): SupabaseClient => {
+  const mockClient = createMockSupabaseClient();
+  const mockClientAny = mockClient as any;
+
+  // Override auth methods
+  mockClientAny.auth = {
+    signOut: vi.fn(),
+    signIn: vi.fn(),
+    signUp: vi.fn(),
+    signInWithOAuth: vi.fn(),
+    resetPassword: vi.fn(),
+    updateUser: vi.fn(),
+    ...authOverrides,
+  };
+
+  return mockClient;
+};
+
+export const createMockUseSupabaseAuth = (overrides: Partial<any> = {}) => ({
+  supabase: createMockAuthSupabaseClient(),
+  signIn: vi.fn(),
+  signUp: vi.fn(),
+  signOut: vi.fn(),
+  signInWithOAuth: vi.fn(),
+  resetPassword: vi.fn(),
+  updateUser: vi.fn(),
+  ...overrides,
+});
+
+export const setupLogoutTestMocks = (signOutResult: { error: any } | Promise<{ error: any }> | string) => {
+  const mockClient = createMockAuthSupabaseClient();
+  const mockUseSupabaseAuth = createMockUseSupabaseAuth({ supabase: mockClient });
+
+  if (signOutResult === "throw_error") {
+    vi.mocked(mockClient.auth.signOut).mockRejectedValue(new Error("Network error"));
+  } else if (signOutResult instanceof Promise) {
+    vi.mocked(mockClient.auth.signOut).mockImplementation(() => signOutResult);
+  } else {
+    vi.mocked(mockClient.auth.signOut).mockResolvedValue(signOutResult);
+  }
+
+  return { mockClient, mockUseSupabaseAuth };
+};
+
+// Logout test fixtures
+export const createLogoutTestFixture = () => ({
+  mockAssign: vi.fn(),
+  setupWindowLocation: () => {
+    Object.defineProperty(window, "location", {
+      value: { assign: vi.fn() },
+      writable: true,
+    });
+  },
+  renderHookAndLogout: async (mockResult: { error: any } | Promise<{ error: any }> | string) => {
+    const { mockUseSupabaseAuth } = setupLogoutTestMocks(mockResult);
+
+    // Import renderHook and act here to avoid circular dependencies
+    const { renderHook, act } = await import("@testing-library/react");
+
+    // Import useLogout here to avoid circular dependencies
+    const { useLogout } = await import("../../lib/hooks/useLogout");
+
+    // Mock useSupabaseAuth - this assumes useSupabaseAuth is already mocked at module level
+    const { useSupabaseAuth } = await import("../../lib/hooks/useSupabaseAuth");
+    vi.mocked(useSupabaseAuth).mockReturnValue(mockUseSupabaseAuth);
+
+    const { result } = renderHook(() => useLogout());
+
+    let logoutResult;
+    await act(async () => {
+      logoutResult = await result.current.logout();
+    });
+
+    return { result, logoutResult, mockUseSupabaseAuth };
+  },
+});

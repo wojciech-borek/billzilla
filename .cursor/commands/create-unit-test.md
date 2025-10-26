@@ -43,11 +43,10 @@ WAŻNE ZASADY PROCESOWE:
        - (B) zaktualizować tylko różniące się fragmenty,
        - (C) pozostawić bez zmian.
    - Porównanie wykonuj syntaktycznie i semantycznie — ignoruj tylko komentarze, formatowanie i drobne różnice nieistotne dla logiki testu.
-
+9 **Reużywalność kodu** Powinieneś korzystać z istniejących helperów i mocków znajdujących się w pliku `testHelper.ts` lub tworzyć nowe.  
 
 
 Wejście:
 - Plik z test-case'ami (może zawierać wiele testów). Każdy test-case zawiera pola: Nazwa testu, Moduł/funkcja, Cel testu, Wejście/dane testowe, Setup/izolacja (mocks), Kroki testowe, Oczekiwany rezultat, Priorytet, Edge cases, Notatki.
 
-Pamię
 
