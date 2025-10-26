@@ -39,7 +39,6 @@ export class TransactionError extends Error {
   }
 }
 
-
 /**
  * Creates a new group with the creator as the first member
  *
@@ -91,22 +90,27 @@ export async function createGroup(
 
   // Parse invitation results from the database function
   const invitationResults: InvitationResultDTO = {
-    added_members: Array.isArray(newGroup.added_members) ? newGroup.added_members.map((member: any) => ({
-      profile_id: member.profile_id,
-      email: member.email,
-      full_name: member.full_name,
-      status: member.status,
-    })) : [],
-    created_invitations: Array.isArray(newGroup.created_invitations) ? newGroup.created_invitations.map((inv: any) => ({
-      id: inv.id,
-      email: inv.email,
-      status: inv.status,
-    })) : [],
+    added_members: Array.isArray(newGroup.added_members)
+      ? newGroup.added_members.map((member: any) => ({
+          profile_id: member.profile_id,
+          email: member.email,
+          full_name: member.full_name,
+          status: member.status,
+        }))
+      : [],
+    created_invitations: Array.isArray(newGroup.created_invitations)
+      ? newGroup.created_invitations.map((inv: any) => ({
+          id: inv.id,
+          email: inv.email,
+          status: inv.status,
+        }))
+      : [],
   };
 
   // Return the complete response
+  const { added_members, created_invitations, ...groupData } = newGroup;
   return {
-    ...newGroup,
+    ...groupData,
     role: "creator" as GroupRole,
     invitations: invitationResults,
   };

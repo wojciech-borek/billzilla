@@ -129,14 +129,13 @@ export const POST: APIRoute = async ({ params, locals }) => {
       user_id: user.id,
       user_email: user.email,
       invitation_email: invitation.email,
-      invitation_status: invitation.status
+      invitation_status: invitation.status,
     });
 
-    const { data: result, error: functionError } = await supabase
-      .rpc("accept_invitation_transaction", {
-        p_invitation_id: invitationId,
-        p_user_id: user.id,
-      });
+    const { data: result, error: functionError } = await supabase.rpc("accept_invitation_transaction", {
+      p_invitation_id: invitationId,
+      p_user_id: user.id,
+    });
 
     console.log("Function call result:", { success: !functionError, error: functionError, data: result });
 
@@ -145,7 +144,7 @@ export const POST: APIRoute = async ({ params, locals }) => {
         error: {
           code: "DATABASE_ERROR",
           message: "Failed to accept invitation",
-          details: { message: functionError.message, code: functionError.code }
+          details: { message: functionError.message, code: functionError.code },
         },
       };
       return new Response(JSON.stringify(errorResponse), {

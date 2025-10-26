@@ -36,7 +36,6 @@ export const GET: APIRoute = async ({ locals }) => {
 
     const supabase = locals.supabase;
 
-
     // Fetch pending invitations for the user's email with group_id
     const { data: invitations, error } = await supabase
       .from("invitations")
@@ -44,7 +43,6 @@ export const GET: APIRoute = async ({ locals }) => {
       .eq("email", user.email.toLowerCase())
       .eq("status", "pending")
       .order("created_at", { ascending: false });
-
 
     if (error) {
       const errorResponse: ErrorResponseDTO = {
@@ -68,18 +66,13 @@ export const GET: APIRoute = async ({ locals }) => {
     }
 
     // Get unique group IDs
-    const groupIds = [...new Set(invitations.map(inv => inv.group_id))];
-
+    const groupIds = [...new Set(invitations.map((inv) => inv.group_id))];
 
     // Fetch group data for these invitations
-    const { data: groups, error: groupsError } = await supabase
-      .from("groups")
-      .select("id, name")
-      .in("id", groupIds);
-
+    const { data: groups, error: groupsError } = await supabase.from("groups").select("id, name").in("id", groupIds);
 
     // Create a map of group data
-    const groupMap = new Map(groups?.map(g => [g.id, g]) || []);
+    const groupMap = new Map(groups?.map((g) => [g.id, g]) || []);
 
     // Map to DTO format, filtering out invitations with missing groups
     const invitationDTOs: InvitationDTO[] = invitations
