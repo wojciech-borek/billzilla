@@ -52,7 +52,7 @@ describe("PasswordResetService", () => {
 
         vi.mocked(mockSupabaseClient.auth.setSession).mockResolvedValue({
           data: { user: null, session: null },
-          error: null
+          error: null,
         });
 
         // Act
@@ -78,7 +78,7 @@ describe("PasswordResetService", () => {
 
         vi.mocked(mockSupabaseClient.auth.setSession).mockResolvedValue({
           data: { user: null, session: null },
-          error: authError
+          error: authError,
         });
         vi.mocked(getAuthErrorMessage).mockReturnValue(expectedErrorMessage);
 
@@ -108,7 +108,7 @@ describe("PasswordResetService", () => {
         // Assert
         expect(result).toEqual({
           success: false,
-          error: "Brak prawidłowego tokenu resetowania hasła"
+          error: "Brak prawidłowego tokenu resetowania hasła",
         });
         // Verify that no Supabase methods were called since validation failed early
         expect(mockSupabaseClient.auth.setSession).not.toHaveBeenCalled();
@@ -124,7 +124,7 @@ describe("PasswordResetService", () => {
 
         vi.mocked(mockSupabaseClient.auth.verifyOtp).mockResolvedValue({
           data: { user: null, session: null },
-          error: null
+          error: null,
         });
 
         // Act
@@ -149,7 +149,7 @@ describe("PasswordResetService", () => {
 
         vi.mocked(mockSupabaseClient.auth.verifyOtp).mockResolvedValue({
           data: { user: null, session: null },
-          error: null
+          error: null,
         });
 
         // Act
@@ -176,7 +176,7 @@ describe("PasswordResetService", () => {
 
         vi.mocked(mockSupabaseClient.auth.verifyOtp).mockResolvedValue({
           data: { user: null, session: null },
-          error: authError
+          error: authError,
         });
         vi.mocked(getAuthErrorMessage).mockReturnValue(expectedErrorMessage);
 
@@ -230,10 +230,10 @@ describe("PasswordResetService", () => {
 
         vi.mocked(mockSupabaseClient.auth.updateUser).mockResolvedValue({
           data: { user: { id: "test-user-id" } as any },
-          error: null
+          error: null,
         });
         vi.mocked(mockSupabaseClient.auth.signOut).mockResolvedValue({
-          error: null
+          error: null,
         });
 
         // Act
@@ -259,7 +259,7 @@ describe("PasswordResetService", () => {
 
         vi.mocked(mockSupabaseClient.auth.updateUser).mockResolvedValue({
           data: { user: null },
-          error: authError
+          error: authError,
         });
         vi.mocked(getAuthErrorMessage).mockReturnValue(expectedErrorMessage);
 
@@ -285,7 +285,7 @@ describe("PasswordResetService", () => {
 
         vi.mocked(mockSupabaseClient.auth.updateUser).mockResolvedValue({
           data: { user: { id: "test-user-id" } as any },
-          error: null
+          error: null,
         });
         vi.mocked(mockSupabaseClient.auth.signOut).mockRejectedValue(new Error("Sign out failed"));
 
@@ -336,8 +336,8 @@ describe("PasswordResetService", () => {
       // Mock window.location for production environment tests
       global.window = {
         location: {
-          origin: "https://app.example.com"
-        }
+          origin: "https://app.example.com",
+        },
       } as any;
     });
 
@@ -358,7 +358,7 @@ describe("PasswordResetService", () => {
 
         vi.mocked(mockSupabaseClient.auth.resetPasswordForEmail).mockResolvedValue({
           data: {},
-          error: null
+          error: null,
         });
 
         // Act
@@ -366,12 +366,9 @@ describe("PasswordResetService", () => {
 
         // Assert
         expect(result).toEqual({ success: true });
-        expect(mockSupabaseClient.auth.resetPasswordForEmail).toHaveBeenCalledWith(
-          email,
-          {
-            redirectTo: "http://localhost:3000/auth/recovery"
-          }
-        );
+        expect(mockSupabaseClient.auth.resetPasswordForEmail).toHaveBeenCalledWith(email, {
+          redirectTo: "http://localhost:3000/auth/recovery",
+        });
         expect(mockSupabaseClient.auth.resetPasswordForEmail).toHaveBeenCalledTimes(1);
       });
     });
@@ -388,7 +385,7 @@ describe("PasswordResetService", () => {
 
         vi.mocked(mockSupabaseClient.auth.resetPasswordForEmail).mockResolvedValue({
           data: {},
-          error: null
+          error: null,
         });
 
         // Act
@@ -396,12 +393,9 @@ describe("PasswordResetService", () => {
 
         // Assert
         expect(result).toEqual({ success: true });
-        expect(mockSupabaseClient.auth.resetPasswordForEmail).toHaveBeenCalledWith(
-          email,
-          {
-            redirectTo: "https://app.example.com/auth/recovery"
-          }
-        );
+        expect(mockSupabaseClient.auth.resetPasswordForEmail).toHaveBeenCalledWith(email, {
+          redirectTo: "https://app.example.com/auth/recovery",
+        });
         expect(mockSupabaseClient.auth.resetPasswordForEmail).toHaveBeenCalledTimes(1);
 
         // Restore original value
@@ -423,7 +417,7 @@ describe("PasswordResetService", () => {
 
         vi.mocked(mockSupabaseClient.auth.resetPasswordForEmail).mockResolvedValue({
           data: {},
-          error: authError
+          error: authError,
         });
         vi.mocked(getAuthErrorMessage).mockReturnValue(expectedErrorMessage);
 
@@ -432,12 +426,9 @@ describe("PasswordResetService", () => {
 
         // Assert
         expect(result).toEqual({ success: false, error: expectedErrorMessage });
-        expect(mockSupabaseClient.auth.resetPasswordForEmail).toHaveBeenCalledWith(
-          email,
-          {
-            redirectTo: "http://localhost:3000/auth/recovery"
-          }
-        );
+        expect(mockSupabaseClient.auth.resetPasswordForEmail).toHaveBeenCalledWith(email, {
+          redirectTo: "http://localhost:3000/auth/recovery",
+        });
         expect(mockSupabaseClient.auth.resetPasswordForEmail).toHaveBeenCalledTimes(1);
         expect(getAuthErrorMessage).toHaveBeenCalledWith(authError);
 
@@ -466,12 +457,9 @@ describe("PasswordResetService", () => {
 
         // Assert
         expect(result).toEqual({ success: false, error: expectedErrorMessage });
-        expect(mockSupabaseClient.auth.resetPasswordForEmail).toHaveBeenCalledWith(
-          email,
-          {
-            redirectTo: "http://localhost:3000/auth/recovery"
-          }
-        );
+        expect(mockSupabaseClient.auth.resetPasswordForEmail).toHaveBeenCalledWith(email, {
+          redirectTo: "http://localhost:3000/auth/recovery",
+        });
         expect(mockSupabaseClient.auth.resetPasswordForEmail).toHaveBeenCalledTimes(1);
         expect(getAuthErrorMessage).toHaveBeenCalledWith(unexpectedError);
 
@@ -492,7 +480,7 @@ describe("PasswordResetService", () => {
 
         vi.mocked(mockSupabaseClient.auth.resetPasswordForEmail).mockResolvedValue({
           data: {},
-          error: null
+          error: null,
         });
 
         // Act
@@ -500,12 +488,9 @@ describe("PasswordResetService", () => {
 
         // Assert
         expect(result).toEqual({ success: true });
-        expect(mockSupabaseClient.auth.resetPasswordForEmail).toHaveBeenCalledWith(
-          email,
-          {
-            redirectTo: "http://localhost:3000/auth/recovery"
-          }
-        );
+        expect(mockSupabaseClient.auth.resetPasswordForEmail).toHaveBeenCalledWith(email, {
+          redirectTo: "http://localhost:3000/auth/recovery",
+        });
         expect(mockSupabaseClient.auth.resetPasswordForEmail).toHaveBeenCalledTimes(1);
 
         // Restore original value
