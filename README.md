@@ -33,6 +33,10 @@ The project is built with a modern tech stack:
 - **Language**: [TypeScript 5](https://www.typescriptlang.org/)
 - **Styling**: [Tailwind CSS 4](https://tailwindcss.com/)
 - **Component Library**: [Shadcn/ui](https://ui.shadcn.com/)
+- **Unit Testing**: [Vitest](https://vitest.dev/) with [React Testing Library](https://testing-library.com/docs/react-testing-library/intro/)
+- **E2E Testing**: [Playwright](https://playwright.dev/)
+- **CI/CD**: [GitHub Actions](https://github.com/features/actions)
+- **Test Coverage**: [@vitest/coverage-v8](https://github.com/vitest-dev/vitest/tree/main/packages/coverage-v8)
 
 ## Getting Started Locally
 
@@ -92,6 +96,14 @@ The following scripts are available in `package.json`:
 | `npm run lint`     | Lints the codebase for errors.         |
 | `npm run lint:fix` | Fixes linting errors automatically.    |
 | `npm run format`   | Formats the code using Prettier.       |
+| `npm run test`     | Runs unit tests in watch mode.         |
+| `npm run test:run` | Runs unit tests in single run mode.    |
+| `npm run test:ui`  | Opens Vitest UI for interactive testing.|
+| `npm run test:coverage` | Generates test coverage report.     |
+| `npm run test:e2e` | Runs all E2E tests in headless mode.    |
+| `npm run test:e2e:ui` | Opens Playwright UI for test debugging.|
+| `npm run test:e2e:headed` | Runs E2E tests with visible browser.|
+| `npm run test:e2e:debug` | Runs E2E tests in debug mode.       |
 
 ## Project Scope
 

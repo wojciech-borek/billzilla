@@ -29,6 +29,14 @@
   2.  **Ekstrakcja danych (Text-to-JSON):** Przetworzony tekst, wzbogacony o kontekst (np. listę członków grupy), zostanie wysłany do zaawansowanego modelu LLM (np. **Claude 3 Sonnet, Llama 3, GPT-4o**), który na podstawie precyzyjnego promptu wyodrębni potrzebne informacje i zwróci je w formacie JSON.
 - **Elastyczność i optymalizacja:** Openrouter.ai umożliwi nam łatwe przełączanie się między modelami, aby znaleźć optymalny balans między dokładnością (MS-003), szybkością (MS-002) a kosztem operacji AI.
 
+### Testowanie - Kompleksowe pokrycie jakości aplikacji:
+
+- **Testy jednostkowe i integracyjne (Vitest + React Testing Library):** Wykorzystujemy **Vitest** jako szybki, nowoczesny framework testowy z natywną obsługą TypeScript i ESM. W połączeniu z **React Testing Library** skupiamy się na testowaniu zachowania komponentów z perspektywy użytkownika, nie wewnętrznej implementacji. Testy obejmują serwisy biznesowe (`/lib/services`), schematy walidacji (`/lib/schemas`), hooki React (`/lib/hooks`) oraz funkcje pomocnicze (`/lib/utils`).
+- **Testy End-to-End (Playwright):** Do kompleksowej weryfikacji pełnych scenariuszy użytkownika używamy **Playwright**, który umożliwia testowanie w prawdziwych przeglądarkach (Chromium, Firefox, WebKit). Framework obsługuje zarówno testy UI jak i bezpośrednie wywołania API, co pozwala na efektywne przygotowanie danych testowych. Szczególny nacisk kładziemy na testowanie funkcji AI transkrypcji głosowej z wykorzystaniem fixture'ów audio i mockowanych odpowiedzi API.
+- **Mockowanie API (MSW - Mock Service Worker):** Dla izolowanych testów komponentowych wykorzystujemy **MSW** do mockowania wywołań API, co zapewnia deterministyczne i szybkie testy bez zależności od zewnętrznych usług.
+- **Zarządzanie jakością kodu:** **ESLint** zapewnia spójność kodu, **Prettier** formatuje kod automatycznie, a **@vitest/coverage-v8** mierzy pokrycie kodu testami z wymaganiami >80% dla krytycznych ścieżek (uwierzytelnianie, kalkulacja sald, operacje na wydatkach).
+- **Zarządzanie testami i błędami:** **GitHub Issues & Projects** służy do śledzenia błędów, planowania testów i zarządzania cyklami życia zgłoszeń. Automatyczne workflow w **GitHub Actions** uruchamia testy przy każdym push'u oraz przed mergem do głównej gałęzi.
+
 ### CI/CD i Hosting:
 
 - **Github Actions:** Posłuży jako narzędzie do automatyzacji procesów: uruchamiania testów, lintera oraz budowania obrazu produkcyjnego aplikacji.
