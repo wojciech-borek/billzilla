@@ -87,6 +87,7 @@ export default function CreateGroupForm({ onCancel, onSuccess }: CreateGroupForm
       className="space-y-6"
       noValidate
       aria-label="Formularz tworzenia nowej grupy"
+      data-testid="create-group-form"
     >
       {/* Form-level error */}
       {mutationError && !fieldErrors && (
@@ -105,13 +106,21 @@ export default function CreateGroupForm({ onCancel, onSuccess }: CreateGroupForm
 
       {/* Action buttons */}
       <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-4">
-        <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting} className="w-full sm:w-auto">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={onCancel}
+          disabled={isSubmitting}
+          className="w-full sm:w-auto"
+          data-testid="cancel-create-group"
+        >
           Anuluj
         </Button>
         <Button
           type="submit"
           disabled={isSubmitting}
           className="w-full sm:w-auto bg-primary hover:bg-primary-dark text-primary-foreground"
+          data-testid="submit-create-group"
         >
           {isSubmitting ? (
             <>

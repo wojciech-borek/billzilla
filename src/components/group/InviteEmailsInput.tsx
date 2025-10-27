@@ -98,13 +98,17 @@ export default function InviteEmailsInput({ control, errors }: InviteEmailsInput
           <div className="space-y-2">
             {/* Email chips display */}
             {field.value && field.value.length > 0 && (
-              <div className="flex flex-wrap gap-2 p-3 bg-muted/50 rounded-lg border border-border">
+              <div
+                className="flex flex-wrap gap-2 p-3 bg-muted/50 rounded-lg border border-border"
+                data-testid="invite-email-chips"
+              >
                 {field.value.map((email) => (
                   <div
                     key={email}
                     className="inline-flex items-center gap-1 px-3 py-1 bg-primary/10 text-primary rounded-full text-sm font-medium transition-colors hover:bg-primary/20"
+                    data-testid="invite-email-chip"
                   >
-                    <span>{email}</span>
+                    <span data-testid="invite-email-chip-text">{email}</span>
                     <button
                       type="button"
                       onClick={() => removeEmail(email, field.value || [], field.onChange)}
@@ -134,6 +138,7 @@ export default function InviteEmailsInput({ control, errors }: InviteEmailsInput
               className={inputError || errors.invite_emails ? "border-destructive focus-visible:ring-destructive" : ""}
               aria-invalid={inputError || errors.invite_emails ? "true" : "false"}
               aria-describedby="invite-emails-help invite-emails-error"
+              data-testid="invite-emails-input"
             />
           </div>
         )}

@@ -1,10 +1,16 @@
+import { config } from "dotenv";
 import { defineConfig, devices } from "@playwright/test";
+import globalSetup from "./e2e/global-setup";
+
+config({ path: ".env.test" });
 
 /**
  * @see https://playwright.dev/docs/test-configuration
  */
 export default defineConfig({
   testDir: "./e2e",
+  /* Global setup to authenticate and save session state */
+  globalSetup: "./e2e/global-setup.ts",
   /* Run tests in files in parallel */
   fullyParallel: true,
   /* Fail the build on CI if you accidentally left test.only in the source code. */
@@ -31,17 +37,39 @@ export default defineConfig({
   projects: [
     {
       name: "chromium",
-      use: { ...devices["Desktop Chrome"] },
+      testIgnore: "**/unauthenticated.spec.ts",
+      use: {
+        ...devices["Desktop Chrome"],
+        storageState: "./e2e/.auth/user.json",
+      },
     },
 
     {
       name: "firefox",
-      use: { ...devices["Desktop Firefox"] },
+      testIgnore: "**/unauthenticated.spec.ts",
+      use: {
+        ...devices["Desktop Firefox"],
+        storageState: "./e2e/.auth/user.json",
+      },
     },
 
     {
       name: "webkit",
-      use: { ...devices["Desktop Safari"] },
+      testIgnore: "**/unauthenticated.spec.ts",
+      use: {
+        ...devices["Desktop Safari"],
+        storageState: "./e2e/.auth/user.json",
+      },
+    },
+
+    /* Project for tests that don't require authentication */
+    {
+      name: "unauthenticated-chromium",
+      testMatch: "**/unauthenticated.spec.ts",
+      use: {
+        ...devices["Desktop Chrome"],
+        // No storageState - starts with clean session
+      },
     },
 
     /* Test against mobile viewports. */
@@ -70,5 +98,11 @@ export default defineConfig({
     command: "npm run dev",
     url: "http://localhost:3000",
     reuseExistingServer: !process.env.CI,
+    env: {
+      ...(Object.fromEntries(Object.entries(process.env).filter(([_, value]) => value !== undefined)) as Record<
+        string,
+        string
+      >),
+    },
   },
 });

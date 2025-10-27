@@ -16,6 +16,7 @@ export default function FloatingActionButton({ onClick }: FloatingActionButtonPr
       className="fixed bottom-6 right-6 h-16 w-16 rounded-full shadow-lg shadow-green-200 transition-all duration-300 ease-out hover:scale-110 hover:shadow-xl hover:shadow-green-300 focus-visible:scale-110 focus-visible:shadow-xl"
       aria-label="Utwórz nową grupę"
       title="Utwórz nową grupę"
+      data-testid="create-group-button"
     >
       {/* Plus icon */}
       <svg className="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">

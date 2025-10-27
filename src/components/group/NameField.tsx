@@ -25,6 +25,7 @@ export default function NameField({ register, errors }: NameFieldProps) {
         className={errors.name ? "border-destructive focus-visible:ring-destructive" : ""}
         aria-invalid={errors.name ? "true" : "false"}
         aria-describedby={errors.name ? "name-error" : undefined}
+        data-testid="group-name-input"
         {...register("name")}
       />
       {errors.name && (

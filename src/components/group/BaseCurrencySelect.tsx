@@ -41,6 +41,7 @@ export default function BaseCurrencySelect({ control, errors }: BaseCurrencySele
               className={errors.base_currency_code ? "border-destructive focus:ring-destructive" : ""}
               aria-invalid={errors.base_currency_code ? "true" : "false"}
               aria-describedby={errors.base_currency_code ? "currency-error" : undefined}
+              data-testid="base-currency-select"
             >
               <SelectValue placeholder={loading ? "Ładowanie..." : "Wybierz walutę"} />
             </SelectTrigger>

@@ -1,4 +1,5 @@
-import { Page, Locator } from "@playwright/test";
+import { Page, Locator, expect } from "@playwright/test";
+import { CreateGroupModal } from "./create-group-modal.page";
 
 export class DashboardPage {
   readonly page: Page;
@@ -6,11 +7,12 @@ export class DashboardPage {
   readonly groupsList: Locator;
   readonly expensesList: Locator;
   readonly userMenu: Locator;
+  private readonly toasts: Locator;
 
   constructor(page: Page) {
     this.page = page;
-    // Create group FAB - fixed position button with aria-label
-    this.createGroupButton = page.locator('button[aria-label="Utwórz nową grupę"]');
+    // Create group FAB - fixed position button with data-testid
+    this.createGroupButton = page.getByTestId("create-group-button");
     // Groups are displayed in a grid, each group is an article with group name
     this.groupsList = page.locator("section").filter({ hasText: "Twoje grupy" });
     this.expensesList = page.locator('[data-testid="expenses-list"]');
@@ -23,6 +25,7 @@ export class DashboardPage {
           .locator('[aria-label*="user"]')
           .or(page.locator('[aria-label*="profile"]').or(page.locator('[aria-label*="account"]')))
       );
+    this.toasts = page.locator("[data-sonner-toast]");
   }
 
   async goto() {
@@ -35,7 +38,68 @@ export class DashboardPage {
   }
 
   async clickCreateGroup() {
+    // Ensure button is visible and clickable before clicking
+    await this.createGroupButton.waitFor({ state: "visible", timeout: 10000 });
+    await expect(this.createGroupButton).toBeEnabled();
+
+    // Scroll button into view and ensure it's clickable
+    await this.createGroupButton.scrollIntoViewIfNeeded();
+
+    // Click the button (modal opening will be awaited by caller)
     await this.createGroupButton.click();
+  }
+
+  /**
+   * Open create group modal and return modal page object
+   */
+  async openCreateGroupModal(): Promise<CreateGroupModal> {
+    // Ensure any existing modal is closed first
+    const existingModal = this.page.getByTestId("create-group-modal");
+    if (await existingModal.isVisible()) {
+      // Try to close it by clicking escape or outside the modal
+      await this.page.keyboard.press("Escape");
+      // Wait for modal to actually close
+      await existingModal.waitFor({ state: "hidden", timeout: 5000 });
+    }
+
+    // Ensure no visible toasts are obstructing interactions
+    await this.waitForNoToasts();
+
+    // Click the create group button
+    await this.createGroupButton.waitFor({ state: "visible", timeout: 10000 });
+    await expect(this.createGroupButton).toBeEnabled();
+    await this.createGroupButton.scrollIntoViewIfNeeded();
+
+    // First attempt
+    try {
+      await this.createGroupButton.click({ timeout: 5000 });
+    } catch {
+      await this.createGroupButton.click({ force: true });
+    }
+
+    const modal = new CreateGroupModal(this.page);
+
+    // Wait for modal to appear, retry click once if needed
+    try {
+      await modal.waitForModal();
+    } catch {
+      await this.waitForNoToasts();
+      await this.createGroupButton.click({ force: true });
+      await modal.waitForModal();
+    }
+
+    return modal;
+  }
+
+  /**
+   * Wait for Sonner toasts to disappear to avoid overlay blocking clicks
+   */
+  private async waitForNoToasts() {
+    try {
+      await expect(this.toasts).toHaveCount(0, { timeout: 5000 });
+    } catch {
+      // As a fallback, proceed; clicking will retry with force if needed
+    }
   }
 
   // Click add expense button on the first available group
@@ -67,9 +131,5 @@ export class DashboardPage {
 
   async getExpenseCount() {
     return await this.expensesList.locator("li").count();
-  }
-
-  async takeScreenshot(name: string) {
-    await this.page.screenshot({ path: `screenshots/${name}.png` });
   }
 }

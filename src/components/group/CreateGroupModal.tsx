@@ -25,9 +25,11 @@ export default function CreateGroupModal({ open, onOpenChange, onSuccess }: Crea
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" data-testid="create-group-modal">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-bold text-foreground">Utwórz nową grupę</DialogTitle>
+          <DialogTitle className="text-2xl font-bold text-foreground" data-testid="create-group-modal-title">
+            Utwórz nową grupę
+          </DialogTitle>
           <DialogDescription className="text-muted-foreground">
             Stwórz grupę rozliczeniową i zaproś znajomych do wspólnego dzielenia się wydatkami.
           </DialogDescription>
