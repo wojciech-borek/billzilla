@@ -647,8 +647,10 @@ export const setupLogoutTestMocks = (signOutResult: { error: any } | Promise<{ e
     vi.mocked(mockClient.auth.signOut).mockRejectedValue(new Error("Network error"));
   } else if (signOutResult instanceof Promise) {
     vi.mocked(mockClient.auth.signOut).mockImplementation(() => signOutResult);
-  } else {
+  } else if (typeof signOutResult === "object" && "error" in signOutResult) {
     vi.mocked(mockClient.auth.signOut).mockResolvedValue(signOutResult);
+  } else {
+    throw new Error(`Invalid signOutResult type: ${typeof signOutResult}`);
   }
 
   return { mockClient, mockUseSupabaseAuth };
