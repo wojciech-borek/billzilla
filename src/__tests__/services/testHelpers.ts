@@ -356,6 +356,127 @@ export const mockGroupInvitationsQuery = (client: SupabaseClient, invitations: a
   });
 };
 
+// Specification-specific mock helpers
+export const mockUserActiveMembership = (client: SupabaseClient, groupId: string, userId: string, active = true) => {
+  const mockClient = client as any;
+  mockClient.from.mockReturnValueOnce(mockClient);
+  mockClient.select.mockReturnValueOnce(mockClient);
+  mockClient.eq.mockReturnValueOnce(mockClient);
+  mockClient.eq.mockReturnValueOnce(mockClient);
+  mockClient.eq.mockReturnValueOnce(mockClient);
+  mockClient.single.mockResolvedValueOnce({
+    data: active ? { status: "active" } : null,
+    error: active ? null : { message: "No membership found" },
+  });
+};
+
+export const mockCurrencyExists = (client: SupabaseClient, currencyCode: string, exists = true) => {
+  const mockClient = client as any;
+  mockClient.from.mockReturnValueOnce(mockClient);
+  mockClient.select.mockReturnValueOnce(mockClient);
+  mockClient.eq.mockReturnValueOnce(mockClient);
+  mockClient.single.mockResolvedValueOnce({
+    data: exists ? { code: currencyCode } : null,
+    error: exists ? null : { message: "Currency not found" },
+  });
+};
+
+export const mockCurrencyConfiguredForGroup = (client: SupabaseClient, groupId: string, currencyCode: string, configured = true) => {
+  const mockClient = client as any;
+  mockClient.from.mockReturnValueOnce(mockClient);
+  mockClient.select.mockReturnValueOnce(mockClient);
+  mockClient.eq.mockReturnValueOnce(mockClient);
+  mockClient.eq.mockReturnValueOnce(mockClient);
+  mockClient.single.mockResolvedValueOnce({
+    data: configured ? { currency_code: currencyCode } : null,
+    error: configured ? null : { message: "Currency not configured" },
+  });
+};
+
+export const mockGroupExistsAndActive = (client: SupabaseClient, groupId: string, exists = true) => {
+  const mockClient = client as any;
+  mockClient.from.mockReturnValueOnce(mockClient);
+  mockClient.select.mockReturnValueOnce(mockClient);
+  mockClient.eq.mockReturnValueOnce(mockClient);
+  mockClient.eq.mockReturnValueOnce(mockClient);
+  mockClient.single.mockResolvedValueOnce({
+    data: exists ? { id: groupId, status: "active" } : null,
+    error: exists ? null : { message: "Group not found" },
+  });
+};
+
+// Repository-specific mock helpers
+export const mockGroupRepositoryQuery = (client: SupabaseClient, table: string, result: { data: any; error: any }) => {
+  const mockClient = client as any;
+
+  const queryBuilder = {
+    select: vi.fn().mockReturnThis(),
+    eq: vi.fn().mockReturnThis(),
+    order: vi.fn().mockImplementation((...args: any[]) => {
+      // Handle different order signatures: order(column) or order(column, options)
+      if (args.length === 1) {
+        // For simple order(column), return the queryBuilder which will be awaited
+        return Promise.resolve(result);
+      } else {
+        // For order(column, options), return a chainable object that can also be awaited
+        const chainableObject = {
+          range: vi.fn().mockResolvedValue(result),
+        };
+        // Make it awaitable by adding then method
+        Object.assign(chainableObject, {
+          then: vi.fn().mockImplementation((resolve) => resolve(result)),
+        });
+        return chainableObject;
+      }
+    }),
+    range: vi.fn().mockResolvedValue(result),
+    single: vi.fn().mockResolvedValue(result),
+    count: vi.fn().mockReturnThis(),
+  };
+
+  mockClient.from.mockReturnValueOnce(queryBuilder);
+  return queryBuilder;
+};
+
+export const mockExpenseRepositoryQuery = (client: SupabaseClient, table: string, result: { data: any; error: any }) => {
+  const mockClient = client as any;
+  const queryBuilder = {
+    select: vi.fn().mockReturnThis(),
+    eq: vi.fn().mockReturnThis(),
+    single: vi.fn().mockResolvedValue(result),
+    insert: vi.fn().mockReturnThis(),
+    delete: vi.fn().mockReturnThis(),
+    order: vi.fn().mockImplementation((...args: any[]) => {
+      // Handle different order signatures: order(column) or order(column, options)
+      if (args.length === 1) {
+        return queryBuilder; // For simple order(column), continue chaining
+      } else {
+        // For order(column, options), return a chainable object
+        return {
+          range: vi.fn().mockResolvedValue(result),
+        };
+      }
+    }),
+    range: vi.fn().mockResolvedValue(result),
+  };
+
+  mockClient.from.mockReturnValueOnce(queryBuilder);
+  return queryBuilder;
+};
+
+export const mockRpcQuery = (client: SupabaseClient, rpcName: string, result: { data: any; error: any }) => {
+  const mockClient = client as any;
+  mockClient.rpc.mockResolvedValueOnce(result);
+};
+
+// Common test setup helpers
+export const setupRepositoryTest = <T>(RepositoryClass: new (client: SupabaseClient) => T) => {
+  const mockSupabaseClient = createMockSupabaseClient();
+  const repository = new RepositoryClass(mockSupabaseClient);
+  vi.clearAllMocks();
+  return { mockSupabaseClient, repository };
+};
+
 // Expense Service specific fixtures and mock builders
 export const createMockExpenseCommand = (overrides: Partial<any> = {}): any => ({
   description: "Lunch at restaurant",
@@ -606,6 +727,25 @@ export const createExpenseSelectFailureScenario = () => ({
   expenseInsert: { data: createMockExpenseInsert(), error: null },
   expenseSelect: { data: null, error: { message: "Select failed" } },
   expenseSplitsInsert: { error: null },
+});
+
+// Test data constants for specifications
+export const TEST_GROUP_ID = "group-123";
+export const TEST_USER_ID = "user-123";
+export const TEST_CURRENCY_CODE = "USD";
+export const TEST_INVALID_CURRENCY_CODE = "INVALID";
+
+// Helper functions for common specification tests
+export const createValidGroupCreationCommand = (overrides: Partial<any> = {}) => ({
+  name: "Test Group",
+  base_currency_code: TEST_CURRENCY_CODE,
+  ...overrides,
+});
+
+export const createInvalidGroupCreationCommand = (overrides: Partial<any> = {}) => ({
+  name: "",
+  base_currency_code: "",
+  ...overrides,
 });
 
 // Auth-specific mock helpers
