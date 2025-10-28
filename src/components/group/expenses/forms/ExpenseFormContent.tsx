@@ -3,12 +3,7 @@ import { type UseFormReturn } from "react-hook-form";
 import { ExpenseBasicInfo } from "./ExpenseBasicInfo";
 import { ExpenseSplitSection } from "./ExpenseSplitSection";
 import type { CreateExpenseFormValues } from "@/lib/schemas/expenseSchemas";
-import type {
-  GroupMemberSummaryDTO,
-  GroupCurrencyDTO,
-  TranscriptionResultDTO,
-  TranscriptionErrorDTO,
-} from "@/types";
+import type { GroupMemberSummaryDTO, GroupCurrencyDTO, TranscriptionResultDTO, TranscriptionErrorDTO } from "@/types";
 
 interface ExpenseFormContentProps {
   form: UseFormReturn<CreateExpenseFormValues>;
@@ -52,11 +47,7 @@ export function ExpenseFormContent({
       />
 
       {/* Participants and Split */}
-      <ExpenseSplitSection
-        form={form}
-        groupMembers={groupMembers}
-        hasLowConfidence={hasLowConfidence}
-      />
+      <ExpenseSplitSection form={form} groupMembers={groupMembers} hasLowConfidence={hasLowConfidence} />
     </div>
   );
 }

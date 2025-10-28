@@ -54,10 +54,7 @@ export function ExpenseForm({
     handleSubmit: submitExpense,
   } = useExpenseForm(groupMembers, groupCurrencies, currentUserId, initialData);
 
-  const { handleTranscriptionComplete } = useExpenseFormIntegration(
-    form,
-    onTranscriptionComplete
-  );
+  const { handleTranscriptionComplete } = useExpenseFormIntegration(form, onTranscriptionComplete);
 
   const {
     handleSubmit,

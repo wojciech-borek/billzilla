@@ -40,11 +40,7 @@ export function ExpenseFormFooter({
 
       {/* Submit Button */}
       <div className="flex justify-end pt-4">
-        <Button
-          type="submit"
-          disabled={!isValid || isSubmitting || !splitValidationValid}
-          className="min-w-[120px]"
-        >
+        <Button type="submit" disabled={!isValid || isSubmitting || !splitValidationValid} className="min-w-[120px]">
           {isSubmitting ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
