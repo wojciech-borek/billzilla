@@ -25,7 +25,7 @@ import type {
 import { GroupRepository } from "./repositories/GroupRepository";
 import { GroupBuilderFactory } from "./builders/GroupBuilder";
 import { GroupCreationUnitOfWork } from "./units/GroupCreationUnitOfWork";
-import { UserIsActiveGroupMemberSpecification, CurrencyConfiguredForGroupSpecification } from "./specifications/groupSpecifications";
+import { UserIsActiveGroupMemberSpecification } from "./specifications/groupSpecifications";
 import { CurrencyNotFoundError, TransactionError, GroupAccessError, GroupDataError } from "./errors/groupErrors";
 
 // Re-export error classes for backward compatibility
@@ -62,7 +62,14 @@ export async function createGroup(
  * Composes the final GroupListItemDTO array using Builder pattern
  */
 function composeGroupListItems(
-  userGroups: any[],
+  userGroups: {
+    id: string;
+    name: string;
+    base_currency_code: string;
+    status: string;
+    created_at: string;
+    group_members: { role: GroupRole }[];
+  }[],
   balancesByGroup: Map<string, number>,
   membersByGroup: Map<string, GroupMemberSummaryDTO[]>,
   supabase: SupabaseClient<Database>
