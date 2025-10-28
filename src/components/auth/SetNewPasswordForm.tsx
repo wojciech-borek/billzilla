@@ -1,9 +1,8 @@
-import { useCallback, memo, type FormEvent } from "react";
-import { Button } from "@/components/ui/button";
-import { FormField } from "@/components/ui/form-field";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { useAuthForm, useSetNewPassword } from "@/lib/hooks";
-import { setNewPasswordSchema, type SetNewPasswordData } from "@/lib/schemas/authSchemas";
+import { memo } from "react";
+import { useSetNewPasswordForm } from "@/lib/hooks";
+import { SetNewPasswordMessages } from "./SetNewPasswordMessages";
+import { SetNewPasswordFields } from "./SetNewPasswordFields";
+import { SetNewPasswordActions } from "./SetNewPasswordActions";
 
 interface SetNewPasswordFormProps {
   token?: string;
@@ -22,63 +21,21 @@ export const SetNewPasswordForm = memo(function SetNewPasswordForm({
   errorMessage,
   successMessage,
 }: SetNewPasswordFormProps) {
-  const {
-    formData,
-    errors,
-    isLoading: formLoading,
-    handleChange,
-    validate,
-  } = useAuthForm<SetNewPasswordData>(setNewPasswordSchema);
-
-  const {
-    isLoading: setPasswordLoading,
-    error: setPasswordError,
-    setNewPassword,
-  } = useSetNewPassword({
+  const { formData, errors, isLoading, setPasswordError, handleChange, handleSubmit } = useSetNewPasswordForm({
     token,
     tokenHash,
     accessToken,
     refreshToken,
   });
 
-  const isLoading = formLoading || setPasswordLoading;
-
-  const handleSetNewPassword = useCallback(
-    async (e: FormEvent<HTMLFormElement>) => {
-      e.preventDefault();
-
-      if (!validate()) {
-        return;
-      }
-
-      const data = formData as SetNewPasswordData;
-      await setNewPassword(data.new_password);
-    },
-    [formData, validate, setNewPassword]
-  );
-
   return (
     <div className="space-y-6">
-      {/* Komunikat sukcesu z URL */}
-      {successMessage && (
-        <Alert className="bg-green-50 border-green-200 text-green-800">
-          <AlertDescription className="text-sm">{successMessage}</AlertDescription>
-        </Alert>
-      )}
-
-      {/* Błąd z URL */}
-      {errorMessage && (
-        <Alert variant="destructive">
-          <AlertDescription className="text-sm">{errorMessage}</AlertDescription>
-        </Alert>
-      )}
-
-      {/* Błąd API */}
-      {setPasswordError && (
-        <Alert variant="destructive">
-          <AlertDescription className="text-sm">{setPasswordError}</AlertDescription>
-        </Alert>
-      )}
+      {/* Komunikaty statusu */}
+      <SetNewPasswordMessages
+        successMessage={successMessage}
+        errorMessage={errorMessage}
+        setPasswordError={setPasswordError}
+      />
 
       {/* Instrukcje */}
       <div className="text-center space-y-2">
@@ -86,46 +43,10 @@ export const SetNewPasswordForm = memo(function SetNewPasswordForm({
       </div>
 
       {/* Formularz ustawiania nowego hasła */}
-      <form onSubmit={handleSetNewPassword} className="space-y-4">
-        <FormField
-          id="new_password"
-          label="Nowe hasło"
-          type="password"
-          placeholder="••••••••"
-          value={formData.new_password || ""}
-          onChange={(value) => handleChange("new_password", value)}
-          error={errors.new_password}
-          helperText="Minimum 8 znaków, w tym cyfra i litera"
-          disabled={isLoading}
-          required
-        />
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <SetNewPasswordFields formData={formData} errors={errors} isLoading={isLoading} onChange={handleChange} />
 
-        <FormField
-          id="confirm_password"
-          label="Powtórz nowe hasło"
-          type="password"
-          placeholder="••••••••"
-          value={formData.confirm_password || ""}
-          onChange={(value) => handleChange("confirm_password", value)}
-          error={errors.confirm_password}
-          disabled={isLoading}
-          required
-        />
-
-        <Button
-          type="submit"
-          disabled={isLoading}
-          className="w-full bg-primary hover:bg-primary-dark text-white rounded-xl transition-all duration-300 ease-out"
-        >
-          {isLoading ? (
-            <>
-              <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-              Zmiana hasła...
-            </>
-          ) : (
-            "Ustaw nowe hasło"
-          )}
-        </Button>
+        <SetNewPasswordActions isLoading={isLoading} />
       </form>
     </div>
   );

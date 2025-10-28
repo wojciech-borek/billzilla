@@ -26,6 +26,7 @@ export { useCurrenciesList } from "./useCurrenciesList";
 export { useAuthForm } from "./useAuthForm";
 export { useLoginForm } from "./useLoginForm";
 export { usePasswordResetForm } from "./usePasswordResetForm";
+export { useSetNewPasswordForm } from "./useSetNewPasswordForm";
 export { useSignup } from "./useSignup";
 export { useSupabaseAuth } from "./useSupabaseAuth";
 export { useLogout } from "./useLogout";
