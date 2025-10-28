@@ -4,6 +4,13 @@ import type { CreateExpenseCommand, ExpenseDTO } from "../../types";
 import { createExpenseSchema, type CreateExpenseSchemaType } from "../schemas/expenseSchemas";
 import { z } from "zod";
 
+// Import refactored components
+import { ExpenseRepository } from "./repositories/ExpenseRepository";
+import { ExpenseValidationError, ExpenseAccessError, ExpenseTransactionError, ExpenseDataError } from "./errors/expenseErrors";
+
+// Re-export error classes for backward compatibility
+export { ExpenseValidationError, ExpenseAccessError, ExpenseTransactionError, ExpenseDataError };
+
 // Schema for basic format validation (no business rules)
 const basicExpenseValidationSchema = z.object({
   description: z
@@ -52,22 +59,6 @@ const basicExpenseValidationSchema = z.object({
 
 type BasicExpenseValidationType = z.infer<typeof basicExpenseValidationSchema>;
 
-export class ExpenseValidationError extends Error {
-  constructor(
-    message: string,
-    public details?: unknown
-  ) {
-    super(message);
-    this.name = "ExpenseValidationError";
-  }
-}
-
-export class ExpenseNotFoundError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = "ExpenseNotFoundError";
-  }
-}
 
 /**
  * Command class for creating expenses with basic format validation
@@ -129,13 +120,13 @@ export class ValidatedExpenseCommand {
 export class ExpenseUnitOfWork {
   private expenseId: string | null = null;
   private currencyConfig: any = null;
-  private readonly supabase: SupabaseClient<Database>;
+  private readonly repository: ExpenseRepository;
   private readonly groupId: string;
   private readonly userId: string;
   private readonly command: ValidatedExpenseCommand;
 
   constructor(supabase: SupabaseClient<Database>, groupId: string, userId: string, command: ValidatedExpenseCommand) {
-    this.supabase = supabase;
+    this.repository = new ExpenseRepository(supabase);
     this.groupId = groupId;
     this.userId = userId;
     this.command = command;
@@ -170,46 +161,19 @@ export class ExpenseUnitOfWork {
   }
 
   private async validateGroupMembership() {
-    const { data: groupData, error: groupError } = await this.supabase
-      .from("groups")
-      .select(
-        `
-        id,
-        base_currency_code,
-        group_currencies (
-          currency_code,
-          exchange_rate
-        ),
-        group_members!inner (
-          profile_id,
-          status
-        )
-      `
-      )
-      .eq("id", this.groupId)
-      .eq("group_members.profile_id", this.userId)
-      .eq("group_members.status", "active")
-      .single();
-
-    if (groupError || !groupData) {
-      throw new ExpenseNotFoundError("Group not found or user is not an active member");
+    try {
+      return await this.repository.fetchGroupMembershipAndCurrencies(this.groupId, this.userId);
+    } catch (error) {
+      throw new ExpenseAccessError();
     }
-
-    return groupData;
   }
 
   private async validateParticipants(groupData: any) {
-    // Get all active group members
-    const { data: groupMembers, error: membersError } = await this.supabase
-      .from("group_members")
-      .select("profile_id")
-      .eq("group_id", this.groupId)
-      .eq("status", "active");
-
-    if (membersError || !groupMembers) {
+    // Get all active group members using repository
+    const groupMembers = await this.repository.fetchActiveGroupMembers(this.groupId);
+    if (!groupMembers) {
       throw new ExpenseValidationError("Could not verify group membership");
     }
-
     const activeMemberIds = new Set(groupMembers.map((m) => m.profile_id));
 
     // Validate payer is an active member
@@ -251,9 +215,8 @@ export class ExpenseUnitOfWork {
   }
 
   private async createExpense() {
-    const { data: expenseData, error: expenseInsertError } = await this.supabase
-      .from("expenses")
-      .insert({
+    try {
+      const expenseData = await this.repository.createExpense({
         group_id: this.groupId,
         description: this.command.description,
         amount: this.command.amount,
@@ -261,97 +224,61 @@ export class ExpenseUnitOfWork {
         expense_date: this.command.expense_date,
         created_by: this.userId,
         payer_id: this.command.payer_id,
-      })
-      .select()
-      .single();
+      });
 
-    if (expenseInsertError || !expenseData) {
-      throw new ExpenseValidationError("Failed to create expense");
+      this.expenseId = expenseData.id;
+      return expenseData;
+    } catch (error) {
+      throw new ExpenseTransactionError("Failed to create expense");
     }
-
-    this.expenseId = expenseData.id;
-    return expenseData;
   }
 
   private async createExpenseSplits() {
-    const splitInserts = this.command.splits.map((split) => ({
-      expense_id: this.expenseId!,
-      profile_id: split.profile_id,
-      amount: split.amount,
-    }));
+    try {
+      const splitInserts = this.command.splits.map((split) => ({
+        expense_id: this.expenseId!,
+        profile_id: split.profile_id,
+        amount: split.amount,
+      }));
 
-    const { error: splitsInsertError } = await this.supabase.from("expense_splits").insert(splitInserts);
-
-    if (splitsInsertError) {
-      throw new ExpenseValidationError("Failed to create expense splits");
+      await this.repository.createExpenseSplits(splitInserts);
+    } catch (error) {
+      throw new ExpenseTransactionError("Failed to create expense splits");
     }
   }
 
   private async fetchCompleteExpense(): Promise<ExpenseDTO> {
-    const { data: completeExpense, error: fetchError } = await this.supabase
-      .from("expenses")
-      .select(
-        `
-        id,
-        group_id,
-        description,
-        amount,
-        currency_code,
-        expense_date,
-        created_at,
-        payer_id,
-        created_by,
-        profiles!expenses_created_by_fkey (
-          id,
-          full_name,
-          avatar_url
-        ),
-        expense_splits (
-          profile_id,
-          amount,
-          profiles (
-            id,
-            full_name,
-            avatar_url
-          )
-        )
-      `
-      )
-      .eq("id", this.expenseId!)
-      .single();
+    try {
+      const completeExpense = await this.repository.fetchCompleteExpense(this.expenseId!);
 
-    if (fetchError || !completeExpense) {
-      throw new ExpenseValidationError("Failed to retrieve created expense");
-    }
+      // Calculate amount in base currency using the currency config from validation
+      const amountInBaseCurrency = this.currencyConfig
+        ? Math.round(this.command.amount * this.currencyConfig.exchange_rate * 100) / 100
+        : this.command.amount;
 
-    // Calculate amount in base currency using the currency config from validation
-    const amountInBaseCurrency = this.currencyConfig
-      ? Math.round(this.command.amount * this.currencyConfig.exchange_rate * 100) / 100
-      : this.command.amount;
+      // Transform to DTO format
+      const createdByProfile = completeExpense.profiles as unknown as {
+        id: string;
+        full_name: string | null;
+        avatar_url: string | null;
+      };
 
-    // Transform to DTO format
-    const createdByProfile = completeExpense.profiles as unknown as {
-      id: string;
-      full_name: string | null;
-      avatar_url: string | null;
-    };
-
-    const expenseDTO: ExpenseDTO = {
-      id: completeExpense.id,
-      group_id: completeExpense.group_id,
-      payer_id: completeExpense.payer_id,
-      description: completeExpense.description,
-      amount: completeExpense.amount,
-      currency_code: completeExpense.currency_code,
-      expense_date: completeExpense.expense_date,
-      created_at: completeExpense.created_at,
-      amount_in_base_currency: amountInBaseCurrency,
-      created_by: {
-        id: createdByProfile.id,
-        full_name: createdByProfile.full_name ?? "",
-        avatar_url: createdByProfile.avatar_url ?? null,
-      },
-      splits: completeExpense.expense_splits.map((split) => {
+      const expenseDTO: ExpenseDTO = {
+        id: completeExpense.id,
+        group_id: completeExpense.group_id,
+        payer_id: completeExpense.payer_id,
+        description: completeExpense.description,
+        amount: completeExpense.amount,
+        currency_code: completeExpense.currency_code,
+        expense_date: completeExpense.expense_date,
+        created_at: completeExpense.created_at,
+        amount_in_base_currency: amountInBaseCurrency,
+        created_by: {
+          id: createdByProfile.id,
+          full_name: createdByProfile.full_name ?? "",
+          avatar_url: createdByProfile.avatar_url ?? null,
+        },
+      splits: completeExpense.expense_splits.map((split: any) => {
         const splitProfile = split.profiles as unknown as {
           id: string;
           full_name: string | null;
@@ -363,14 +290,17 @@ export class ExpenseUnitOfWork {
           amount: split.amount,
         };
       }),
-    };
+      };
 
-    return expenseDTO;
+      return expenseDTO;
+    } catch (error) {
+      throw new ExpenseDataError("retrieve created expense", error instanceof Error ? error.message : "Unknown error");
+    }
   }
 
   private async rollbackExpense() {
     if (this.expenseId) {
-      await this.supabase.from("expenses").delete().eq("id", this.expenseId);
+      await this.repository.deleteExpense(this.expenseId);
     }
   }
 }

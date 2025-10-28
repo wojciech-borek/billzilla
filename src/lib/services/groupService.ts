@@ -1,16 +1,15 @@
 /**
  * Group service - handles business logic for group operations
+ * Refactored to use Specification Pattern, Builder Pattern, Repository Pattern, and Unit of Work
  */
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "../../db/database.types";
 import { calculateUserBalances } from "./balanceService";
-import { fetchGroupMembers, getGroupMemberDetails, verifyGroupMembership } from "./memberService";
-import { validateCurrencyExists } from "./currencyService";
+import { fetchGroupMembers, getGroupMemberDetails } from "./memberService";
 import type {
   CreateGroupCommand,
   CreateGroupResponseDTO,
-  InvitationResultDTO,
   GroupRole,
   GroupListItemDTO,
   GroupMemberSummaryDTO,
@@ -22,45 +21,15 @@ import type {
   GroupStatus,
 } from "../../types";
 
-/**
- * Custom error for currency not found
- */
-export class CurrencyNotFoundError extends Error {
-  constructor(currencyCode: string) {
-    super(`Currency with code '${currencyCode}' does not exist`);
-    this.name = "CurrencyNotFoundError";
-  }
-}
+// Import refactored components
+import { GroupRepository } from "./repositories/GroupRepository";
+import { GroupBuilderFactory } from "./builders/GroupBuilder";
+import { GroupCreationUnitOfWork } from "./units/GroupCreationUnitOfWork";
+import { UserIsActiveGroupMemberSpecification, CurrencyConfiguredForGroupSpecification } from "./specifications/groupSpecifications";
+import { CurrencyNotFoundError, TransactionError, GroupAccessError, GroupDataError } from "./errors/groupErrors";
 
-/**
- * Custom error for transaction failures
- */
-export class TransactionError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = "TransactionError";
-  }
-}
-
-/**
- * Custom error for group not found or access denied
- */
-export class GroupAccessError extends Error {
-  constructor(message = "Group not found or you are not a member") {
-    super(message);
-    this.name = "GroupAccessError";
-  }
-}
-
-/**
- * Custom error for group data fetch failures
- */
-export class GroupDataError extends Error {
-  constructor(operation: string, details?: string) {
-    super(`Failed to ${operation}${details ? `: ${details}` : ""}`);
-    this.name = "GroupDataError";
-  }
-}
+// Re-export error classes for backward compatibility
+export { CurrencyNotFoundError, TransactionError, GroupAccessError, GroupDataError };
 
 /**
  * Creates a new group with the creator as the first member
@@ -84,155 +53,34 @@ export async function createGroup(
   command: CreateGroupCommand,
   userId: string
 ): Promise<CreateGroupResponseDTO> {
-  // Input validation
-  if (!userId) {
-    throw new GroupDataError("create group", "User ID is required");
-  }
-  if (!command.name?.trim()) {
-    throw new GroupDataError("create group", "Group name is required");
-  }
-  if (!command.base_currency_code) {
-    throw new GroupDataError("create group", "Base currency code is required");
-  }
-
-  try {
-    // Validate that base currency exists
-    const currencyExists = await validateCurrencyExists(supabase, command.base_currency_code);
-    if (!currencyExists) {
-      throw new CurrencyNotFoundError(command.base_currency_code);
-    }
-
-    // Step 2-5: Create group atomically using RPC function
-    // This function runs as SECURITY DEFINER (bypasses RLS) and handles invitations atomically
-
-    // Create group atomically using RPC function
-    const { data: newGroupData, error: groupError } = await supabase.rpc("create_group_transaction", {
-      p_group_name: command.name,
-      p_base_currency_code: command.base_currency_code,
-      p_creator_id: userId,
-      p_invite_emails: command.invite_emails || undefined,
-    });
-
-    if (groupError || !newGroupData || newGroupData.length === 0) {
-      throw new TransactionError(`Failed to create group: ${groupError?.message || "Unknown error"}`);
-    }
-
-    const newGroup = newGroupData[0];
-
-    // Parse invitation results from the database function
-    const invitationResults: InvitationResultDTO = {
-      added_members: Array.isArray(newGroup.added_members)
-        ? newGroup.added_members.map((member: any) => ({
-            profile_id: member.profile_id,
-            email: member.email,
-            full_name: member.full_name,
-            status: member.status,
-          }))
-        : [],
-      created_invitations: Array.isArray(newGroup.created_invitations)
-        ? newGroup.created_invitations.map((inv: any) => ({
-            id: inv.id,
-            email: inv.email,
-            status: inv.status,
-          }))
-        : [],
-    };
-
-    // Return the complete response
-    const { added_members, created_invitations, ...groupData } = newGroup;
-    return {
-      ...groupData,
-      role: "creator" as GroupRole,
-      invitations: invitationResults,
-    };
-  } catch (error) {
-    // Re-throw custom errors as-is
-    if (error instanceof CurrencyNotFoundError || error instanceof TransactionError) {
-      throw error;
-    }
-    // Convert currency operation errors for non-existent currencies to CurrencyNotFoundError
-    if (error instanceof Error && error.name === "CurrencyOperationError" && error.message.includes("does not exist")) {
-      throw new CurrencyNotFoundError(command.base_currency_code);
-    }
-    // Wrap unexpected errors
-    throw new GroupDataError("create group", error instanceof Error ? error.message : "Unknown error");
-  }
+  // Use Unit of Work pattern for atomic group creation
+  const unitOfWork = new GroupCreationUnitOfWork(supabase, command, userId);
+  return await unitOfWork.execute();
 }
 
 /**
- * Fetches groups where user is a member with their role
- */
-async function fetchUserGroupsWithRoles(
-  supabase: SupabaseClient<Database>,
-  userId: string,
-  status: GroupStatus,
-  limit: number,
-  offset: number
-) {
-  const { data: userGroups, error: groupsError } = await supabase
-    .from("groups")
-    .select(
-      `
-      *,
-      group_members!inner(role)
-    `
-    )
-    .eq("group_members.profile_id", userId)
-    .eq("status", status)
-    .order("created_at", { ascending: false })
-    .range(offset, offset + limit - 1);
-
-  if (groupsError) {
-    throw new GroupDataError("fetch groups", groupsError.message);
-  }
-
-  return userGroups;
-}
-
-/**
- * Counts total groups for a user with pagination
- */
-async function countUserGroups(
-  supabase: SupabaseClient<Database>,
-  userId: string,
-  status: GroupStatus
-): Promise<number> {
-  const { count: totalCount, error: countError } = await supabase
-    .from("groups")
-    .select("id, group_members!inner(profile_id)", { count: "exact", head: true })
-    .eq("group_members.profile_id", userId)
-    .eq("status", status);
-
-  if (countError) {
-    throw new GroupDataError("count user groups", countError.message);
-  }
-
-  return totalCount || 0;
-}
-
-/**
- * Composes the final GroupListItemDTO array
+ * Composes the final GroupListItemDTO array using Builder pattern
  */
 function composeGroupListItems(
   userGroups: any[],
   balancesByGroup: Map<string, number>,
-  membersByGroup: Map<string, GroupMemberSummaryDTO[]>
+  membersByGroup: Map<string, GroupMemberSummaryDTO[]>,
+  supabase: SupabaseClient<Database>
 ): GroupListItemDTO[] {
+  const builder = GroupBuilderFactory.forGroupList(supabase);
+
   return userGroups.map((group) => {
     // Extract role from group_members relation
     const groupMembersData = group.group_members as unknown as { role: GroupRole }[];
     const role = groupMembersData[0]?.role || "member";
 
-    return {
-      id: group.id,
-      name: group.name,
-      base_currency_code: group.base_currency_code,
-      status: group.status,
-      created_at: group.created_at,
-      role,
-      my_balance: balancesByGroup.get(group.id) || 0,
-      members: membersByGroup.get(group.id) || [],
-    };
+    return builder
+      .reset()
+      .withGroupData(group)
+      .withUserRole(role)
+      .withUserBalance(balancesByGroup.get(group.id) || 0)
+      .withMembers(membersByGroup.get(group.id) || [])
+      .buildGroupListItem();
   });
 }
 
@@ -275,12 +123,14 @@ export async function listGroups(
     throw new GroupDataError("list groups", "Offset must be non-negative");
   }
 
-  try {
-    // Fetch user groups with roles
-    const userGroups = await fetchUserGroupsWithRoles(supabase, userId, status, limit, offset);
+  const repository = new GroupRepository(supabase);
 
-    // Get total count for pagination
-    const total = await countUserGroups(supabase, userId, status);
+  try {
+    // Fetch user groups with roles using repository
+    const userGroups = await repository.fetchUserGroupsWithRoles(userId, status, limit, offset);
+
+    // Get total count for pagination using repository
+    const total = await repository.countUserGroups(userId, status);
 
     // Early return for empty results
     if (!userGroups || userGroups.length === 0) {
@@ -300,8 +150,8 @@ export async function listGroups(
       calculateUserBalances(supabase, userId, groupIds),
     ]);
 
-    // Compose final response
-    const groupListItems = composeGroupListItems(userGroups, balancesByGroup, membersByGroup);
+    // Compose final response using Builder pattern
+    const groupListItems = composeGroupListItems(userGroups, balancesByGroup, membersByGroup, supabase);
 
     return {
       data: groupListItems,
@@ -323,8 +173,8 @@ export async function listGroups(
  * Gets currencies available in a specific group
  *
  * This function performs the following operations:
- * 1. Verifies user is a member of the group
- * 2. Fetches all currencies available in the group
+ * 1. Verifies user is a member of the group using Specification pattern
+ * 2. Fetches all currencies available in the group using Repository pattern
  * 3. Separates base currency from additional currencies
  * 4. Returns GroupCurrenciesDTO
  *
@@ -347,37 +197,24 @@ export async function getGroupCurrencies(
     throw new GroupDataError("get group currencies", "User ID is required");
   }
 
+  const repository = new GroupRepository(supabase);
+
   try {
-    // Verify user is a member of the group
-    const isMember = await verifyGroupMembership(supabase, groupId, userId);
+    // Verify user is a member of the group using Specification pattern
+    const membershipSpec = new UserIsActiveGroupMemberSpecification(supabase);
+    const isMember = await membershipSpec.isSatisfiedBy({ groupId, userId });
     if (!isMember) {
       throw new GroupAccessError();
     }
 
-    // Get group base currency
-    const { data: group, error: groupError } = await supabase
-      .from("groups")
-      .select("base_currency_code")
-      .eq("id", groupId)
-      .single();
+    // Get group basic info using repository
+    const group = await repository.fetchGroupBasic(groupId);
 
-    if (groupError || !group) {
-      throw new GroupDataError("get group currencies", "Group not found");
-    }
-
-    // Fetch all currencies for the group
-    const { data: currenciesData, error: currenciesError } = await supabase
-      .from("group_currencies")
-      .select("currency_code, exchange_rate, currencies(name)")
-      .eq("group_id", groupId)
-      .order("currency_code");
-
-    if (currenciesError) {
-      throw new GroupDataError("get group currencies", "Failed to fetch currencies");
-    }
+    // Fetch all currencies for the group using repository
+    const currenciesData = await repository.fetchGroupCurrencies(groupId);
 
     // Transform currencies data
-    const groupCurrencies: GroupCurrencyDTO[] = (currenciesData || []).map((gc) => {
+    const groupCurrencies: GroupCurrencyDTO[] = currenciesData.map((gc) => {
       const currency = gc.currencies as unknown as { name: string };
       return {
         code: gc.currency_code,
@@ -416,11 +253,11 @@ export async function getGroupCurrencies(
  * Gets detailed information about a specific group including members, currencies and invitations
  *
  * This function performs the following operations:
- * 1. Fetches group details
+ * 1. Fetches group details using Repository pattern
  * 2. Fetches all active members with their profile information
  * 3. Fetches all currencies available in the group
  * 4. Fetches pending invitations
- * 5. Returns complete GroupDetailDTO
+ * 5. Builds complete GroupDetailDTO using Builder pattern
  *
  * @param supabase - Supabase client instance
  * @param groupId - ID of the group to fetch
@@ -441,59 +278,31 @@ export async function getGroupDetails(
     throw new GroupDataError("get group details", "User ID is required");
   }
 
+  const repository = new GroupRepository(supabase);
+  const builder = GroupBuilderFactory.forGroupDetail(supabase);
+
   try {
-    // Verify user membership
-    const isMember = await verifyGroupMembership(supabase, groupId, userId);
+    // Verify user membership using Specification pattern
+    const membershipSpec = new UserIsActiveGroupMemberSpecification(supabase);
+    const isMember = await membershipSpec.isSatisfiedBy({ groupId, userId });
     if (!isMember) {
       throw new GroupAccessError();
     }
 
-    // Fetch group with user's membership and role
-    const { data: groupData, error: groupError } = await supabase
-      .from("groups")
-      .select(
-        `
-        *,
-        group_members!inner(
-          role,
-          status,
-          joined_at
-        )
-      `
-      )
-      .eq("id", groupId)
-      .eq("group_members.profile_id", userId)
-      .eq("group_members.status", "active")
-      .single();
+    // Fetch group with user's membership and role using repository
+    const groupData = await repository.fetchGroupWithMembership(groupId, userId);
 
-    if (groupError || !groupData) {
-      throw new GroupAccessError();
-    }
-
-    // Extract user's role
-    const userMembership = groupData.group_members as unknown as {
-      role: GroupRole;
-      status: "active" | "inactive";
-      joined_at: string;
-    }[];
-    const myRole = userMembership[0]?.role || "member";
+    // Extract user's role using repository helper
+    const myRole = repository.extractUserRole(groupData);
 
     // Fetch all active members with profiles using member service
     const members = await getGroupMemberDetails(supabase, groupId);
 
-    // Fetch group currencies
-    const { data: currenciesData, error: currenciesError } = await supabase
-      .from("group_currencies")
-      .select("currency_code, exchange_rate, currencies(name)")
-      .eq("group_id", groupId)
-      .order("currency_code");
-
-    if (currenciesError) {
-      throw new GroupDataError("get group details", "Failed to fetch currencies");
-    }
+    // Fetch group currencies using repository
+    const currenciesData = await repository.fetchGroupCurrencies(groupId);
 
     // Transform currencies data
-    const groupCurrencies: GroupCurrencyDTO[] = (currenciesData || []).map((gc) => {
+    const groupCurrencies: GroupCurrencyDTO[] = currenciesData.map((gc) => {
       const currency = gc.currencies as unknown as { name: string };
       return {
         code: gc.currency_code,
@@ -502,41 +311,23 @@ export async function getGroupDetails(
       };
     });
 
-    // Separate base currency from additional currencies
-    const baseCurrency = groupCurrencies.find((gc) => gc.code === groupData.base_currency_code);
-    const additional_currencies = groupCurrencies.filter((gc) => gc.code !== groupData.base_currency_code);
-
-    // Fetch pending invitations
-    const { data: invitationsData, error: invitationsError } = await supabase
-      .from("invitations")
-      .select("id, email, status, created_at")
-      .eq("group_id", groupId)
-      .eq("status", "pending")
-      .order("created_at", { ascending: false });
-
-    // Note: invitations errors are not thrown as invitations are optional
-    const pendingInvitations: PendingInvitationDTO[] = (invitationsData || []).map((inv) => ({
+    // Fetch pending invitations using repository
+    const invitationsData = await repository.fetchPendingInvitations(groupId);
+    const pendingInvitations: PendingInvitationDTO[] = invitationsData.map((inv) => ({
       id: inv.id,
       email: inv.email,
       status: inv.status,
       created_at: inv.created_at,
     }));
 
-    // Combine all currencies into a flat array for backwards compatibility
-    const allCurrencies = [baseCurrency, ...additional_currencies].filter(Boolean) as GroupCurrencyDTO[];
-
-    // Return complete group details
-    return {
-      id: groupData.id,
-      name: groupData.name,
-      base_currency_code: groupData.base_currency_code,
-      status: groupData.status,
-      created_at: groupData.created_at,
-      my_role: myRole,
-      members,
-      group_currencies: allCurrencies,
-      pending_invitations: pendingInvitations,
-    };
+    // Build final DTO using Builder pattern
+    return builder
+      .withGroupData(groupData)
+      .withUserRole(myRole)
+      .withMembers(members)
+      .withCurrencies(groupCurrencies)
+      .withInvitations(pendingInvitations)
+      .buildGroupDetail();
   } catch (error) {
     // Re-throw custom errors as-is
     if (error instanceof GroupAccessError) {

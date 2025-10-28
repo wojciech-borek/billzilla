@@ -475,10 +475,9 @@ export const setupExpenseMocks = (
             select: vi.fn().mockReturnThis(),
             insert: vi.fn().mockReturnThis(),
             delete: vi.fn().mockReturnThis(),
-            eq: vi.fn().mockImplementation(() => {
-              groupMembersCallCount++;
-              // Group members query returns result on the final eq() call (usually 2nd call)
-              if (groupMembersCallCount === 2) {
+            eq: vi.fn().mockImplementation((field: string, value: any) => {
+              // For fetchActiveGroupMembers, return data when querying by status = active
+              if (field === "status" && value === "active") {
                 return Promise.resolve(config.groupMembers);
               }
               return queryBuilder;

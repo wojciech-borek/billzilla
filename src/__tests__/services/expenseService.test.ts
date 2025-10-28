@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "../../db/database.types";
-import { createExpense, ExpenseValidationError, ExpenseNotFoundError } from "../../lib/services/expenseService";
+import { createExpense, ExpenseValidationError, ExpenseAccessError, ExpenseTransactionError, ExpenseDataError } from "../../lib/services/expenseService";
 import type { CreateExpenseCommand, ExpenseDTO } from "../../types";
 import {
   createMockSupabaseClient,
@@ -178,7 +178,7 @@ describe("ExpenseService", () => {
       expect(result.amount_in_base_currency).toBe(120.0); // 100 * 1.2
     });
 
-    it("should_throw_ExpenseNotFoundError_when_group_not_found", async () => {
+    it("should_throw_ExpenseAccessError_when_group_not_found", async () => {
       // Arrange
       const groupId = "nonexistent-group";
       const userId = "123e4567-e89b-12d3-a456-426614174000";
@@ -199,9 +199,9 @@ describe("ExpenseService", () => {
       supabase = createClient<Database>("url", "key");
 
       // Act & Assert
-      await expect(createExpense(supabase, groupId, userId, command)).rejects.toThrow(ExpenseNotFoundError);
+      await expect(createExpense(supabase, groupId, userId, command)).rejects.toThrow(ExpenseAccessError);
       await expect(createExpense(supabase, groupId, userId, command)).rejects.toThrow(
-        "Group not found or user is not an active member"
+        "Expense not found or you do not have permission to access it"
       );
     });
 
@@ -265,7 +265,7 @@ describe("ExpenseService", () => {
       );
     });
 
-    it("should_throw_ExpenseValidationError_when_expense_insertion_fails", async () => {
+    it("should_throw_ExpenseTransactionError_when_expense_insertion_fails", async () => {
       // Arrange
       const groupId = "group-123";
       const userId = "123e4567-e89b-12d3-a456-426614174000";
@@ -283,10 +283,16 @@ describe("ExpenseService", () => {
       supabase = createClient<Database>("url", "key");
 
       // Act & Assert
-      await expectExpenseValidationError(createExpense(supabase, groupId, userId, command), "Failed to create expense");
+      try {
+        await createExpense(supabase, groupId, userId, command);
+        expect.fail("Expected ExpenseTransactionError to be thrown");
+      } catch (error) {
+        expect(error).toBeInstanceOf(ExpenseTransactionError);
+        expect((error as ExpenseTransactionError).message).toBe("Failed to create expense");
+      }
     });
 
-    it("should_throw_ExpenseValidationError_when_splits_insertion_fails", async () => {
+    it("should_throw_ExpenseTransactionError_when_splits_insertion_fails", async () => {
       // Arrange
       const groupId = "group-123";
       const userId = "123e4567-e89b-12d3-a456-426614174000";
@@ -305,13 +311,16 @@ describe("ExpenseService", () => {
       supabase = createClient<Database>("url", "key");
 
       // Act & Assert
-      await expectExpenseValidationError(
-        createExpense(supabase, groupId, userId, command),
-        "Failed to create expense splits"
-      );
+      try {
+        await createExpense(supabase, groupId, userId, command);
+        expect.fail("Expected ExpenseTransactionError to be thrown");
+      } catch (error) {
+        expect(error).toBeInstanceOf(ExpenseTransactionError);
+        expect((error as ExpenseTransactionError).message).toBe("Failed to create expense splits");
+      }
     });
 
-    it("should_throw_ExpenseValidationError_when_fetch_after_creation_fails", async () => {
+    it("should_throw_ExpenseDataError_when_fetch_after_creation_fails", async () => {
       // Arrange
       const groupId = "group-123";
       const userId = "123e4567-e89b-12d3-a456-426614174000";
@@ -331,10 +340,13 @@ describe("ExpenseService", () => {
       supabase = createClient<Database>("url", "key");
 
       // Act & Assert
-      await expectExpenseValidationError(
-        createExpense(supabase, groupId, userId, command),
-        "Failed to retrieve created expense"
-      );
+      try {
+        await createExpense(supabase, groupId, userId, command);
+        expect.fail("Expected ExpenseDataError to be thrown");
+      } catch (error) {
+        expect(error).toBeInstanceOf(ExpenseDataError);
+        expect((error as ExpenseDataError).message).toBe("Failed to retrieve created expense: Failed to retrieve created expense");
+      }
     });
 
     it("should_handle_empty_splits_array", async () => {
@@ -410,28 +422,54 @@ describe("ExpenseService", () => {
     });
   });
 
-  describe("ExpenseNotFoundError", () => {
-    it("should_create_ExpenseNotFoundError_with_message", () => {
-      // Arrange
-      const message = "Expense with ID 123 not found";
+  describe("ExpenseAccessError", () => {
+    it("should_create_ExpenseAccessError_with_default_message", () => {
+      const error = new ExpenseAccessError();
 
-      // Act
-      const error = new ExpenseNotFoundError(message);
-
-      // Assert
-      expect(error).toBeInstanceOf(ExpenseNotFoundError);
-      expect(error.name).toBe("ExpenseNotFoundError");
-      expect(error.message).toBe("Expense with ID 123 not found");
+      expect(error).toBeInstanceOf(ExpenseAccessError);
+      expect(error.name).toBe("ExpenseAccessError");
+      expect(error.message).toBe("Expense not found or you do not have permission to access it");
     });
 
-    it("should_create_ExpenseNotFoundError_with_empty_message", () => {
-      // Arrange & Act
-      const error = new ExpenseNotFoundError("");
+    it("should_create_ExpenseAccessError_with_custom_message", () => {
+      const message = "Custom access error";
+      const error = new ExpenseAccessError(message);
 
-      // Assert
-      expect(error).toBeInstanceOf(ExpenseNotFoundError);
-      expect(error.name).toBe("ExpenseNotFoundError");
-      expect(error.message).toBe("");
+      expect(error).toBeInstanceOf(ExpenseAccessError);
+      expect(error.name).toBe("ExpenseAccessError");
+      expect(error.message).toBe(message);
+    });
+  });
+
+  describe("ExpenseTransactionError", () => {
+    it("should_create_ExpenseTransactionError_with_message", () => {
+      const message = "Transaction failed";
+      const error = new ExpenseTransactionError(message);
+
+      expect(error).toBeInstanceOf(ExpenseTransactionError);
+      expect(error.name).toBe("ExpenseTransactionError");
+      expect(error.message).toBe(message);
+    });
+  });
+
+  describe("ExpenseDataError", () => {
+    it("should_create_ExpenseDataError_with_operation_and_details", () => {
+      const operation = "fetch expense";
+      const details = "Database connection failed";
+      const error = new ExpenseDataError(operation, details);
+
+      expect(error).toBeInstanceOf(ExpenseDataError);
+      expect(error.name).toBe("ExpenseDataError");
+      expect(error.message).toBe(`Failed to ${operation}: ${details}`);
+    });
+
+    it("should_create_ExpenseDataError_with_operation_only", () => {
+      const operation = "create expense";
+      const error = new ExpenseDataError(operation);
+
+      expect(error).toBeInstanceOf(ExpenseDataError);
+      expect(error.name).toBe("ExpenseDataError");
+      expect(error.message).toBe(`Failed to ${operation}`);
     });
   });
 });

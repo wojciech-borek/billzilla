@@ -8,7 +8,7 @@ import { createExpenseSchema } from "../../../../../lib/schemas/expenseSchemas";
 import {
   createExpense,
   ExpenseValidationError,
-  ExpenseNotFoundError,
+  ExpenseAccessError,
 } from "../../../../../lib/services/expenseService";
 import type { ErrorResponseDTO } from "../../../../../types";
 
@@ -126,7 +126,7 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
       });
     }
 
-    if (error instanceof ExpenseNotFoundError) {
+    if (error instanceof ExpenseAccessError) {
       const errorResponse: ErrorResponseDTO = {
         error: {
           code: "NOT_FOUND",
