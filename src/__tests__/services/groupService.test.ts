@@ -538,6 +538,316 @@ describe("GroupService", () => {
       expect(result.data[0].role).toBe("member");
     });
 
+    it("should_calculate_balance_correctly_when_payer_is_different_from_creator", async () => {
+      // Arrange - Test scenario: User A creates expense, User B pays, both owe equal shares
+      const creatorId = "user-creator"; // User who creates the expense
+      const payerId = "user-payer"; // User who actually pays
+      const groupId = "group-123";
+      const options = { status: "active" as const, limit: 50, offset: 0 };
+
+      const mockSupabaseClient = {
+        ...mockSupabase,
+        from: vi
+          .fn()
+          // Groups query
+          .mockReturnValueOnce({
+            select: vi.fn(() => ({
+              eq: vi.fn(() => ({
+                eq: vi.fn(() => ({
+                  order: vi.fn(() => ({
+                    range: vi.fn().mockResolvedValue({
+                      data: [
+                        {
+                          id: groupId,
+                          name: "Test Group",
+                          base_currency_code: "USD",
+                          status: "active",
+                          created_at: "2024-01-01T00:00:00Z",
+                          group_members: [{ role: "member" }],
+                        },
+                      ],
+                      error: null,
+                    }),
+                  })),
+                })),
+              })),
+            })),
+          })
+          // Count query
+          .mockReturnValueOnce({
+            select: vi.fn(() => ({
+              eq: vi.fn(() => ({
+                eq: vi.fn().mockResolvedValue({
+                  count: 1,
+                  error: null,
+                }),
+              })),
+            })),
+          })
+          // Group members query
+          .mockReturnValueOnce({
+            select: vi.fn(() => ({
+              in: vi.fn(() => ({
+                eq: vi.fn().mockResolvedValue({
+                  data: [
+                    {
+                      group_id: groupId,
+                      profile_id: creatorId,
+                      status: "active",
+                      role: "member",
+                      joined_at: "2024-01-01T00:00:00Z",
+                      profiles: {
+                        id: creatorId,
+                        full_name: "Expense Creator",
+                        avatar_url: null,
+                      },
+                    },
+                    {
+                      group_id: groupId,
+                      profile_id: payerId,
+                      status: "active",
+                      role: "member",
+                      joined_at: "2024-01-01T00:00:00Z",
+                      profiles: {
+                        id: payerId,
+                        full_name: "Expense Payer",
+                        avatar_url: null,
+                      },
+                    },
+                  ],
+                  error: null,
+                }),
+              })),
+            })),
+          })
+          // User expenses query - payer paid 100 USD (not creator)
+          .mockReturnValueOnce({
+            select: vi.fn(() => ({
+              in: vi.fn(() => ({
+                eq: vi.fn().mockResolvedValue({
+                  data: [
+                    {
+                      group_id: groupId,
+                      amount: 100,
+                      currency_code: "USD",
+                    },
+                  ],
+                  error: null,
+                }),
+              })),
+            })),
+          })
+          // User splits query - creator owes 50 USD
+          .mockReturnValueOnce({
+            select: vi.fn(() => ({
+              eq: vi.fn(() => ({
+                in: vi.fn().mockResolvedValue({
+                  data: [
+                    {
+                      amount: 50,
+                      expenses: {
+                        group_id: groupId,
+                        currency_code: "USD",
+                      },
+                    },
+                  ],
+                  error: null,
+                }),
+              })),
+            })),
+          })
+          // Settlements query (no settlements)
+          .mockReturnValueOnce({
+            select: vi.fn(() => ({
+              in: vi.fn(() => ({
+                or: vi.fn().mockResolvedValue({
+                  data: [],
+                  error: null,
+                }),
+              })),
+            })),
+          })
+          // Group currencies query
+          .mockReturnValueOnce({
+            select: vi.fn(() => ({
+              in: vi.fn().mockResolvedValue({
+                data: [
+                  {
+                    group_id: groupId,
+                    currency_code: "USD",
+                    exchange_rate: 1.0,
+                  },
+                ],
+                error: null,
+              }),
+            })),
+          }),
+      } as any;
+
+      // Act - Test balance for the PAYER (who actually paid)
+      const result = await listGroups(mockSupabaseClient, payerId, options);
+
+      // Assert - Payer should have positive balance (paid 100, owes 50)
+      expect(result.data).toHaveLength(1);
+      expect(result.data[0].my_balance).toBe(50); // 100 paid - 50 owed = 50 positive balance
+      expect(result.data[0].id).toBe(groupId);
+      expect(result.data[0].name).toBe("Test Group");
+      expect(result.data[0].members).toHaveLength(2);
+      expect(result.data[0].role).toBe("member");
+    });
+
+    it("should_calculate_balance_correctly_for_creator_when_payer_is_different", async () => {
+      // Arrange - Test scenario: User A creates expense, User B pays, both owe equal shares
+      const creatorId = "user-creator"; // User who creates the expense
+      const payerId = "user-payer"; // User who actually pays
+      const groupId = "group-123";
+      const options = { status: "active" as const, limit: 50, offset: 0 };
+
+      const mockSupabaseClient = {
+        ...mockSupabase,
+        from: vi
+          .fn()
+          // Groups query
+          .mockReturnValueOnce({
+            select: vi.fn(() => ({
+              eq: vi.fn(() => ({
+                eq: vi.fn(() => ({
+                  order: vi.fn(() => ({
+                    range: vi.fn().mockResolvedValue({
+                      data: [
+                        {
+                          id: groupId,
+                          name: "Test Group",
+                          base_currency_code: "USD",
+                          status: "active",
+                          created_at: "2024-01-01T00:00:00Z",
+                          group_members: [{ role: "member" }],
+                        },
+                      ],
+                      error: null,
+                    }),
+                  })),
+                })),
+              })),
+            })),
+          })
+          // Count query
+          .mockReturnValueOnce({
+            select: vi.fn(() => ({
+              eq: vi.fn(() => ({
+                eq: vi.fn().mockResolvedValue({
+                  count: 1,
+                  error: null,
+                }),
+              })),
+            })),
+          })
+          // Group members query
+          .mockReturnValueOnce({
+            select: vi.fn(() => ({
+              in: vi.fn(() => ({
+                eq: vi.fn().mockResolvedValue({
+                  data: [
+                    {
+                      group_id: groupId,
+                      profile_id: creatorId,
+                      status: "active",
+                      role: "member",
+                      joined_at: "2024-01-01T00:00:00Z",
+                      profiles: {
+                        id: creatorId,
+                        full_name: "Expense Creator",
+                        avatar_url: null,
+                      },
+                    },
+                    {
+                      group_id: groupId,
+                      profile_id: payerId,
+                      status: "active",
+                      role: "member",
+                      joined_at: "2024-01-01T00:00:00Z",
+                      profiles: {
+                        id: payerId,
+                        full_name: "Expense Payer",
+                        avatar_url: null,
+                      },
+                    },
+                  ],
+                  error: null,
+                }),
+              })),
+            })),
+          })
+          // User expenses query - creator didn't pay anything
+          .mockReturnValueOnce({
+            select: vi.fn(() => ({
+              in: vi.fn(() => ({
+                eq: vi.fn().mockResolvedValue({
+                  data: [], // Creator paid nothing
+                  error: null,
+                }),
+              })),
+            })),
+          })
+          // User splits query - creator owes 50 USD
+          .mockReturnValueOnce({
+            select: vi.fn(() => ({
+              eq: vi.fn(() => ({
+                in: vi.fn().mockResolvedValue({
+                  data: [
+                    {
+                      amount: 50,
+                      expenses: {
+                        group_id: groupId,
+                        currency_code: "USD",
+                      },
+                    },
+                  ],
+                  error: null,
+                }),
+              })),
+            })),
+          })
+          // Settlements query (no settlements)
+          .mockReturnValueOnce({
+            select: vi.fn(() => ({
+              in: vi.fn(() => ({
+                or: vi.fn().mockResolvedValue({
+                  data: [],
+                  error: null,
+                }),
+              })),
+            })),
+          })
+          // Group currencies query
+          .mockReturnValueOnce({
+            select: vi.fn(() => ({
+              in: vi.fn().mockResolvedValue({
+                data: [
+                  {
+                    group_id: groupId,
+                    currency_code: "USD",
+                    exchange_rate: 1.0,
+                  },
+                ],
+                error: null,
+              }),
+            })),
+          }),
+      } as any;
+
+      // Act - Test balance for the CREATOR (who didn't pay)
+      const result = await listGroups(mockSupabaseClient, creatorId, options);
+
+      // Assert - Creator should have negative balance (paid 0, owes 50)
+      expect(result.data).toHaveLength(1);
+      expect(result.data[0].my_balance).toBe(-50); // 0 paid - 50 owed = -50 negative balance
+      expect(result.data[0].id).toBe(groupId);
+      expect(result.data[0].name).toBe("Test Group");
+      expect(result.data[0].members).toHaveLength(2);
+      expect(result.data[0].role).toBe("member");
+    });
+
     it("should_throw_error_when_groups_query_fails", async () => {
       // Arrange
       const userId = "user-123";

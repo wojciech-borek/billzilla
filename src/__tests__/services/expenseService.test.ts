@@ -44,7 +44,7 @@ describe("ExpenseService", () => {
     it("should_create_expense_successfully_when_all_validations_pass", async () => {
       // Arrange
       const groupId = "group-123";
-      const userId = "user-456";
+      const userId = "123e4567-e89b-12d3-a456-426614174000";
       const command = createMockExpenseCommand();
       const scenario = createValidExpenseScenario();
 
@@ -66,26 +66,26 @@ describe("ExpenseService", () => {
       expectExpenseDTO(result, {
         id: "expense-123",
         group_id: "group-123",
-        payer_id: "user-456",
+        payer_id: "123e4567-e89b-12d3-a456-426614174000",
         description: "Lunch at restaurant",
         amount: 50.0,
         currency_code: "USD",
-        expense_date: "2024-01-15",
+        expense_date: "2024-01-15T10:00",
         created_at: "2024-01-15T10:00:00Z",
         amount_in_base_currency: 50.0,
         created_by: {
-          id: "user-456",
+          id: "123e4567-e89b-12d3-a456-426614174000",
           full_name: "John Doe",
           avatar_url: null,
         },
         splits: [
           {
-            profile_id: "user-456",
+            profile_id: "123e4567-e89b-12d3-a456-426614174000",
             full_name: "John Doe",
             amount: 25.0,
           },
           {
-            profile_id: "user-789",
+            profile_id: "987fcdeb-51a2-43d7-8f9e-123456789abc",
             full_name: "Jane Smith",
             amount: 25.0,
           },
@@ -96,16 +96,16 @@ describe("ExpenseService", () => {
     it("should_throw_ExpenseValidationError_when_split_participant_not_active_member", async () => {
       // Arrange
       const groupId = "group-123";
-      const userId = "user-456";
+      const userId = "123e4567-e89b-12d3-a456-426614174000";
       const command = createMockExpenseCommand({
         description: "Test expense",
         amount: 50.0,
         currency_code: "USD",
-        expense_date: "2024-01-15",
-        payer_id: "user-456",
+        expense_date: "2024-01-15T10:00",
+        payer_id: "123e4567-e89b-12d3-a456-426614174000",
         splits: [
-          { profile_id: "user-456", amount: 25.0 },
-          { profile_id: "inactive-user-999", amount: 25.0 }, // Not in active members
+          { profile_id: "123e4567-e89b-12d3-a456-426614174000", amount: 25.0 },
+          { profile_id: "11111111-2222-3333-4444-555555555555", amount: 25.0 }, // Not in active members
         ],
       });
 
@@ -122,21 +122,21 @@ describe("ExpenseService", () => {
       // Act & Assert
       await expectExpenseValidationError(
         createExpense(supabase, groupId, userId, command),
-        "Split participant inactive-user-999 is not an active member of the group"
+        "Split participant 11111111-2222-3333-4444-555555555555 is not an active member of the group"
       );
     });
 
     it("should_calculate_amount_in_base_currency_correctly", async () => {
       // Arrange
       const groupId = "group-123";
-      const userId = "user-456";
+      const userId = "123e4567-e89b-12d3-a456-426614174000";
       const command = createMockExpenseCommand({
         description: "Test expense",
         amount: 100.0,
         currency_code: "EUR", // EUR to USD conversion (rate: 1.2)
-        expense_date: "2024-01-15",
-        payer_id: "user-456",
-        splits: [{ profile_id: "user-456", amount: 100.0 }],
+        expense_date: "2024-01-15T10:00",
+        payer_id: "123e4567-e89b-12d3-a456-426614174000",
+        splits: [{ profile_id: "123e4567-e89b-12d3-a456-426614174000", amount: 100.0 }],
       });
 
       const scenario = createValidExpenseScenario();
@@ -149,10 +149,10 @@ describe("ExpenseService", () => {
         created_at: "2024-01-15T10:00:00Z",
         expense_splits: [
           {
-            profile_id: "user-456",
+            profile_id: "123e4567-e89b-12d3-a456-426614174000",
             amount: 100.0,
             profiles: {
-              id: "user-456",
+              id: "123e4567-e89b-12d3-a456-426614174000",
               full_name: "John Doe",
               avatar_url: null,
             },
@@ -181,14 +181,14 @@ describe("ExpenseService", () => {
     it("should_throw_ExpenseNotFoundError_when_group_not_found", async () => {
       // Arrange
       const groupId = "nonexistent-group";
-      const userId = "user-456";
+      const userId = "123e4567-e89b-12d3-a456-426614174000";
       const command = createMockExpenseCommand({
         description: "Test expense",
         amount: 50.0,
         currency_code: "USD",
-        expense_date: "2024-01-15",
-        payer_id: "user-456",
-        splits: [{ profile_id: "user-456", amount: 50.0 }],
+        expense_date: "2024-01-15T10:00",
+        payer_id: "123e4567-e89b-12d3-a456-426614174000",
+        splits: [{ profile_id: "123e4567-e89b-12d3-a456-426614174000", amount: 50.0 }],
       });
 
       const mockClient = createMockSupabaseClient();
@@ -208,14 +208,14 @@ describe("ExpenseService", () => {
     it("should_throw_ExpenseValidationError_when_payer_not_active_member", async () => {
       // Arrange
       const groupId = "group-123";
-      const userId = "user-456";
+      const userId = "123e4567-e89b-12d3-a456-426614174000";
       const command = createMockExpenseCommand({
         description: "Test expense",
         amount: 50.0,
         currency_code: "USD",
-        expense_date: "2024-01-15",
-        payer_id: "inactive-user-999", // Not in active members list
-        splits: [{ profile_id: "user-456", amount: 50.0 }],
+        expense_date: "2024-01-15T10:00",
+        payer_id: "11111111-2222-3333-4444-555555555555", // Not in active members list
+        splits: [{ profile_id: "123e4567-e89b-12d3-a456-426614174000", amount: 50.0 }],
       });
 
       const scenario = createPayerNotMemberScenario();
@@ -238,14 +238,14 @@ describe("ExpenseService", () => {
     it("should_throw_ExpenseValidationError_when_currency_not_configured", async () => {
       // Arrange
       const groupId = "group-123";
-      const userId = "user-456";
+      const userId = "123e4567-e89b-12d3-a456-426614174000";
       const command = createMockExpenseCommand({
         description: "Test expense",
         amount: 100.0,
         currency_code: "XYZ", // Not configured for group
-        expense_date: "2024-01-15",
-        payer_id: "user-456",
-        splits: [{ profile_id: "user-456", amount: 100.0 }],
+        expense_date: "2024-01-15T10:00",
+        payer_id: "123e4567-e89b-12d3-a456-426614174000",
+        splits: [{ profile_id: "123e4567-e89b-12d3-a456-426614174000", amount: 100.0 }],
       });
 
       const scenario = createCurrencyNotConfiguredScenario();
@@ -268,7 +268,7 @@ describe("ExpenseService", () => {
     it("should_throw_ExpenseValidationError_when_expense_insertion_fails", async () => {
       // Arrange
       const groupId = "group-123";
-      const userId = "user-456";
+      const userId = "123e4567-e89b-12d3-a456-426614174000";
       const command = createMockExpenseCommand();
 
       const scenario = createExpenseInsertFailureScenario();
@@ -289,7 +289,7 @@ describe("ExpenseService", () => {
     it("should_throw_ExpenseValidationError_when_splits_insertion_fails", async () => {
       // Arrange
       const groupId = "group-123";
-      const userId = "user-456";
+      const userId = "123e4567-e89b-12d3-a456-426614174000";
       const command = createMockExpenseCommand();
 
       const scenario = createExpenseSplitsInsertFailureScenario();
@@ -314,7 +314,7 @@ describe("ExpenseService", () => {
     it("should_throw_ExpenseValidationError_when_fetch_after_creation_fails", async () => {
       // Arrange
       const groupId = "group-123";
-      const userId = "user-456";
+      const userId = "123e4567-e89b-12d3-a456-426614174000";
       const command = createMockExpenseCommand();
 
       const scenario = createExpenseSelectFailureScenario();
@@ -340,13 +340,13 @@ describe("ExpenseService", () => {
     it("should_handle_empty_splits_array", async () => {
       // Arrange
       const groupId = "group-123";
-      const userId = "user-456";
+      const userId = "123e4567-e89b-12d3-a456-426614174000";
       const command = createMockExpenseCommand({
         description: "Test expense",
         amount: 50.0,
         currency_code: "USD",
-        expense_date: "2024-01-15",
-        payer_id: "user-456",
+        expense_date: "2024-01-15T10:00",
+        payer_id: "123e4567-e89b-12d3-a456-426614174000",
         splits: [], // Empty splits array
       });
 

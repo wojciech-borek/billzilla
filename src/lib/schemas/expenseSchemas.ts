@@ -55,12 +55,10 @@ export const createExpenseSchema = z
       .length(3, "Currency code must be exactly 3 characters")
       .regex(/^[A-Z]{3}$/, "Currency code must be 3 uppercase letters (ISO 4217 format)")
       .trim(),
-    expense_date: z
-      .string()
-      .regex(
-        /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?$/,
-        "Invalid date format. Expected YYYY-MM-DDTHH:MM or YYYY-MM-DDTHH:MM:SS format"
-      ),
+    expense_date: z.string().refine((val) => {
+      const date = new Date(val);
+      return !isNaN(date.getTime()) && date.toISOString().startsWith(val.slice(0, 10));
+    }, "Invalid date format. Expected valid date-time string"),
     payer_id: z.string().uuid("Invalid payer ID format"),
     splits: z.array(expenseSplitCommandSchema).min(1, "At least one split is required"),
   })
@@ -129,9 +127,17 @@ export const createExpenseFormSchema = z
     expense_date: z
       .string()
       .optional()
-      .refine((val) => !val || /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?$/.test(val), {
-        message: "Nieprawidłowy format daty. Oczekiwany format YYYY-MM-DDTHH:MM lub YYYY-MM-DDTHH:MM:SS",
-      }),
+      .refine(
+        (val) =>
+          !val ||
+          (() => {
+            const date = new Date(val);
+            return !isNaN(date.getTime()) && date.toISOString().startsWith(val.slice(0, 10));
+          })(),
+        {
+          message: "Nieprawidłowy format daty. Oczekiwany prawidłowy format daty",
+        }
+      ),
     payer_id: z
       .string()
       .optional()
@@ -197,7 +203,15 @@ export const expenseTranscriptionSchema = z.object({
     .nullable(),
   expense_date: z
     .string()
-    .regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?$/, "Invalid date format")
+    .refine(
+      (val) =>
+        !val ||
+        (() => {
+          const date = new Date(val);
+          return !isNaN(date.getTime()) && date.toISOString().startsWith(val.slice(0, 10));
+        })(),
+      "Invalid date format"
+    )
     .optional()
     .nullable(),
   payer_id: z.string().uuid("Invalid payer ID format").optional().nullable(),

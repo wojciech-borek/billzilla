@@ -299,7 +299,7 @@ export const createMockSplitData = (overrides: Partial<any> = {}) => ({
 export const createMockSettlementData = (overrides: Partial<any> = {}) => ({
   id: "settlement-123",
   payer_id: "user-123",
-  payee_id: "user-456",
+  payee_id: "123e4567-e89b-12d3-a456-426614174000",
   amount: 25,
   currency_code: "USD",
   group_id: "group-123",
@@ -361,11 +361,11 @@ export const createMockExpenseCommand = (overrides: Partial<any> = {}): any => (
   description: "Lunch at restaurant",
   amount: 50.0,
   currency_code: "USD",
-  expense_date: "2024-01-15",
-  payer_id: "user-456",
+  expense_date: "2024-01-15T10:00",
+  payer_id: "123e4567-e89b-12d3-a456-426614174000",
   splits: [
-    { profile_id: "user-456", amount: 25.0 },
-    { profile_id: "user-789", amount: 25.0 },
+    { profile_id: "123e4567-e89b-12d3-a456-426614174000", amount: 25.0 },
+    { profile_id: "987fcdeb-51a2-43d7-8f9e-123456789abc", amount: 25.0 },
   ],
   ...overrides,
 });
@@ -376,9 +376,9 @@ export const createMockExpenseInsert = (overrides: Partial<any> = {}) => ({
   description: "Lunch at restaurant",
   amount: 50.0,
   currency_code: "USD",
-  expense_date: "2024-01-15",
-  created_by: "user-456",
-  payer_id: "user-456",
+  expense_date: "2024-01-15T10:00",
+  created_by: "123e4567-e89b-12d3-a456-426614174000",
+  payer_id: "123e4567-e89b-12d3-a456-426614174000",
   ...overrides,
 });
 
@@ -386,25 +386,25 @@ export const createMockCompleteExpense = (overrides: Partial<any> = {}) => ({
   ...createMockExpenseInsert(),
   created_at: "2024-01-15T10:00:00Z",
   profiles: {
-    id: "user-456",
+    id: "123e4567-e89b-12d3-a456-426614174000",
     full_name: "John Doe",
     avatar_url: null,
   },
   expense_splits: [
     {
-      profile_id: "user-456",
+      profile_id: "123e4567-e89b-12d3-a456-426614174000",
       amount: 25.0,
       profiles: {
-        id: "user-456",
+        id: "123e4567-e89b-12d3-a456-426614174000",
         full_name: "John Doe",
         avatar_url: null,
       },
     },
     {
-      profile_id: "user-789",
+      profile_id: "987fcdeb-51a2-43d7-8f9e-123456789abc",
       amount: 25.0,
       profiles: {
-        id: "user-789",
+        id: "987fcdeb-51a2-43d7-8f9e-123456789abc",
         full_name: "Jane Smith",
         avatar_url: null,
       },
@@ -421,15 +421,15 @@ export const createMockExpenseGroup = (overrides: Partial<any> = {}) => ({
     { currency_code: "EUR", exchange_rate: 1.2 },
   ],
   group_members: [
-    { profile_id: "user-456", status: "active" },
-    { profile_id: "user-789", status: "active" },
+    { profile_id: "123e4567-e89b-12d3-a456-426614174000", status: "active" },
+    { profile_id: "987fcdeb-51a2-43d7-8f9e-123456789abc", status: "active" },
   ],
   ...overrides,
 });
 
 export const createMockExpenseActiveMembers = (overrides: any[] = []) => [
-  { profile_id: "user-456" },
-  { profile_id: "user-789" },
+  { profile_id: "123e4567-e89b-12d3-a456-426614174000" },
+  { profile_id: "987fcdeb-51a2-43d7-8f9e-123456789abc" },
   ...overrides,
 ];
 
@@ -570,7 +570,7 @@ export const createGroupNotFoundScenario = () => ({
 
 export const createPayerNotMemberScenario = (groupData = createMockExpenseGroup()) => ({
   groupData,
-  activeMembers: createMockExpenseActiveMembers([{ profile_id: "user-456" }]), // Only user-456
+  activeMembers: createMockExpenseActiveMembers([{ profile_id: "123e4567-e89b-12d3-a456-426614174000" }]), // Only 123e4567-e89b-12d3-a456-426614174000
   expenseInsert: null,
   expenseSelect: null,
   expenseSplitsInsert: null,

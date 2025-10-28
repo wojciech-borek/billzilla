@@ -23,7 +23,7 @@ async function fetchUserExpenses(supabase: SupabaseClient<Database>, userId: str
     .from("expenses")
     .select("group_id, amount, currency_code")
     .in("group_id", groupIds)
-    .eq("created_by", userId);
+    .eq("payer_id", userId);
 
   if (expensesError) {
     throw new BalanceCalculationError("fetch user expenses", expensesError.message);
