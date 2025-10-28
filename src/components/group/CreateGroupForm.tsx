@@ -18,7 +18,10 @@ export default function CreateGroupForm({ onCancel, onSuccess }: CreateGroupForm
     onSuccess,
   });
 
-  const { handleSubmit, formState: { isSubmitting } } = form;
+  const {
+    handleSubmit,
+    formState: { isSubmitting },
+  } = form;
 
   return (
     <form

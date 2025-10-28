@@ -12,7 +12,11 @@ interface CreateGroupFormFieldsProps {
  * Component containing all form fields for creating a group
  */
 export default function CreateGroupFormFields({ form }: CreateGroupFormFieldsProps) {
-  const { register, control, formState: { errors } } = form;
+  const {
+    register,
+    control,
+    formState: { errors },
+  } = form;
 
   return (
     <>

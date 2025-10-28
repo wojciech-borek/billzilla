@@ -25,6 +25,7 @@ export { useCurrenciesList } from "./useCurrenciesList";
 // Authentication hooks
 export { useAuthForm } from "./useAuthForm";
 export { useLoginForm } from "./useLoginForm";
+export { usePasswordResetForm } from "./usePasswordResetForm";
 export { useSignup } from "./useSignup";
 export { useSupabaseAuth } from "./useSupabaseAuth";
 export { useLogout } from "./useLogout";

@@ -22,9 +22,7 @@ interface UseCreateGroupFormLogicResult {
  * Custom hook that encapsulates the form logic for creating a group
  * Handles form state, validation, submission, focus management, and error handling
  */
-export function useCreateGroupFormLogic({
-  onSuccess,
-}: UseCreateGroupFormLogicProps): UseCreateGroupFormLogicResult {
+export function useCreateGroupFormLogic({ onSuccess }: UseCreateGroupFormLogicProps): UseCreateGroupFormLogicResult {
   const formRef = useRef<HTMLFormElement>(null);
   const firstErrorRef = useRef<HTMLElement | null>(null);
 
