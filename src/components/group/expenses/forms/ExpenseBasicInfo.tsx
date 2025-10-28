@@ -49,11 +49,7 @@ export function ExpenseBasicInfo({
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        <BasicInfoFields
-          form={form}
-          hasLowConfidence={hasLowConfidence}
-          groupCurrencies={groupCurrencies}
-        />
+        <BasicInfoFields form={form} hasLowConfidence={hasLowConfidence} groupCurrencies={groupCurrencies} />
 
         <ExpenseMetadataFields
           form={form}

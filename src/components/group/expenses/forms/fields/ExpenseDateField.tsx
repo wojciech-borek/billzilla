@@ -9,7 +9,10 @@ import type { FieldProps } from "./types";
  * Date field component for expense form
  */
 export function ExpenseDateField({ form, hasLowConfidence }: FieldProps) {
-  const { register, formState: { errors } } = form;
+  const {
+    register,
+    formState: { errors },
+  } = form;
 
   return (
     <div className="space-y-2">

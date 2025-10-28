@@ -81,11 +81,7 @@ export function useEmailChips(options: UseEmailChipsOptions = {}): UseEmailChips
   );
 
   const handleKeyDown = useCallback(
-    (
-      e: KeyboardEvent<HTMLInputElement>,
-      currentEmails: string[],
-      onChange: (emails: string[]) => void
-    ) => {
+    (e: KeyboardEvent<HTMLInputElement>, currentEmails: string[], onChange: (emails: string[]) => void) => {
       // Add email on Enter, comma, or semicolon
       if (e.key === "Enter" || e.key === "," || e.key === ";") {
         e.preventDefault();

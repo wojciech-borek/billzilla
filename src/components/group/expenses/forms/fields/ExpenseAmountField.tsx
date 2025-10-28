@@ -8,7 +8,10 @@ import type { FieldProps } from "./types";
  * Amount field component for expense form
  */
 export function ExpenseAmountField({ form, hasLowConfidence }: FieldProps) {
-  const { register, formState: { errors } } = form;
+  const {
+    register,
+    formState: { errors },
+  } = form;
 
   return (
     <div className="space-y-2">

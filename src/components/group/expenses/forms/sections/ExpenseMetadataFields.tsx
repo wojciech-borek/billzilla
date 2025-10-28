@@ -12,7 +12,12 @@ interface ExpenseMetadataFieldsProps extends FieldProps {
 /**
  * Expense metadata fields section - date and payer selection
  */
-export function ExpenseMetadataFields({ form, hasLowConfidence, groupMembers, currentUserId }: ExpenseMetadataFieldsProps) {
+export function ExpenseMetadataFields({
+  form,
+  hasLowConfidence,
+  groupMembers,
+  currentUserId,
+}: ExpenseMetadataFieldsProps) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       <ExpenseDateField form={form} hasLowConfidence={hasLowConfidence} />

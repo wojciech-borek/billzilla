@@ -12,11 +12,7 @@ export function ErrorMessage({ message, id }: ErrorMessageProps) {
   if (!message) return null;
 
   return (
-    <p
-      id={id}
-      className="text-sm text-destructive"
-      role="alert"
-    >
+    <p id={id} className="text-sm text-destructive" role="alert">
       {message}
     </p>
   );

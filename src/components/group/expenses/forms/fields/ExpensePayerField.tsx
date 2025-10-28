@@ -15,7 +15,10 @@ interface ExpensePayerFieldProps extends FieldProps {
  * Payer field component for expense form
  */
 export function ExpensePayerField({ form, hasLowConfidence, groupMembers, currentUserId }: ExpensePayerFieldProps) {
-  const { control, formState: { errors } } = form;
+  const {
+    control,
+    formState: { errors },
+  } = form;
 
   return (
     <div className="space-y-2">

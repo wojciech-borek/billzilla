@@ -18,7 +18,8 @@ interface InviteEmailsInputProps {
  */
 export default function InviteEmailsInput({ control, errors }: InviteEmailsInputProps) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const { inputValue, inputError, addEmail, removeEmail, handleKeyDown, handleBlur, setInputValue, setInputError } = useEmailChips();
+  const { inputValue, inputError, addEmail, removeEmail, handleKeyDown, handleBlur, setInputValue, setInputError } =
+    useEmailChips();
 
   return (
     <div className="space-y-2">
