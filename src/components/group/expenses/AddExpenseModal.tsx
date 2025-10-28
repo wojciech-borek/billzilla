@@ -1,18 +1,11 @@
-import React, { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { X } from "lucide-react";
+import React from "react";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { toast } from "sonner";
 
-import { ExpenseForm } from "./forms/ExpenseForm";
-import type {
-  GroupMemberSummaryDTO,
-  GroupCurrencyDTO,
-  ExpenseDTO,
-  TranscriptionResultDTO,
-  TranscriptionErrorDTO,
-  CreateExpenseCommand,
-} from "@/types";
+import { useExpenseModalLogic } from "@/lib/hooks/useExpenseModalLogic";
+import { ExpenseModalHeader } from "./ExpenseModalHeader";
+import { ExpenseModalContent } from "./ExpenseModalContent";
+import type { GroupMemberSummaryDTO, GroupCurrencyDTO, ExpenseDTO, TranscriptionResultDTO } from "@/types";
 
 interface AddExpenseModalProps {
   groupId: string;
@@ -40,9 +33,14 @@ export function AddExpenseModal({
   isLoading = false,
   error = null,
 }: AddExpenseModalProps) {
-  const [isFromVoice, setIsFromVoice] = useState(false);
-  const [transcriptionData, setTranscriptionData] = useState<CreateExpenseCommand | null>(null);
-  const [lowConfidence, setLowConfidence] = useState(false);
+  const {
+    isFromVoice,
+    transcriptionData,
+    lowConfidence,
+    processTranscription,
+    handleTranscriptionError,
+    resetVoiceState,
+  } = useExpenseModalLogic(currentUserId);
 
   const handleExpenseCreated = async (expense: ExpenseDTO) => {
     toast.success("Wydatek został utworzony pomyślnie!");
@@ -51,98 +49,34 @@ export function AddExpenseModal({
   };
 
   const handleTranscriptionComplete = (result: TranscriptionResultDTO) => {
-    try {
-      // Validate confidence level
-      const hasLowConfidence = result.confidence < 0.5;
-      setLowConfidence(hasLowConfidence);
-
-      if (hasLowConfidence) {
-        toast.warning("Wyniki rozpoznania mogą być niedokładne. Sprawdź wszystkie pola przed zatwierdzeniem.", {
-          duration: 5000,
-        });
-      }
-
-      // AI now returns splits with profile_ids directly - no mapping needed!
-      const expenseData = result.expense_data as CreateExpenseCommand;
-
-      // Apply defaults for optional fields (payer, date, currency)
-      // These will be further validated and defaulted in populateFromTranscription
-      const finalExpenseData: CreateExpenseCommand = {
-        description: expenseData.description,
-        amount: expenseData.amount,
-        currency_code: expenseData.currency_code || groupCurrencies[0]?.code || "PLN",
-        expense_date: expenseData.expense_date || new Date().toISOString().slice(0, 16),
-        payer_id: expenseData.payer_id || currentUserId, // null if AI didn't determine, will use current user
-        splits: expenseData.splits,
-      };
-
-      // Set transcription data and mark as from voice
-      setTranscriptionData(finalExpenseData);
-      setIsFromVoice(true);
-
-      toast.success("Wydatek rozpoznany! Sprawdź dane i zatwierdź.");
-    } catch (error) {
-      toast.error("Błąd podczas przetwarzania rozpoznanego wydatku");
-    }
-  };
-
-  const handleTranscriptionError = (error: TranscriptionErrorDTO) => {
-    toast.error(`Błąd rozpoznania głosu: ${error.message}`, {
-      duration: 5000,
-    });
+    processTranscription(result, groupCurrencies);
   };
 
   // Reset voice state when modal closes
   const handleClose = () => {
-    setIsFromVoice(false);
-    setTranscriptionData(null);
-    setLowConfidence(false);
+    resetVoiceState();
     onClose();
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="max-w-3xl p-0 rounded-lg" showCloseButton={false}>
-        <DialogHeader className="px-6 py-4 border-b bg-background">
-          <div className="flex items-center justify-between">
-            <DialogTitle className="text-xl font-semibold">Dodaj wydatek</DialogTitle>
-            <Button variant="ghost" size="sm" onClick={handleClose} className="p-2 h-auto" aria-label="Zamknij modal">
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-        </DialogHeader>
-
-        <div className="px-6 py-4 bg-background max-h-[70vh] overflow-y-auto">
-          {isLoading ? (
-            <div className="flex items-center justify-center py-12">
-              <div className="text-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-                <p className="text-sm text-muted-foreground">Ładowanie danych grupy...</p>
-              </div>
-            </div>
-          ) : error ? (
-            <div className="text-center py-12">
-              <p className="text-sm text-destructive mb-4">{error}</p>
-              <Button onClick={onClose} variant="ghost">
-                Zamknij
-              </Button>
-            </div>
-          ) : (
-            <ExpenseForm
-              groupId={groupId}
-              groupMembers={groupMembers}
-              groupCurrencies={groupCurrencies}
-              currentUserId={currentUserId}
-              onSubmit={handleExpenseCreated}
-              initialData={transcriptionData || undefined}
-              isFromVoice={isFromVoice}
-              hasLowConfidence={lowConfidence}
-              onTranscriptionComplete={handleTranscriptionComplete}
-              onTranscriptionError={handleTranscriptionError}
-              isLoading={isLoading || !!error}
-            />
-          )}
-        </div>
+        <ExpenseModalHeader onClose={handleClose} />
+        <ExpenseModalContent
+          groupId={groupId}
+          groupMembers={groupMembers}
+          groupCurrencies={groupCurrencies}
+          currentUserId={currentUserId}
+          isLoading={isLoading}
+          error={error}
+          transcriptionData={transcriptionData}
+          isFromVoice={isFromVoice}
+          hasLowConfidence={lowConfidence}
+          onExpenseCreated={handleExpenseCreated}
+          onTranscriptionComplete={handleTranscriptionComplete}
+          onTranscriptionError={handleTranscriptionError}
+          onClose={onClose}
+        />
       </DialogContent>
     </Dialog>
   );
