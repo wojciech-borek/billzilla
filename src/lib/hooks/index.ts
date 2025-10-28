@@ -17,6 +17,7 @@ export { useExpenseFormIntegration } from "./useExpenseFormIntegration";
 
 // Group management hooks
 export { useCreateGroupMutation } from "./useCreateGroupMutation";
+export { useCreateGroupFormLogic } from "./useCreateGroupFormLogic";
 
 // Utility hooks
 export { useCurrenciesList } from "./useCurrenciesList";
