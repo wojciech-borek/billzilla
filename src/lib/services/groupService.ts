@@ -4,6 +4,9 @@
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "../../db/database.types";
+import { calculateUserBalances } from "./balanceService";
+import { fetchGroupMembers, getGroupMemberDetails, verifyGroupMembership } from "./memberService";
+import { validateCurrencyExists } from "./currencyService";
 import type {
   CreateGroupCommand,
   CreateGroupResponseDTO,
@@ -40,6 +43,26 @@ export class TransactionError extends Error {
 }
 
 /**
+ * Custom error for group not found or access denied
+ */
+export class GroupAccessError extends Error {
+  constructor(message = "Group not found or you are not a member") {
+    super(message);
+    this.name = "GroupAccessError";
+  }
+}
+
+/**
+ * Custom error for group data fetch failures
+ */
+export class GroupDataError extends Error {
+  constructor(operation: string, details?: string) {
+    super(`Failed to ${operation}${details ? `: ${details}` : ""}`);
+    this.name = "GroupDataError";
+  }
+}
+
+/**
  * Creates a new group with the creator as the first member
  *
  * This function performs the following operations in a transaction:
@@ -61,87 +84,91 @@ export async function createGroup(
   command: CreateGroupCommand,
   userId: string
 ): Promise<CreateGroupResponseDTO> {
-  // Step 1: Validate that base currency exists
-  const { data: currency, error: currencyError } = await supabase
-    .from("currencies")
-    .select("code")
-    .eq("code", command.base_currency_code)
-    .single();
-
-  if (currencyError || !currency) {
-    throw new CurrencyNotFoundError(command.base_currency_code);
+  // Input validation
+  if (!userId) {
+    throw new GroupDataError("create group", "User ID is required");
+  }
+  if (!command.name?.trim()) {
+    throw new GroupDataError("create group", "Group name is required");
+  }
+  if (!command.base_currency_code) {
+    throw new GroupDataError("create group", "Base currency code is required");
   }
 
-  // Step 2-5: Create group atomically using RPC function
-  // This function runs as SECURITY DEFINER (bypasses RLS) and handles invitations atomically
+  try {
+    // Validate that base currency exists
+    const currencyExists = await validateCurrencyExists(supabase, command.base_currency_code);
+    if (!currencyExists) {
+      throw new CurrencyNotFoundError(command.base_currency_code);
+    }
 
-  const { data: newGroupData, error: groupError } = await supabase.rpc("create_group_transaction", {
-    p_group_name: command.name,
-    p_base_currency_code: command.base_currency_code,
-    p_creator_id: userId,
-    p_invite_emails: command.invite_emails || undefined,
-  });
+    // Step 2-5: Create group atomically using RPC function
+    // This function runs as SECURITY DEFINER (bypasses RLS) and handles invitations atomically
 
-  if (groupError || !newGroupData || newGroupData.length === 0) {
-    throw new TransactionError(`Failed to create group: ${groupError?.message || "Unknown error"}`);
+    // Create group atomically using RPC function
+    const { data: newGroupData, error: groupError } = await supabase.rpc("create_group_transaction", {
+      p_group_name: command.name,
+      p_base_currency_code: command.base_currency_code,
+      p_creator_id: userId,
+      p_invite_emails: command.invite_emails || undefined,
+    });
+
+    if (groupError || !newGroupData || newGroupData.length === 0) {
+      throw new TransactionError(`Failed to create group: ${groupError?.message || "Unknown error"}`);
+    }
+
+    const newGroup = newGroupData[0];
+
+    // Parse invitation results from the database function
+    const invitationResults: InvitationResultDTO = {
+      added_members: Array.isArray(newGroup.added_members)
+        ? newGroup.added_members.map((member: any) => ({
+            profile_id: member.profile_id,
+            email: member.email,
+            full_name: member.full_name,
+            status: member.status,
+          }))
+        : [],
+      created_invitations: Array.isArray(newGroup.created_invitations)
+        ? newGroup.created_invitations.map((inv: any) => ({
+            id: inv.id,
+            email: inv.email,
+            status: inv.status,
+          }))
+        : [],
+    };
+
+    // Return the complete response
+    const { added_members, created_invitations, ...groupData } = newGroup;
+    return {
+      ...groupData,
+      role: "creator" as GroupRole,
+      invitations: invitationResults,
+    };
+  } catch (error) {
+    // Re-throw custom errors as-is
+    if (error instanceof CurrencyNotFoundError || error instanceof TransactionError) {
+      throw error;
+    }
+    // Convert currency operation errors for non-existent currencies to CurrencyNotFoundError
+    if (error instanceof Error && error.name === "CurrencyOperationError" && error.message.includes("does not exist")) {
+      throw new CurrencyNotFoundError(command.base_currency_code);
+    }
+    // Wrap unexpected errors
+    throw new GroupDataError("create group", error instanceof Error ? error.message : "Unknown error");
   }
-
-  const newGroup = newGroupData[0];
-
-  // Parse invitation results from the database function
-  const invitationResults: InvitationResultDTO = {
-    added_members: Array.isArray(newGroup.added_members)
-      ? newGroup.added_members.map((member: any) => ({
-          profile_id: member.profile_id,
-          email: member.email,
-          full_name: member.full_name,
-          status: member.status,
-        }))
-      : [],
-    created_invitations: Array.isArray(newGroup.created_invitations)
-      ? newGroup.created_invitations.map((inv: any) => ({
-          id: inv.id,
-          email: inv.email,
-          status: inv.status,
-        }))
-      : [],
-  };
-
-  // Return the complete response
-  const { added_members, created_invitations, ...groupData } = newGroup;
-  return {
-    ...groupData,
-    role: "creator" as GroupRole,
-    invitations: invitationResults,
-  };
 }
 
 /**
- * Lists groups for a user with computed fields
- *
- * This function performs the following operations:
- * 1. Fetches groups where user is a member with their role
- * 2. Fetches full list of active members for each group
- * 3. Calculates user's balance in base currency for each group
- * 4. Returns paginated results
- *
- * @param supabase - Supabase client instance
- * @param userId - ID of the user requesting the list
- * @param options - Query options (status, limit, offset)
- * @returns Paginated list of groups with computed fields
+ * Fetches groups where user is a member with their role
  */
-export async function listGroups(
+async function fetchUserGroupsWithRoles(
   supabase: SupabaseClient<Database>,
   userId: string,
-  options: {
-    status?: GroupStatus;
-    limit?: number;
-    offset?: number;
-  }
-): Promise<PaginatedResponse<GroupListItemDTO>> {
-  const { status = "active", limit = 50, offset = 0 } = options;
-
-  // Step A: Fetch groups where user is a member with their role
+  status: GroupStatus,
+  limit: number,
+  offset: number
+) {
   const { data: userGroups, error: groupsError } = await supabase
     .from("groups")
     .select(
@@ -156,10 +183,20 @@ export async function listGroups(
     .range(offset, offset + limit - 1);
 
   if (groupsError) {
-    throw new Error("Failed to fetch groups");
+    throw new GroupDataError("fetch groups", groupsError.message);
   }
 
-  // Get total count for pagination
+  return userGroups;
+}
+
+/**
+ * Counts total groups for a user with pagination
+ */
+async function countUserGroups(
+  supabase: SupabaseClient<Database>,
+  userId: string,
+  status: GroupStatus
+): Promise<number> {
   const { count: totalCount, error: countError } = await supabase
     .from("groups")
     .select("id, group_members!inner(profile_id)", { count: "exact", head: true })
@@ -167,166 +204,21 @@ export async function listGroups(
     .eq("status", status);
 
   if (countError) {
-    throw new Error("Failed to count groups");
+    throw new GroupDataError("count user groups", countError.message);
   }
 
-  const total = totalCount || 0;
+  return totalCount || 0;
+}
 
-  // If no groups, return empty result
-  if (!userGroups || userGroups.length === 0) {
-    return {
-      data: [],
-      total,
-      limit,
-      offset,
-    };
-  }
-
-  const groupIds = userGroups.map((g) => g.id);
-
-  // Step B: Fetch all active members for these groups
-  const { data: groupMembers, error: membersError } = await supabase
-    .from("group_members")
-    .select(
-      `
-      group_id,
-      profile_id,
-      status,
-      role,
-      profiles!inner(
-        id,
-        full_name,
-        avatar_url
-      )
-    `
-    )
-    .in("group_id", groupIds)
-    .eq("status", "active");
-
-  if (membersError) {
-    throw new Error("Failed to fetch group members");
-  }
-
-  // Organize members by group
-  const membersByGroup = new Map<string, GroupMemberSummaryDTO[]>();
-
-  for (const member of groupMembers || []) {
-    const groupId = member.group_id;
-    const profile = member.profiles as unknown as { id: string; full_name: string | null; avatar_url: string | null };
-
-    if (!membersByGroup.has(groupId)) {
-      membersByGroup.set(groupId, []);
-    }
-
-    membersByGroup.get(groupId)!.push({
-      profile_id: member.profile_id,
-      full_name: profile.full_name,
-      avatar_url: profile.avatar_url,
-      status: member.status,
-      role: member.role,
-    });
-  }
-
-  // Step C: Calculate user's balance for each group
-  // C1: Fetch expenses paid by user
-  const { data: userExpenses, error: expensesError } = await supabase
-    .from("expenses")
-    .select("group_id, amount, currency_code")
-    .in("group_id", groupIds)
-    .eq("created_by", userId);
-
-  if (expensesError) {
-    throw new Error("Failed to fetch user expenses");
-  }
-
-  // C2: Fetch expense splits for user
-  const { data: userSplits, error: splitsError } = await supabase
-    .from("expense_splits")
-    .select(
-      `
-      amount,
-      expenses!inner(
-        group_id,
-        currency_code
-      )
-    `
-    )
-    .eq("profile_id", userId)
-    .in("expenses.group_id", groupIds);
-
-  if (splitsError) {
-    throw new Error("Failed to fetch user splits");
-  }
-
-  // C3: Fetch settlements involving user
-  const { data: settlements, error: settlementsError } = await supabase
-    .from("settlements")
-    .select("group_id, amount, payer_id, payee_id")
-    .in("group_id", groupIds)
-    .or(`payer_id.eq.${userId},payee_id.eq.${userId}`);
-
-  if (settlementsError) {
-    throw new Error("Failed to fetch settlements");
-  }
-
-  // C4: Fetch exchange rates for all group currencies
-  const { data: groupCurrencies, error: currenciesError } = await supabase
-    .from("group_currencies")
-    .select("group_id, currency_code, exchange_rate")
-    .in("group_id", groupIds);
-
-  if (currenciesError) {
-    throw new Error("Failed to fetch group currencies");
-  }
-
-  // Build exchange rate lookup: groupId -> currencyCode -> exchangeRate
-  const exchangeRates = new Map<string, Map<string, number>>();
-  for (const gc of groupCurrencies || []) {
-    if (!exchangeRates.has(gc.group_id)) {
-      exchangeRates.set(gc.group_id, new Map());
-    }
-    exchangeRates.get(gc.group_id)!.set(gc.currency_code, gc.exchange_rate);
-  }
-
-  // Calculate balances per group
-  const balancesByGroup = new Map<string, number>();
-
-  // Initialize all groups with 0 balance
-  for (const groupId of groupIds) {
-    balancesByGroup.set(groupId, 0);
-  }
-
-  // Add amounts paid by user (converted to base currency)
-  for (const expense of userExpenses || []) {
-    const rate = exchangeRates.get(expense.group_id)?.get(expense.currency_code) || 1.0;
-    const amountInBase = expense.amount * rate;
-    balancesByGroup.set(expense.group_id, balancesByGroup.get(expense.group_id)! + amountInBase);
-  }
-
-  // Subtract amounts owed by user (converted to base currency)
-  for (const split of userSplits || []) {
-    const expenseData = split.expenses as unknown as { group_id: string; currency_code: string };
-    const rate = exchangeRates.get(expenseData.group_id)?.get(expenseData.currency_code) || 1.0;
-    const amountInBase = split.amount * rate;
-    balancesByGroup.set(expenseData.group_id, balancesByGroup.get(expenseData.group_id)! - amountInBase);
-  }
-
-  // Add settlements received by user
-  for (const settlement of settlements || []) {
-    if (settlement.payee_id === userId) {
-      balancesByGroup.set(settlement.group_id, balancesByGroup.get(settlement.group_id)! + settlement.amount);
-    }
-  }
-
-  // Subtract settlements paid by user
-  for (const settlement of settlements || []) {
-    if (settlement.payer_id === userId) {
-      balancesByGroup.set(settlement.group_id, balancesByGroup.get(settlement.group_id)! - settlement.amount);
-    }
-  }
-
-  // Step D: Compose GroupListItemDTO array
-  const groupListItems: GroupListItemDTO[] = userGroups.map((group) => {
+/**
+ * Composes the final GroupListItemDTO array
+ */
+function composeGroupListItems(
+  userGroups: any[],
+  balancesByGroup: Map<string, number>,
+  membersByGroup: Map<string, GroupMemberSummaryDTO[]>
+): GroupListItemDTO[] {
+  return userGroups.map((group) => {
     // Extract role from group_members relation
     const groupMembersData = group.group_members as unknown as { role: GroupRole }[];
     const role = groupMembersData[0]?.role || "member";
@@ -342,13 +234,89 @@ export async function listGroups(
       members: membersByGroup.get(group.id) || [],
     };
   });
+}
 
-  return {
-    data: groupListItems,
-    total,
-    limit,
-    offset,
-  };
+/**
+ * Lists groups for a user with computed fields
+ *
+ * This function performs the following operations:
+ * 1. Fetches groups where user is a member with their role
+ * 2. Fetches full list of active members for each group
+ * 3. Calculates user's balance in base currency for each group
+ * 4. Returns paginated results
+ *
+ * @param supabase - Supabase client instance
+ * @param userId - ID of the user requesting the list
+ * @param options - Query options (status, limit, offset)
+ * @returns Paginated list of groups with computed fields
+ * @throws {GroupDataError} If any data fetching operation fails
+ */
+export async function listGroups(
+  supabase: SupabaseClient<Database>,
+  userId: string,
+  options: {
+    status?: GroupStatus;
+    limit?: number;
+    offset?: number;
+  }
+): Promise<PaginatedResponse<GroupListItemDTO>> {
+  // Input validation
+  if (!userId) {
+    throw new GroupDataError("list groups", "User ID is required");
+  }
+
+  const { status = "active", limit = 50, offset = 0 } = options;
+
+  // Validate pagination parameters
+  if (limit <= 0 || limit > 100) {
+    throw new GroupDataError("list groups", "Limit must be between 1 and 100");
+  }
+  if (offset < 0) {
+    throw new GroupDataError("list groups", "Offset must be non-negative");
+  }
+
+  try {
+    // Fetch user groups with roles
+    const userGroups = await fetchUserGroupsWithRoles(supabase, userId, status, limit, offset);
+
+    // Get total count for pagination
+    const total = await countUserGroups(supabase, userId, status);
+
+    // Early return for empty results
+    if (!userGroups || userGroups.length === 0) {
+      return {
+        data: [],
+        total,
+        limit,
+        offset,
+      };
+    }
+
+    const groupIds = userGroups.map((g) => g.id);
+
+    // Fetch group members and balances in parallel
+    const [membersByGroup, balancesByGroup] = await Promise.all([
+      fetchGroupMembers(supabase, groupIds),
+      calculateUserBalances(supabase, userId, groupIds),
+    ]);
+
+    // Compose final response
+    const groupListItems = composeGroupListItems(userGroups, balancesByGroup, membersByGroup);
+
+    return {
+      data: groupListItems,
+      total,
+      limit,
+      offset,
+    };
+  } catch (error) {
+    // Re-throw custom errors as-is
+    if (error instanceof GroupDataError) {
+      throw error;
+    }
+    // Wrap unexpected errors
+    throw new GroupDataError("list groups", error instanceof Error ? error.message : "Unknown error");
+  }
 }
 
 /**
@@ -371,63 +339,77 @@ export async function getGroupCurrencies(
   groupId: string,
   userId: string
 ): Promise<GroupCurrenciesDTO> {
-  // Step 1: Verify user is a member of the group
-  const { data: membership, error: membershipError } = await supabase
-    .from("group_members")
-    .select("group_id")
-    .eq("group_id", groupId)
-    .eq("profile_id", userId)
-    .eq("status", "active")
-    .single();
-
-  if (membershipError || !membership) {
-    throw new Error("Group not found or you are not a member");
+  // Input validation
+  if (!groupId) {
+    throw new GroupDataError("get group currencies", "Group ID is required");
+  }
+  if (!userId) {
+    throw new GroupDataError("get group currencies", "User ID is required");
   }
 
-  // Step 2: Get group base currency
-  const { data: group, error: groupError } = await supabase
-    .from("groups")
-    .select("base_currency_code")
-    .eq("id", groupId)
-    .single();
+  try {
+    // Verify user is a member of the group
+    const isMember = await verifyGroupMembership(supabase, groupId, userId);
+    if (!isMember) {
+      throw new GroupAccessError();
+    }
 
-  if (groupError || !group) {
-    throw new Error("Group not found");
-  }
+    // Get group base currency
+    const { data: group, error: groupError } = await supabase
+      .from("groups")
+      .select("base_currency_code")
+      .eq("id", groupId)
+      .single();
 
-  // Step 3: Fetch all currencies for the group
-  const { data: currenciesData, error: currenciesError } = await supabase
-    .from("group_currencies")
-    .select("currency_code, exchange_rate, currencies(name)")
-    .eq("group_id", groupId)
-    .order("currency_code");
+    if (groupError || !group) {
+      throw new GroupDataError("get group currencies", "Group not found");
+    }
 
-  if (currenciesError) {
-    throw new Error("Failed to fetch group currencies");
-  }
+    // Fetch all currencies for the group
+    const { data: currenciesData, error: currenciesError } = await supabase
+      .from("group_currencies")
+      .select("currency_code, exchange_rate, currencies(name)")
+      .eq("group_id", groupId)
+      .order("currency_code");
 
-  // Step 4: Transform currencies data
-  const groupCurrencies: GroupCurrencyDTO[] = (currenciesData || []).map((gc) => {
-    const currency = gc.currencies as unknown as { name: string };
+    if (currenciesError) {
+      throw new GroupDataError("get group currencies", "Failed to fetch currencies");
+    }
+
+    // Transform currencies data
+    const groupCurrencies: GroupCurrencyDTO[] = (currenciesData || []).map((gc) => {
+      const currency = gc.currencies as unknown as { name: string };
+      return {
+        code: gc.currency_code,
+        name: currency.name,
+        exchange_rate: gc.exchange_rate,
+      };
+    });
+
+    // Separate base currency from additional currencies
+    const baseCurrency = groupCurrencies.find((gc) => gc.code === group.base_currency_code);
+    const additionalCurrencies = groupCurrencies.filter((gc) => gc.code !== group.base_currency_code);
+
     return {
-      code: gc.currency_code,
-      name: currency.name,
-      exchange_rate: gc.exchange_rate,
+      base_currency: baseCurrency || {
+        code: group.base_currency_code,
+        name: "Unknown Currency",
+        exchange_rate: 1.0,
+      },
+      additional_currencies: additionalCurrencies,
     };
-  });
-
-  // Step 5: Separate base currency from additional currencies
-  const baseCurrency = groupCurrencies.find((gc) => gc.code === group.base_currency_code);
-  const additionalCurrencies = groupCurrencies.filter((gc) => gc.code !== group.base_currency_code);
-
-  return {
-    base_currency: baseCurrency || {
-      code: group.base_currency_code,
-      name: "Unknown Currency",
-      exchange_rate: 1.0,
-    },
-    additional_currencies: additionalCurrencies,
-  };
+  } catch (error) {
+    // Re-throw custom errors as-is
+    if (error instanceof GroupAccessError) {
+      throw error;
+    }
+    // Convert member operation errors to access errors
+    if (error instanceof Error && error.name === "MemberOperationError") {
+      throw new GroupAccessError();
+    }
+    // Wrap unexpected errors
+    throw new GroupDataError("get group currencies", error instanceof Error ? error.message : "Unknown error");
+  }
 }
 
 /**
@@ -451,140 +433,120 @@ export async function getGroupDetails(
   groupId: string,
   userId: string
 ): Promise<GroupDetailDTO> {
-  // Step 1: Fetch group with user's membership and role
-  const { data: groupData, error: groupError } = await supabase
-    .from("groups")
-    .select(
+  // Input validation
+  if (!groupId) {
+    throw new GroupDataError("get group details", "Group ID is required");
+  }
+  if (!userId) {
+    throw new GroupDataError("get group details", "User ID is required");
+  }
+
+  try {
+    // Verify user membership
+    const isMember = await verifyGroupMembership(supabase, groupId, userId);
+    if (!isMember) {
+      throw new GroupAccessError();
+    }
+
+    // Fetch group with user's membership and role
+    const { data: groupData, error: groupError } = await supabase
+      .from("groups")
+      .select(
+        `
+        *,
+        group_members!inner(
+          role,
+          status,
+          joined_at
+        )
       `
-      *,
-      group_members!inner(
-        role,
-        status,
-        joined_at
       )
-    `
-    )
-    .eq("id", groupId)
-    .eq("group_members.profile_id", userId)
-    .eq("group_members.status", "active")
-    .single();
+      .eq("id", groupId)
+      .eq("group_members.profile_id", userId)
+      .eq("group_members.status", "active")
+      .single();
 
-  if (groupError || !groupData) {
-    throw new Error("Group not found or you are not a member");
-  }
+    if (groupError || !groupData) {
+      throw new GroupAccessError();
+    }
 
-  // Extract user's role
-  const userMembership = groupData.group_members as unknown as {
-    role: GroupRole;
-    status: "active" | "inactive";
-    joined_at: string;
-  }[];
-  const myRole = userMembership[0]?.role || "member";
+    // Extract user's role
+    const userMembership = groupData.group_members as unknown as {
+      role: GroupRole;
+      status: "active" | "inactive";
+      joined_at: string;
+    }[];
+    const myRole = userMembership[0]?.role || "member";
 
-  // Step 2: Fetch all active members with profiles
-  const { data: membersData, error: membersError } = await supabase
-    .from("group_members")
-    .select(
-      `
-      profile_id,
-      role,
-      status,
-      joined_at,
-      profiles!inner(
-        id,
-        full_name,
-        email,
-        avatar_url,
-        updated_at
-      )
-    `
-    )
-    .eq("group_id", groupId)
-    .eq("status", "active")
-    .order("joined_at", { ascending: true });
+    // Fetch all active members with profiles using member service
+    const members = await getGroupMemberDetails(supabase, groupId);
 
-  if (membersError) {
-    throw new Error("Failed to fetch group members");
-  }
+    // Fetch group currencies
+    const { data: currenciesData, error: currenciesError } = await supabase
+      .from("group_currencies")
+      .select("currency_code, exchange_rate, currencies(name)")
+      .eq("group_id", groupId)
+      .order("currency_code");
 
-  // Transform members data
-  const members: GroupDetailDTO["members"] = (membersData || []).map((member) => {
-    const profile = member.profiles as unknown as {
-      id: string;
-      full_name: string | null;
-      email: string;
-      avatar_url: string | null;
-      updated_at: string;
-    };
+    if (currenciesError) {
+      throw new GroupDataError("get group details", "Failed to fetch currencies");
+    }
 
+    // Transform currencies data
+    const groupCurrencies: GroupCurrencyDTO[] = (currenciesData || []).map((gc) => {
+      const currency = gc.currencies as unknown as { name: string };
+      return {
+        code: gc.currency_code,
+        name: currency.name,
+        exchange_rate: gc.exchange_rate,
+      };
+    });
+
+    // Separate base currency from additional currencies
+    const baseCurrency = groupCurrencies.find((gc) => gc.code === groupData.base_currency_code);
+    const additional_currencies = groupCurrencies.filter((gc) => gc.code !== groupData.base_currency_code);
+
+    // Fetch pending invitations
+    const { data: invitationsData, error: invitationsError } = await supabase
+      .from("invitations")
+      .select("id, email, status, created_at")
+      .eq("group_id", groupId)
+      .eq("status", "pending")
+      .order("created_at", { ascending: false });
+
+    // Note: invitations errors are not thrown as invitations are optional
+    const pendingInvitations: PendingInvitationDTO[] = (invitationsData || []).map((inv) => ({
+      id: inv.id,
+      email: inv.email,
+      status: inv.status,
+      created_at: inv.created_at,
+    }));
+
+    // Combine all currencies into a flat array for backwards compatibility
+    const allCurrencies = [baseCurrency, ...additional_currencies].filter(Boolean) as GroupCurrencyDTO[];
+
+    // Return complete group details
     return {
-      profile_id: member.profile_id,
-      full_name: profile.full_name,
-      email: profile.email,
-      avatar_url: profile.avatar_url,
-      role: member.role,
-      status: member.status,
-      joined_at: member.joined_at,
+      id: groupData.id,
+      name: groupData.name,
+      base_currency_code: groupData.base_currency_code,
+      status: groupData.status,
+      created_at: groupData.created_at,
+      my_role: myRole,
+      members,
+      group_currencies: allCurrencies,
+      pending_invitations: pendingInvitations,
     };
-  });
-
-  // Step 3: Fetch group currencies
-  const { data: currenciesData, error: currenciesError } = await supabase
-    .from("group_currencies")
-    .select("currency_code, exchange_rate, currencies(name)")
-    .eq("group_id", groupId)
-    .order("currency_code");
-
-  if (currenciesError) {
-    throw new Error("Failed to fetch group currencies");
+  } catch (error) {
+    // Re-throw custom errors as-is
+    if (error instanceof GroupAccessError) {
+      throw error;
+    }
+    // Convert member operation errors to access errors
+    if (error instanceof Error && error.name === "MemberOperationError") {
+      throw new GroupAccessError();
+    }
+    // Wrap unexpected errors
+    throw new GroupDataError("get group details", error instanceof Error ? error.message : "Unknown error");
   }
-
-  // Transform currencies data
-  const groupCurrencies: GroupCurrencyDTO[] = (currenciesData || []).map((gc) => {
-    const currency = gc.currencies as unknown as { name: string };
-    return {
-      code: gc.currency_code,
-      name: currency.name,
-      exchange_rate: gc.exchange_rate,
-    };
-  });
-
-  // Separate base currency from additional currencies
-  const baseCurrency = groupCurrencies.find((gc) => gc.code === groupData.base_currency_code);
-  const additional_currencies = groupCurrencies.filter((gc) => gc.code !== groupData.base_currency_code);
-
-  // Step 4: Fetch pending invitations
-  const { data: invitationsData, error: invitationsError } = await supabase
-    .from("invitations")
-    .select("id, email, status, created_at")
-    .eq("group_id", groupId)
-    .eq("status", "pending")
-    .order("created_at", { ascending: false });
-
-  if (invitationsError) {
-    // Don't throw - invitations are optional
-  }
-
-  const pendingInvitations: PendingInvitationDTO[] = (invitationsData || []).map((inv) => ({
-    id: inv.id,
-    email: inv.email,
-    status: inv.status,
-    created_at: inv.created_at,
-  }));
-
-  // Combine all currencies into a flat array for backwards compatibility
-  const allCurrencies = [baseCurrency, ...additional_currencies].filter(Boolean) as GroupCurrencyDTO[];
-
-  // Return complete group details
-  return {
-    id: groupData.id,
-    name: groupData.name,
-    base_currency_code: groupData.base_currency_code,
-    status: groupData.status,
-    created_at: groupData.created_at,
-    my_role: myRole,
-    members,
-    group_currencies: allCurrencies,
-    pending_invitations: pendingInvitations,
-  };
 }

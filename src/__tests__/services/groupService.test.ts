@@ -148,7 +148,7 @@ describe("GroupService", () => {
       // Mock currency validation failure
       mockSupabaseClient.single.mockResolvedValueOnce({
         data: null,
-        error: { message: "Currency not found" },
+        error: { code: "PGRST116", message: "Currency not found" },
       });
 
       // Act & Assert
@@ -734,6 +734,17 @@ describe("GroupService", () => {
       const groupId = "group-123";
       const userId = "user-123";
 
+      // Mock verifyGroupMembership query (returns true for membership)
+      mockSupabaseClient.from.mockReturnValueOnce(mockSupabase);
+      mockSupabaseClient.select.mockReturnValueOnce(mockSupabase);
+      mockSupabaseClient.eq.mockReturnValueOnce(mockSupabase);
+      mockSupabaseClient.eq.mockReturnValueOnce(mockSupabase);
+      mockSupabaseClient.eq.mockReturnValueOnce(mockSupabase);
+      mockSupabaseClient.single.mockResolvedValueOnce({
+        data: { group_id: groupId },
+        error: null,
+      });
+
       // Mock group with membership query
       const mockGroupData = {
         id: groupId,
@@ -890,7 +901,7 @@ describe("GroupService", () => {
       const groupId = "invalid-group";
       const userId = "user-123";
 
-      // Mock group query returns no results (user not member or group doesn't exist)
+      // Mock verifyGroupMembership query returns no membership
       mockSupabaseClient.from.mockReturnValueOnce(mockSupabase);
       mockSupabaseClient.select.mockReturnValueOnce(mockSupabase);
       mockSupabaseClient.eq.mockReturnValueOnce(mockSupabase);
@@ -898,7 +909,7 @@ describe("GroupService", () => {
       mockSupabaseClient.eq.mockReturnValueOnce(mockSupabase);
       mockSupabaseClient.single.mockResolvedValueOnce({
         data: null,
-        error: { message: "No group found" },
+        error: { code: "PGRST116", message: "No membership found" },
       });
 
       // Act & Assert
@@ -906,7 +917,7 @@ describe("GroupService", () => {
         "Group not found or you are not a member"
       );
 
-      expect(mockSupabaseClient.from).toHaveBeenCalledWith("groups");
+      expect(mockSupabaseClient.from).toHaveBeenCalledWith("group_members");
       // Should not proceed to other queries
       expect(mockSupabaseClient.from).toHaveBeenCalledTimes(1);
     });
@@ -916,6 +927,17 @@ describe("GroupService", () => {
       const mockSupabaseClient = mockSupabase as any;
       const groupId = "group-123";
       const userId = "user-123";
+
+      // Mock verifyGroupMembership query (returns true for membership)
+      mockSupabaseClient.from.mockReturnValueOnce(mockSupabase);
+      mockSupabaseClient.select.mockReturnValueOnce(mockSupabase);
+      mockSupabaseClient.eq.mockReturnValueOnce(mockSupabase);
+      mockSupabaseClient.eq.mockReturnValueOnce(mockSupabase);
+      mockSupabaseClient.eq.mockReturnValueOnce(mockSupabase);
+      mockSupabaseClient.single.mockResolvedValueOnce({
+        data: { group_id: groupId },
+        error: null,
+      });
 
       // Mock group with membership query (same as successful test)
       const mockGroupData = {
