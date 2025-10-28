@@ -15,24 +15,12 @@ export const LoginForm = memo(function LoginForm({ errorMessage, successMessage,
 
   return (
     <div className="space-y-6">
-      <LoginFormMessages
-        successMessage={successMessage}
-        errorMessage={errorMessage}
-        apiError={apiError}
-      />
+      <LoginFormMessages successMessage={successMessage} errorMessage={errorMessage} apiError={apiError} />
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        <LoginFormFields
-          formData={formData}
-          errors={errors}
-          isLoading={isLoading}
-          onChange={handleChange}
-        />
+        <LoginFormFields formData={formData} errors={errors} isLoading={isLoading} onChange={handleChange} />
 
-        <LoginFormActions
-          isLoading={isLoading}
-          redirectTo={redirectTo}
-        />
+        <LoginFormActions isLoading={isLoading} redirectTo={redirectTo} />
       </form>
     </div>
   );

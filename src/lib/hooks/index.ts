@@ -13,6 +13,7 @@ export { useTranscriptionErrorHandler } from "./useTranscriptionErrorHandler";
 
 // Expense form hooks
 export { useExpenseForm } from "./useExpenseForm";
+export { useExpenseFormIntegration } from "./useExpenseFormIntegration";
 
 // Group management hooks
 export { useCreateGroupMutation } from "./useCreateGroupMutation";

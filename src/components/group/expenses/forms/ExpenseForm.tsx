@@ -1,11 +1,11 @@
 import React from "react";
-import { Button } from "@/components/ui/button";
-import { Loader2, Mic, AlertTriangle } from "lucide-react";
 
 import { type CreateExpenseFormValues } from "@/lib/schemas/expenseSchemas";
 import { useExpenseForm } from "@/lib/hooks/useExpenseForm";
-import { ExpenseBasicInfo } from "./ExpenseBasicInfo";
-import { ExpenseSplitSection } from "./ExpenseSplitSection";
+import { useExpenseFormIntegration } from "@/lib/hooks/useExpenseFormIntegration";
+import { ExpenseFormHeader } from "./ExpenseFormHeader";
+import { ExpenseFormContent } from "./ExpenseFormContent";
+import { ExpenseFormFooter } from "./ExpenseFormFooter";
 import type {
   GroupMemberSummaryDTO,
   GroupCurrencyDTO,
@@ -52,8 +52,12 @@ export function ExpenseForm({
     submitError,
     fieldErrors,
     handleSubmit: submitExpense,
-    populateFromTranscription,
   } = useExpenseForm(groupMembers, groupCurrencies, currentUserId, initialData);
+
+  const { handleTranscriptionComplete } = useExpenseFormIntegration(
+    form,
+    onTranscriptionComplete
+  );
 
   const {
     handleSubmit,
@@ -69,95 +73,37 @@ export function ExpenseForm({
     }
   };
 
-  // Wrapper for transcription completion that populates the form
-  const handleTranscriptionComplete = React.useCallback(
-    (result: TranscriptionResultDTO) => {
-      try {
-        populateFromTranscription(result.expense_data);
-        // Call parent callback
-        onTranscriptionComplete?.(result);
-      } catch (error) {
-        // Still call parent callback to show error
-        if (onTranscriptionError) {
-          onTranscriptionError({
-            code: "FORM_POPULATION_ERROR",
-            message: error instanceof Error ? error.message : "Błąd podczas wypełniania formularza",
-          });
-        }
-      }
-    },
-    [populateFromTranscription, onTranscriptionComplete, onTranscriptionError]
-  );
-
   const formErrors = { ...errors, ...fieldErrors };
 
   return (
     <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-6">
-      {/* Voice input badges */}
-      {isFromVoice && (
-        <div className="flex justify-center gap-2 flex-wrap">
-          <div className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-accent/20 text-accent border border-accent/30">
-            <Mic className="h-3 w-3 mr-1" />
-            Wypełnione głosem
-          </div>
-          {hasLowConfidence && (
-            <div className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800 border border-amber-300">
-              <AlertTriangle className="h-3 w-3 mr-1" />
-              Niska pewność
-            </div>
-          )}
-        </div>
-      )}
+      <ExpenseFormHeader isFromVoice={isFromVoice} hasLowConfidence={hasLowConfidence} />
 
-      {/* Basic Information */}
-      <ExpenseBasicInfo
+      <ExpenseFormContent
         form={form}
+        groupId={groupId}
         groupMembers={groupMembers}
         groupCurrencies={groupCurrencies}
         currentUserId={currentUserId}
         hasLowConfidence={hasLowConfidence}
-        groupId={groupId}
         onTranscriptionComplete={handleTranscriptionComplete}
         onTranscriptionError={onTranscriptionError}
         isLoading={isLoading}
       />
 
-      {/* Participants and Split */}
-      <ExpenseSplitSection form={form} groupMembers={groupMembers} hasLowConfidence={hasLowConfidence} />
-
-      {/* Error Messages */}
-      {submitError && (
-        <div className="p-4 border border-destructive/50 rounded-lg bg-destructive/10">
-          <p className="text-sm text-destructive font-medium">Błąd podczas tworzenia wydatku</p>
-          <p className="text-sm text-destructive mt-1">{submitError}</p>
-        </div>
-      )}
-
-      {/* Split validation error */}
-      {formErrors.splits && (
-        <div className="p-4 border border-destructive/50 rounded-lg bg-destructive/10">
-          <p className="text-sm text-destructive font-medium">Błąd podziału</p>
-          <p className="text-sm text-destructive mt-1">
-            {typeof formErrors.splits === "string"
+      <ExpenseFormFooter
+        submitError={submitError}
+        splitValidationError={
+          formErrors.splits
+            ? typeof formErrors.splits === "string"
               ? formErrors.splits
-              : formErrors.splits?.message || "Błąd walidacji podziału"}
-          </p>
-        </div>
-      )}
-
-      {/* Submit Button */}
-      <div className="flex justify-end pt-4">
-        <Button type="submit" disabled={!isValid || isSubmitting || !splitValidation.isValid} className="min-w-[120px]">
-          {isSubmitting ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Tworzenie...
-            </>
-          ) : (
-            "Utwórz wydatek"
-          )}
-        </Button>
-      </div>
+              : formErrors.splits?.message || "Błąd walidacji podziału"
+            : undefined
+        }
+        isSubmitting={isSubmitting}
+        isValid={isValid}
+        splitValidationValid={splitValidation.isValid}
+      />
     </form>
   );
 }
