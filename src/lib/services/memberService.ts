@@ -2,8 +2,7 @@
  * Member service - handles business logic for group member operations
  */
 
-import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database } from "../../db/database.types";
+import type { SupabaseClient } from "../../db/supabase.client";
 import type { GroupMemberSummaryDTO } from "../../types";
 
 /**
@@ -28,7 +27,7 @@ export class MemberOperationError extends Error {
  * @throws {MemberOperationError} If data fetching fails
  */
 export async function fetchGroupMembers(
-  supabase: SupabaseClient<Database>,
+  supabase: SupabaseClient,
   groupIds: string[]
 ): Promise<Map<string, GroupMemberSummaryDTO[]>> {
   // Input validation
@@ -93,7 +92,7 @@ export async function fetchGroupMembers(
  * @throws {MemberOperationError} If membership check fails
  */
 export async function verifyGroupMembership(
-  supabase: SupabaseClient<Database>,
+  supabase: SupabaseClient,
   groupId: string,
   userId: string
 ): Promise<boolean> {
@@ -132,7 +131,7 @@ export async function verifyGroupMembership(
  * @returns Array of detailed member information
  * @throws {MemberOperationError} If data fetching fails
  */
-export async function getGroupMemberDetails(supabase: SupabaseClient<Database>, groupId: string) {
+export async function getGroupMemberDetails(supabase: SupabaseClient, groupId: string) {
   // Input validation
   if (!groupId) {
     throw new MemberOperationError("get member details", "Group ID is required");

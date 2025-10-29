@@ -1,5 +1,4 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database } from "../../../db/database.types";
+import type { SupabaseClient } from "../../../db/supabase.client";
 import type { GroupStatus, GroupRole } from "../../../types";
 import { GroupDataError } from "../errors/groupErrors";
 
@@ -62,7 +61,7 @@ interface CreatedGroupData {
  * Encapsulates all data access logic for groups
  */
 export class GroupRepository {
-  constructor(private supabase: SupabaseClient<Database>) {}
+  constructor(private supabase: SupabaseClient) {}
 
   /**
    * Fetch groups where user is a member with their role

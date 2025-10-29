@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { createClient } from "@supabase/supabase-js";
-import type { Database } from "../../db/database.types";
+import { createClient, type SupabaseClient } from "@/db/supabase.client";
 import {
   createExpense,
   ExpenseValidationError,
@@ -25,21 +24,21 @@ import {
 } from "./testHelpers";
 
 // Mock Supabase client
-vi.mock("@supabase/supabase-js", () => ({
+vi.mock("../../db/supabase.client", () => ({
   createClient: vi.fn(),
 }));
 
 const mockCreateClient = vi.mocked(createClient);
 
 describe("ExpenseService", () => {
-  let supabase: ReturnType<typeof createClient<Database>>;
+  let supabase: SupabaseClient;
 
   beforeEach(() => {
     vi.clearAllMocks();
     const mockClient = createMockSupabaseClient();
     setupExpenseMocks(mockClient, {});
-    mockCreateClient.mockReturnValue(mockClient as ReturnType<typeof createClient<Database>>);
-    supabase = createClient<Database>("url", "key");
+    mockCreateClient.mockReturnValue(mockClient as unknown as SupabaseClient);
+    supabase = createClient();
   });
 
   describe("createExpense", () => {
@@ -58,8 +57,8 @@ describe("ExpenseService", () => {
         expenseSelect: scenario.expenseSelect,
         expenseSplitsInsert: scenario.expenseSplitsInsert,
       });
-      mockCreateClient.mockReturnValue(mockClient as ReturnType<typeof createClient<Database>>);
-      supabase = createClient<Database>("url", "key");
+      mockCreateClient.mockReturnValue(mockClient as unknown as SupabaseClient);
+      supabase = createClient();
 
       // Act
       const result = await createExpense(supabase, groupId, userId, command);
@@ -118,8 +117,8 @@ describe("ExpenseService", () => {
         groups: { data: scenario.groupData, error: null },
         groupMembers: { data: scenario.activeMembers, error: null },
       });
-      mockCreateClient.mockReturnValue(mockClient as ReturnType<typeof createClient<Database>>);
-      supabase = createClient<Database>("url", "key");
+      mockCreateClient.mockReturnValue(mockClient as unknown as SupabaseClient);
+      supabase = createClient();
 
       // Act & Assert
       await expectExpenseValidationError(
@@ -170,8 +169,8 @@ describe("ExpenseService", () => {
         expenseSelect: { data: mockCompleteExpenseEUR, error: null },
         expenseSplitsInsert: scenario.expenseSplitsInsert,
       });
-      mockCreateClient.mockReturnValue(mockClient as ReturnType<typeof createClient<Database>>);
-      supabase = createClient<Database>("url", "key");
+      mockCreateClient.mockReturnValue(mockClient as unknown as SupabaseClient);
+      supabase = createClient();
 
       // Act
       const result = await createExpense(supabase, groupId, userId, command);
@@ -197,8 +196,8 @@ describe("ExpenseService", () => {
       setupExpenseMocks(mockClient, {
         groups: { data: null, error: { message: "Not found" } },
       });
-      mockCreateClient.mockReturnValue(mockClient as ReturnType<typeof createClient<Database>>);
-      supabase = createClient<Database>("url", "key");
+      mockCreateClient.mockReturnValue(mockClient as unknown as SupabaseClient);
+      supabase = createClient();
 
       // Act & Assert
       await expect(createExpense(supabase, groupId, userId, command)).rejects.toThrow(ExpenseAccessError);
@@ -227,8 +226,8 @@ describe("ExpenseService", () => {
         groups: { data: scenario.groupData, error: null },
         groupMembers: { data: scenario.activeMembers, error: null },
       });
-      mockCreateClient.mockReturnValue(mockClient as ReturnType<typeof createClient<Database>>);
-      supabase = createClient<Database>("url", "key");
+      mockCreateClient.mockReturnValue(mockClient as unknown as SupabaseClient);
+      supabase = createClient();
 
       // Act & Assert
       await expectExpenseValidationError(
@@ -257,8 +256,8 @@ describe("ExpenseService", () => {
         groups: { data: scenario.groupData, error: null },
         groupMembers: { data: scenario.activeMembers, error: null },
       });
-      mockCreateClient.mockReturnValue(mockClient as ReturnType<typeof createClient<Database>>);
-      supabase = createClient<Database>("url", "key");
+      mockCreateClient.mockReturnValue(mockClient as unknown as SupabaseClient);
+      supabase = createClient();
 
       // Act & Assert
       await expectExpenseValidationError(
@@ -281,8 +280,8 @@ describe("ExpenseService", () => {
         groupMembers: { data: scenario.activeMembers, error: null },
         expenseInsert: scenario.expenseInsert,
       });
-      mockCreateClient.mockReturnValue(mockClient as ReturnType<typeof createClient<Database>>);
-      supabase = createClient<Database>("url", "key");
+      mockCreateClient.mockReturnValue(mockClient as unknown as SupabaseClient);
+      supabase = createClient();
 
       // Act & Assert
       try {
@@ -309,8 +308,8 @@ describe("ExpenseService", () => {
         expenseInsert: scenario.expenseInsert,
         expenseSplitsInsert: scenario.expenseSplitsInsert,
       });
-      mockCreateClient.mockReturnValue(mockClient as ReturnType<typeof createClient<Database>>);
-      supabase = createClient<Database>("url", "key");
+      mockCreateClient.mockReturnValue(mockClient as unknown as SupabaseClient);
+      supabase = createClient();
 
       // Act & Assert
       try {
@@ -338,8 +337,8 @@ describe("ExpenseService", () => {
         expenseSelect: scenario.expenseSelect,
         expenseSplitsInsert: scenario.expenseSplitsInsert,
       });
-      mockCreateClient.mockReturnValue(mockClient as ReturnType<typeof createClient<Database>>);
-      supabase = createClient<Database>("url", "key");
+      mockCreateClient.mockReturnValue(mockClient as unknown as SupabaseClient);
+      supabase = createClient();
 
       // Act & Assert
       try {
@@ -373,8 +372,8 @@ describe("ExpenseService", () => {
         groups: { data: scenario.groupData, error: null },
         groupMembers: { data: scenario.activeMembers, error: null },
       });
-      mockCreateClient.mockReturnValue(mockClient as ReturnType<typeof createClient<Database>>);
-      supabase = createClient<Database>("url", "key");
+      mockCreateClient.mockReturnValue(mockClient as unknown as SupabaseClient);
+      supabase = createClient();
 
       // Act & Assert - should pass splits validation (empty array is allowed)
       // The test verifies that empty splits don't cause a validation error

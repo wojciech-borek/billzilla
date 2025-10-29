@@ -2,8 +2,7 @@
  * Balance service - handles business logic for balance calculations
  */
 
-import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database } from "../../db/database.types";
+import type { SupabaseClient } from "../../db/supabase.client";
 
 /**
  * Custom error for balance calculation failures
@@ -18,7 +17,7 @@ export class BalanceCalculationError extends Error {
 /**
  * Fetches expenses paid by user in specified groups
  */
-async function fetchUserExpenses(supabase: SupabaseClient<Database>, userId: string, groupIds: string[]) {
+async function fetchUserExpenses(supabase: SupabaseClient, userId: string, groupIds: string[]) {
   const { data: userExpenses, error: expensesError } = await supabase
     .from("expenses")
     .select("group_id, amount, currency_code")
@@ -35,7 +34,7 @@ async function fetchUserExpenses(supabase: SupabaseClient<Database>, userId: str
 /**
  * Fetches expense splits for user in specified groups
  */
-async function fetchUserExpenseSplits(supabase: SupabaseClient<Database>, userId: string, groupIds: string[]) {
+async function fetchUserExpenseSplits(supabase: SupabaseClient, userId: string, groupIds: string[]) {
   const { data: userSplits, error: splitsError } = await supabase
     .from("expense_splits")
     .select(
@@ -60,7 +59,7 @@ async function fetchUserExpenseSplits(supabase: SupabaseClient<Database>, userId
 /**
  * Fetches settlements involving user in specified groups
  */
-async function fetchUserSettlements(supabase: SupabaseClient<Database>, userId: string, groupIds: string[]) {
+async function fetchUserSettlements(supabase: SupabaseClient, userId: string, groupIds: string[]) {
   const { data: settlements, error: settlementsError } = await supabase
     .from("settlements")
     .select("group_id, amount, payer_id, payee_id")
@@ -78,7 +77,7 @@ async function fetchUserSettlements(supabase: SupabaseClient<Database>, userId: 
  * Fetches exchange rates for all group currencies
  */
 async function fetchExchangeRates(
-  supabase: SupabaseClient<Database>,
+  supabase: SupabaseClient,
   groupIds: string[]
 ): Promise<Map<string, Map<string, number>>> {
   const { data: groupCurrencies, error: currenciesError } = await supabase
@@ -119,7 +118,7 @@ async function fetchExchangeRates(
  * @throws {BalanceCalculationError} If any data fetching operation fails
  */
 export async function calculateUserBalances(
-  supabase: SupabaseClient<Database>,
+  supabase: SupabaseClient,
   userId: string,
   groupIds: string[]
 ): Promise<Map<string, number>> {

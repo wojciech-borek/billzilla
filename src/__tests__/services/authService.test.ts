@@ -1,7 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import type { SupabaseClient, AuthError } from "@supabase/supabase-js";
+import type { AuthError } from "@supabase/supabase-js";
 import { SignupError, signupUser } from "../../lib/services/authService";
 import type { SignupFormData } from "../../lib/schemas/authSchemas";
+import { createMockAuthSupabaseClient, type MockSupabaseClient } from "./testHelpers";
 
 describe("SignupError", () => {
   describe("UT-authService-01: should_create_error_with_message_and_original_error_when_constructed", () => {
@@ -37,14 +38,10 @@ describe("SignupError", () => {
 });
 
 describe("signupUser", () => {
-  let mockSupabaseClient: SupabaseClient;
+  let mockSupabaseClient: MockSupabaseClient;
 
   beforeEach(() => {
-    mockSupabaseClient = {
-      auth: {
-        signUp: vi.fn(),
-      },
-    } as unknown as SupabaseClient;
+    mockSupabaseClient = createMockAuthSupabaseClient();
   });
 
   describe("UT-authService-03: should_signup_successfully_when_supabase_signup_succeeds", () => {

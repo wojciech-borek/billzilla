@@ -1,5 +1,4 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database } from "../../db/database.types";
+import type { SupabaseClient } from "../../db/supabase.client";
 import type { CreateExpenseCommand, ExpenseDTO } from "../../types";
 import { z } from "zod";
 
@@ -173,7 +172,7 @@ export class ExpenseUnitOfWork {
   private readonly userId: string;
   private readonly command: ValidatedExpenseCommand;
 
-  constructor(supabase: SupabaseClient<Database>, groupId: string, userId: string, command: ValidatedExpenseCommand) {
+  constructor(supabase: SupabaseClient, groupId: string, userId: string, command: ValidatedExpenseCommand) {
     this.repository = new ExpenseRepository(supabase);
     this.groupId = groupId;
     this.userId = userId;
@@ -355,7 +354,7 @@ export class ExpenseUnitOfWork {
 }
 
 export async function createExpense(
-  supabase: SupabaseClient<Database>,
+  supabase: SupabaseClient,
   groupId: string,
   userId: string,
   command: CreateExpenseCommand,

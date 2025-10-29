@@ -1,5 +1,4 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database } from "../../../db/database.types";
+import type { SupabaseClient } from "../../../db/supabase.client";
 import type { CreateGroupCommand, CreateGroupResponseDTO, InvitationResultDTO } from "../../../types";
 import { GroupRepository } from "../repositories/GroupRepository";
 import { GroupBuilderFactory } from "../builders/GroupBuilder";
@@ -34,7 +33,7 @@ export class GroupCreationUnitOfWork {
   private createdGroupId: string | null = null;
 
   constructor(
-    private supabase: SupabaseClient<Database>,
+    private supabase: SupabaseClient,
     private command: CreateGroupCommand,
     private userId: string
   ) {

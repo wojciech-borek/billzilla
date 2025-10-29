@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database } from "@/db/database.types";
+import type { SupabaseClient } from "@/db/supabase.client";
 
 // Type for invalid test cases that may have null/undefined values
 interface InvalidGroupCreationTestCase {
@@ -36,10 +35,10 @@ import {
 
 // Test fixtures for specification testing
 const createBasicSpecTestFixture = <TSpec>(
-  SpecClass: new (client: SupabaseClient<Database>) => TSpec,
-  mockSetup: (client: SupabaseClient<Database>) => void
+  SpecClass: new (client: SupabaseClient) => TSpec,
+  mockSetup: (client: SupabaseClient) => void
 ) => ({
-  setup: (mockSupabase: SupabaseClient<Database>): TSpec => {
+  setup: (mockSupabase: SupabaseClient): TSpec => {
     mockSetup(mockSupabase);
     return new SpecClass(mockSupabase);
   },
@@ -51,27 +50,24 @@ const createSyncSpecTestFixture = <TSpec>(SpecClass: new () => TSpec) => ({
 
 // Specification-specific mock fixtures
 const membershipSpecFixtures = {
-  activeMember: (client: SupabaseClient<Database>) =>
-    mockUserActiveMembership(client, TEST_GROUP_ID, TEST_USER_ID, true),
-  inactiveMember: (client: SupabaseClient<Database>) =>
-    mockUserActiveMembership(client, TEST_GROUP_ID, TEST_USER_ID, false),
+  activeMember: (client: SupabaseClient) => mockUserActiveMembership(client, TEST_GROUP_ID, TEST_USER_ID, true),
+  inactiveMember: (client: SupabaseClient) => mockUserActiveMembership(client, TEST_GROUP_ID, TEST_USER_ID, false),
 };
 
 const currencySpecFixtures = {
-  exists: (client: SupabaseClient<Database>) => mockCurrencyExists(client, TEST_CURRENCY_CODE, true),
-  notExists: (client: SupabaseClient<Database>) => mockCurrencyExists(client, TEST_INVALID_CURRENCY_CODE, false),
+  exists: (client: SupabaseClient) => mockCurrencyExists(client, TEST_CURRENCY_CODE, true),
+  notExists: (client: SupabaseClient) => mockCurrencyExists(client, TEST_INVALID_CURRENCY_CODE, false),
 };
 
 const groupCurrencySpecFixtures = {
-  configured: (client: SupabaseClient<Database>) =>
+  configured: (client: SupabaseClient) =>
     mockCurrencyConfiguredForGroup(client, TEST_GROUP_ID, TEST_CURRENCY_CODE, true),
-  notConfigured: (client: SupabaseClient<Database>) =>
-    mockCurrencyConfiguredForGroup(client, TEST_GROUP_ID, "EUR", false),
+  notConfigured: (client: SupabaseClient) => mockCurrencyConfiguredForGroup(client, TEST_GROUP_ID, "EUR", false),
 };
 
 const groupSpecFixtures = {
-  existsAndActive: (client: SupabaseClient<Database>) => mockGroupExistsAndActive(client, TEST_GROUP_ID, true),
-  notExistsOrInactive: (client: SupabaseClient<Database>) => mockGroupExistsAndActive(client, TEST_GROUP_ID, false),
+  existsAndActive: (client: SupabaseClient) => mockGroupExistsAndActive(client, TEST_GROUP_ID, true),
+  notExistsOrInactive: (client: SupabaseClient) => mockGroupExistsAndActive(client, TEST_GROUP_ID, false),
 };
 
 // Parameterized test data tables
@@ -110,10 +106,10 @@ const groupCreationInvalidTestCases: [string, InvalidGroupCreationTestCase][] = 
 ];
 
 describe("Group Specifications", () => {
-  let mockSupabase: SupabaseClient<Database>;
+  let mockSupabase: SupabaseClient;
 
   beforeEach(() => {
-    mockSupabase = createMockSupabaseClient();
+    mockSupabase = createMockSupabaseClient() as unknown as SupabaseClient;
   });
 
   afterEach(() => {

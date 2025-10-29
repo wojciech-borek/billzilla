@@ -1,6 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import type { SupabaseClient } from "@supabase/supabase-js";
 import { PasswordResetService } from "../../lib/services/passwordResetService";
+import { createMockAuthSupabaseClient } from "./testHelpers";
+import type { MockSupabaseClient } from "../testTypes";
+import type { User } from "@supabase/supabase-js";
 
 // Mock createClient to avoid Supabase environment requirements
 vi.mock("../../db/supabase.client", () => ({
@@ -17,18 +19,28 @@ import { createClient } from "../../db/supabase.client";
 import { getAuthErrorMessage } from "../../lib/utils/authErrors";
 
 // Mock Supabase client
-let mockSupabaseClient: SupabaseClient;
+let mockSupabaseClient: MockSupabaseClient;
 
 beforeEach(() => {
-  mockSupabaseClient = {
-    auth: {
-      setSession: vi.fn(),
-      verifyOtp: vi.fn(),
-      updateUser: vi.fn(),
-      signOut: vi.fn(),
-      resetPasswordForEmail: vi.fn(),
+  mockSupabaseClient = createMockAuthSupabaseClient({
+    setSession: {
+      data: {
+        user: null,
+        session: {
+          access_token: "token",
+          refresh_token: "refresh",
+          token_type: "bearer",
+          expires_in: 3600,
+          user: {} as User,
+        },
+      },
+      error: null,
     },
-  } as unknown as SupabaseClient;
+    verifyOtp: { data: { user: null, session: null }, error: null },
+    updateUser: { data: { user: {} as User, session: null }, error: null },
+    signOut: { error: null },
+    resetPasswordForEmail: { error: null },
+  });
 
   // Mock createClient to return our mock client
   vi.mocked(createClient).mockReturnValue(mockSupabaseClient);
@@ -51,7 +63,16 @@ describe("PasswordResetService", () => {
         const tokens = { accessToken: "valid_access_token", refreshToken: "valid_refresh_token" };
 
         vi.mocked(mockSupabaseClient.auth.setSession).mockResolvedValue({
-          data: { user: null, session: null },
+          data: {
+            user: null,
+            session: {
+              access_token: "token",
+              refresh_token: "refresh",
+              token_type: "bearer",
+              expires_in: 3600,
+              user: {} as User,
+            },
+          },
           error: null,
         });
 
@@ -73,6 +94,7 @@ describe("PasswordResetService", () => {
         // Arrange
         const service = createMockedService();
         const tokens = { accessToken: "invalid_access_token", refreshToken: "invalid_refresh_token" };
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const authError = { message: "Invalid tokens", code: "invalid_token" } as any;
         const expectedErrorMessage = "Przetworzona wiadomość błędu";
 
@@ -123,7 +145,7 @@ describe("PasswordResetService", () => {
         const tokens = { token: "pkce_valid_token_hash" };
 
         vi.mocked(mockSupabaseClient.auth.verifyOtp).mockResolvedValue({
-          data: { user: null, session: null },
+          data: { user: null, session: null, messageId: undefined },
           error: null,
         });
 
@@ -148,7 +170,7 @@ describe("PasswordResetService", () => {
         const tokens = { tokenHash: "regular_token_hash" };
 
         vi.mocked(mockSupabaseClient.auth.verifyOtp).mockResolvedValue({
-          data: { user: null, session: null },
+          data: { user: null, session: null, messageId: undefined },
           error: null,
         });
 
@@ -171,11 +193,12 @@ describe("PasswordResetService", () => {
         // Arrange
         const service = createMockedService();
         const tokens = { token: "invalid_token_hash" };
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const authError = { message: "Invalid token", code: "invalid_token" } as any;
         const expectedErrorMessage = "Przetworzona wiadomość błędu";
 
         vi.mocked(mockSupabaseClient.auth.verifyOtp).mockResolvedValue({
-          data: { user: null, session: null },
+          data: { user: null, session: null, messageId: undefined },
           error: authError,
         });
         vi.mocked(getAuthErrorMessage).mockReturnValue(expectedErrorMessage);
@@ -229,7 +252,7 @@ describe("PasswordResetService", () => {
         const newPassword = "ValidPassword123!";
 
         vi.mocked(mockSupabaseClient.auth.updateUser).mockResolvedValue({
-          data: { user: { id: "test-user-id" } as any },
+          data: { user: { id: "test-user-id" } as User, session: null },
           error: null,
         });
         vi.mocked(mockSupabaseClient.auth.signOut).mockResolvedValue({
@@ -254,11 +277,12 @@ describe("PasswordResetService", () => {
         // Arrange
         const service = createMockedService();
         const newPassword = "weak_password";
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const authError = { message: "Password policy violation", code: "weak_password" } as any;
         const expectedErrorMessage = "Przetworzona wiadomość błędu";
 
         vi.mocked(mockSupabaseClient.auth.updateUser).mockResolvedValue({
-          data: { user: null },
+          data: { user: null, session: null },
           error: authError,
         });
         vi.mocked(getAuthErrorMessage).mockReturnValue(expectedErrorMessage);
@@ -284,7 +308,7 @@ describe("PasswordResetService", () => {
         const newPassword = "ValidPassword123!";
 
         vi.mocked(mockSupabaseClient.auth.updateUser).mockResolvedValue({
-          data: { user: { id: "test-user-id" } as any },
+          data: { user: { id: "test-user-id" } as User, session: null },
           error: null,
         });
         vi.mocked(mockSupabaseClient.auth.signOut).mockRejectedValue(new Error("Sign out failed"));
@@ -337,6 +361,7 @@ describe("PasswordResetService", () => {
         location: {
           origin: "https://app.example.com",
         },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any;
     });
 
@@ -353,10 +378,10 @@ describe("PasswordResetService", () => {
 
         // Mock development environment
         const originalDev = import.meta.env.DEV;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (import.meta.env as any).DEV = true;
 
         vi.mocked(mockSupabaseClient.auth.resetPasswordForEmail).mockResolvedValue({
-          data: {},
           error: null,
         });
 
@@ -369,6 +394,10 @@ describe("PasswordResetService", () => {
           redirectTo: "http://localhost:3000/auth/recovery",
         });
         expect(mockSupabaseClient.auth.resetPasswordForEmail).toHaveBeenCalledTimes(1);
+
+        // Restore original value
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (import.meta.env as any).DEV = originalDev;
       });
     });
 
@@ -380,10 +409,10 @@ describe("PasswordResetService", () => {
 
         // Mock production environment by directly modifying import.meta.env
         const originalDev = import.meta.env.DEV;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (import.meta.env as any).DEV = false;
 
         vi.mocked(mockSupabaseClient.auth.resetPasswordForEmail).mockResolvedValue({
-          data: {},
           error: null,
         });
 
@@ -398,6 +427,7 @@ describe("PasswordResetService", () => {
         expect(mockSupabaseClient.auth.resetPasswordForEmail).toHaveBeenCalledTimes(1);
 
         // Restore original value
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (import.meta.env as any).DEV = originalDev;
       });
     });
@@ -407,15 +437,16 @@ describe("PasswordResetService", () => {
         // Arrange
         const service = createMockedService();
         const email = "invalid@example.com";
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const authError = { message: "User not found", code: "user_not_found" } as any;
         const expectedErrorMessage = "Przetworzona wiadomość błędu";
 
         // Mock development environment for simplicity
         const originalDev = import.meta.env.DEV;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (import.meta.env as any).DEV = true;
 
         vi.mocked(mockSupabaseClient.auth.resetPasswordForEmail).mockResolvedValue({
-          data: {},
           error: authError,
         });
         vi.mocked(getAuthErrorMessage).mockReturnValue(expectedErrorMessage);
@@ -432,6 +463,7 @@ describe("PasswordResetService", () => {
         expect(getAuthErrorMessage).toHaveBeenCalledWith(authError);
 
         // Restore original value
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (import.meta.env as any).DEV = originalDev;
       });
     });
@@ -446,6 +478,7 @@ describe("PasswordResetService", () => {
 
         // Mock development environment
         const originalDev = import.meta.env.DEV;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (import.meta.env as any).DEV = true;
 
         vi.mocked(mockSupabaseClient.auth.resetPasswordForEmail).mockRejectedValue(unexpectedError);
@@ -463,6 +496,7 @@ describe("PasswordResetService", () => {
         expect(getAuthErrorMessage).toHaveBeenCalledWith(unexpectedError);
 
         // Restore original value
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (import.meta.env as any).DEV = originalDev;
       });
     });
@@ -475,10 +509,10 @@ describe("PasswordResetService", () => {
 
         // Mock development environment
         const originalDev = import.meta.env.DEV;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (import.meta.env as any).DEV = true;
 
         vi.mocked(mockSupabaseClient.auth.resetPasswordForEmail).mockResolvedValue({
-          data: {},
           error: null,
         });
 
@@ -493,6 +527,7 @@ describe("PasswordResetService", () => {
         expect(mockSupabaseClient.auth.resetPasswordForEmail).toHaveBeenCalledTimes(1);
 
         // Restore original value
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (import.meta.env as any).DEV = originalDev;
       });
     });

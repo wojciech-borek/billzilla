@@ -1,5 +1,4 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database } from "../../../db/database.types";
+import type { SupabaseClient } from "../../../db/supabase.client";
 
 // Type definitions for repository return types
 interface CompleteExpenseData {
@@ -50,7 +49,7 @@ interface GroupExpenseData {
  * Encapsulates all data access logic for expenses
  */
 export class ExpenseRepository {
-  constructor(private supabase: SupabaseClient<Database>) {}
+  constructor(private supabase: SupabaseClient) {}
 
   /**
    * Fetch group membership and basic info for validation

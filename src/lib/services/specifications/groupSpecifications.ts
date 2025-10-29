@@ -1,5 +1,4 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database } from "../../../db/database.types";
+import type { SupabaseClient } from "../../../db/supabase.client";
 import { CurrencyNotFoundError } from "../errors/groupErrors";
 
 /**
@@ -85,7 +84,7 @@ export class NotSpecification<T> extends GroupSpecification {
  * Specification for validating that a user is an active member of a group
  */
 export class UserIsActiveGroupMemberSpecification extends GroupSpecification {
-  constructor(private supabase: SupabaseClient<Database>) {
+  constructor(private supabase: SupabaseClient) {
     super();
   }
 
@@ -106,7 +105,7 @@ export class UserIsActiveGroupMemberSpecification extends GroupSpecification {
  * Specification for validating that a currency exists in the system
  */
 export class CurrencyExistsSpecification extends GroupSpecification {
-  constructor(private supabase: SupabaseClient<Database>) {
+  constructor(private supabase: SupabaseClient) {
     super();
   }
 
@@ -125,7 +124,7 @@ export class CurrencyExistsSpecification extends GroupSpecification {
  * Specification for validating that a currency is configured for a specific group
  */
 export class CurrencyConfiguredForGroupSpecification extends GroupSpecification {
-  constructor(private supabase: SupabaseClient<Database>) {
+  constructor(private supabase: SupabaseClient) {
     super();
   }
 
@@ -163,7 +162,7 @@ export class GroupBaseCurrencyValidSpecification extends GroupSpecification {
  * Specification for validating that a group exists and is active
  */
 export class GroupExistsAndActiveSpecification extends GroupSpecification {
-  constructor(private supabase: SupabaseClient<Database>) {
+  constructor(private supabase: SupabaseClient) {
     super();
   }
 
@@ -183,7 +182,7 @@ export class GroupExistsAndActiveSpecification extends GroupSpecification {
  * Composite specification for validating group creation command
  */
 export class GroupCreationValidSpecification extends GroupSpecification {
-  constructor(private supabase: SupabaseClient<Database>) {
+  constructor(private supabase: SupabaseClient) {
     super();
   }
 

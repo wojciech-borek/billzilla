@@ -1,4 +1,4 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
+import type { SupabaseClient } from "../../../db/supabase.client";
 import type { Database } from "../../../db/database.types";
 import type {
   CreateGroupResponseDTO,
@@ -18,7 +18,7 @@ import type {
 type GroupData = Database["public"]["Tables"]["groups"]["Row"];
 
 export class GroupBuilder {
-  private supabase: SupabaseClient<Database>;
+  private supabase: SupabaseClient;
   private groupData: GroupData | null = null;
   private members: GroupMemberSummaryDTO[] = [];
   private currencies: GroupCurrencyDTO[] = [];
@@ -26,7 +26,7 @@ export class GroupBuilder {
   private userRole: GroupRole = "member";
   private userBalance = 0;
 
-  constructor(supabase: SupabaseClient<Database>) {
+  constructor(supabase: SupabaseClient) {
     this.supabase = supabase;
   }
 
@@ -155,21 +155,21 @@ export const GroupBuilderFactory = {
   /**
    * Create a builder pre-configured for group list items
    */
-  forGroupList(supabase: SupabaseClient<Database>): GroupBuilder {
+  forGroupList(supabase: SupabaseClient): GroupBuilder {
     return new GroupBuilder(supabase);
   },
 
   /**
    * Create a builder pre-configured for group details
    */
-  forGroupDetail(supabase: SupabaseClient<Database>): GroupBuilder {
+  forGroupDetail(supabase: SupabaseClient): GroupBuilder {
     return new GroupBuilder(supabase);
   },
 
   /**
    * Create a builder pre-configured for group creation response
    */
-  forGroupCreation(supabase: SupabaseClient<Database>): GroupBuilder {
+  forGroupCreation(supabase: SupabaseClient): GroupBuilder {
     return new GroupBuilder(supabase);
   },
 } as const;
