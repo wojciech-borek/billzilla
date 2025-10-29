@@ -72,7 +72,7 @@ const groupSpecFixtures = {
 };
 
 // Parameterized test data tables
-const groupNameValidationTestCases = [
+const groupNameValidationTestCases: Array<{ input: string | null | undefined; expected: boolean; description: string }> = [
   { input: "Valid Name", expected: true, description: "valid name" },
   { input: null, expected: false, description: "null value" },
   { input: undefined, expected: false, description: "undefined value" },
@@ -81,7 +81,7 @@ const groupNameValidationTestCases = [
   { input: "a".repeat(100), expected: true, description: "very long name" }
 ];
 
-const currencyCodeValidationTestCases = [
+const currencyCodeValidationTestCases: Array<{ input: string | null | undefined; expected: boolean; description: string }> = [
   { input: TEST_CURRENCY_CODE, expected: true, description: "valid currency code" },
   { input: null, expected: false, description: "null currency code" },
   { input: undefined, expected: false, description: "undefined currency code" },
@@ -100,7 +100,7 @@ const compositeSpecTestMatrix = [
   { specA: false, specB: false, andResult: false, orResult: false }
 ];
 
-const groupCreationInvalidTestCases = [
+const groupCreationInvalidTestCases: Array<[string, { name: string | null | undefined; base_currency_code: string | null | undefined }]> = [
   ["empty name", { name: "", base_currency_code: TEST_CURRENCY_CODE }],
   ["empty currency code", { name: "Test Group", base_currency_code: "" }],
   ["both empty", { name: "", base_currency_code: "" }],
@@ -337,7 +337,7 @@ describe("Group Specifications", () => {
 
     it.each(groupCreationInvalidTestCases)(
       "should throw error for %s",
-      async (_, command) => {
+      async (description, command) => {
         const spec = new GroupCreationValidSpecification(mockSupabase);
         await expect(spec.isSatisfiedBy(command)).rejects.toThrow("Invalid group creation parameters");
       }

@@ -110,7 +110,11 @@ export class CurrencyExistsSpecification extends GroupSpecification {
     super();
   }
 
-  async isSatisfiedBy(currencyCode: string): Promise<boolean> {
+  async isSatisfiedBy(currencyCode: string | null | undefined): Promise<boolean> {
+    if (currencyCode === null || currencyCode === undefined) {
+      throw new CurrencyNotFoundError(String(currencyCode));
+    }
+
     const { data, error } = await this.supabase
       .from("currencies")
       .select("code")
@@ -149,7 +153,7 @@ export class CurrencyConfiguredForGroupSpecification extends GroupSpecification 
  * Specification for validating group name requirements
  */
 export class GroupNameValidSpecification extends GroupSpecification {
-  isSatisfiedBy(name: string): boolean {
+  isSatisfiedBy(name: string | null | undefined): boolean {
     return name !== null && name !== undefined && name.trim().length > 0;
   }
 }
@@ -158,7 +162,7 @@ export class GroupNameValidSpecification extends GroupSpecification {
  * Specification for validating group base currency code format
  */
 export class GroupBaseCurrencyValidSpecification extends GroupSpecification {
-  isSatisfiedBy(currencyCode: string): boolean {
+  isSatisfiedBy(currencyCode: string | null | undefined): boolean {
     return currencyCode !== null && currencyCode !== undefined && currencyCode.trim().length > 0;
   }
 }
@@ -191,7 +195,7 @@ export class GroupCreationValidSpecification extends GroupSpecification {
     super();
   }
 
-  async isSatisfiedBy(command: { name: string; base_currency_code: string }): Promise<boolean> {
+  async isSatisfiedBy(command: { name: string | null | undefined; base_currency_code: string | null | undefined }): Promise<boolean> {
     const nameValid = new GroupNameValidSpecification();
     const currencyCodeValid = new GroupBaseCurrencyValidSpecification();
 
