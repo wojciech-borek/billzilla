@@ -30,6 +30,11 @@ export default defineConfig({
 
     /* Take screenshot on failure */
     screenshot: "only-on-failure",
+
+    /* Ensure consistent viewport for visual regression tests */
+    ...(process.env.CI && {
+      viewport: { width: 1280, height: 720 },
+    }),
   },
 
   /* Configure projects for major browsers */
@@ -68,6 +73,10 @@ export default defineConfig({
       use: {
         ...devices["Desktop Chrome"],
         // No storageState - starts with clean session
+        // Ensure consistent viewport for visual regression tests in CI
+        ...(process.env.CI && {
+          viewport: { width: 1280, height: 720 },
+        }),
       },
     },
 
