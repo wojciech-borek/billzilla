@@ -1,5 +1,4 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database } from "../../../db/database.types";
+import type { SupabaseClient } from "../../../db/supabase.client";
 import { CurrencyNotFoundError } from "../errors/groupErrors";
 
 /**
@@ -15,18 +14,18 @@ export interface Specification<T> {
 /**
  * Abstract base class for group specifications
  */
-export abstract class GroupSpecification implements Specification<any> {
-  abstract isSatisfiedBy(candidate: any): Promise<boolean> | boolean;
+export abstract class GroupSpecification<T = unknown> implements Specification<T> {
+  abstract isSatisfiedBy(candidate: T): Promise<boolean> | boolean;
 
-  and(other: Specification<any>): Specification<any> {
+  and(other: Specification<T>): Specification<T> {
     return new AndSpecification(this, other);
   }
 
-  or(other: Specification<any>): Specification<any> {
+  or(other: Specification<T>): Specification<T> {
     return new OrSpecification(this, other);
   }
 
-  not(): Specification<any> {
+  not(): Specification<T> {
     return new NotSpecification(this);
   }
 }
@@ -85,7 +84,7 @@ export class NotSpecification<T> extends GroupSpecification {
  * Specification for validating that a user is an active member of a group
  */
 export class UserIsActiveGroupMemberSpecification extends GroupSpecification {
-  constructor(private supabase: SupabaseClient<Database>) {
+  constructor(private supabase: SupabaseClient) {
     super();
   }
 
@@ -106,16 +105,12 @@ export class UserIsActiveGroupMemberSpecification extends GroupSpecification {
  * Specification for validating that a currency exists in the system
  */
 export class CurrencyExistsSpecification extends GroupSpecification {
-  constructor(private supabase: SupabaseClient<Database>) {
+  constructor(private supabase: SupabaseClient) {
     super();
   }
 
   async isSatisfiedBy(currencyCode: string): Promise<boolean> {
-    const { data, error } = await this.supabase
-      .from("currencies")
-      .select("code")
-      .eq("code", currencyCode)
-      .single();
+    const { data, error } = await this.supabase.from("currencies").select("code").eq("code", currencyCode).single();
 
     if (error || !data) {
       throw new CurrencyNotFoundError(currencyCode);
@@ -129,7 +124,7 @@ export class CurrencyExistsSpecification extends GroupSpecification {
  * Specification for validating that a currency is configured for a specific group
  */
 export class CurrencyConfiguredForGroupSpecification extends GroupSpecification {
-  constructor(private supabase: SupabaseClient<Database>) {
+  constructor(private supabase: SupabaseClient) {
     super();
   }
 
@@ -167,7 +162,7 @@ export class GroupBaseCurrencyValidSpecification extends GroupSpecification {
  * Specification for validating that a group exists and is active
  */
 export class GroupExistsAndActiveSpecification extends GroupSpecification {
-  constructor(private supabase: SupabaseClient<Database>) {
+  constructor(private supabase: SupabaseClient) {
     super();
   }
 
@@ -187,7 +182,7 @@ export class GroupExistsAndActiveSpecification extends GroupSpecification {
  * Composite specification for validating group creation command
  */
 export class GroupCreationValidSpecification extends GroupSpecification {
-  constructor(private supabase: SupabaseClient<Database>) {
+  constructor(private supabase: SupabaseClient) {
     super();
   }
 

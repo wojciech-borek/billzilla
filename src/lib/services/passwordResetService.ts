@@ -100,9 +100,8 @@ export class PasswordResetService {
       // Note: signOut failure should not affect the password update result
       try {
         await this.supabase.auth.signOut();
-      } catch (signOutError) {
-        // Log signOut error but don't fail the password update
-        console.warn("Failed to sign out after password change:", signOutError);
+      } catch {
+        // Sign out failure is not critical for password reset success
       }
 
       return { success: true };

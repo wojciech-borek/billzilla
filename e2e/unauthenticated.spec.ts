@@ -27,6 +27,8 @@ test.describe("Unauthenticated User Flows", () => {
     // Visual regression test - capture screenshot of the entire login page
     await expect(page).toHaveScreenshot("login-page-initial-state.png", {
       fullPage: true,
+      // Allow small pixel differences in CI environment
+      maxDiffPixelRatio: process.env.CI ? 0.02 : 0.01,
     });
   });
 
@@ -73,6 +75,8 @@ test.describe("Unauthenticated User Flows", () => {
     // Visual regression test - capture screenshot of the entire signup page
     await expect(page).toHaveScreenshot("signup-page-initial-state.png", {
       fullPage: true,
+      // Allow small pixel differences in CI environment
+      maxDiffPixelRatio: process.env.CI ? 0.02 : 0.01,
     });
   });
 
@@ -96,6 +100,8 @@ test.describe("Unauthenticated User Flows", () => {
     // Visual regression test - capture screenshot of the password reset request page
     await expect(page).toHaveScreenshot("password-reset-request-page-initial-state.png", {
       fullPage: true,
+      // Allow small pixel differences in CI environment
+      maxDiffPixelRatio: process.env.CI ? 0.02 : 0.01,
     });
   });
 
@@ -119,6 +125,8 @@ test.describe("Unauthenticated User Flows", () => {
     // Visual regression test - capture screenshot of the set new password page
     await expect(page).toHaveScreenshot("set-new-password-page-initial-state.png", {
       fullPage: true,
+      // Allow small pixel differences in CI environment
+      maxDiffPixelRatio: process.env.CI ? 0.02 : 0.01,
     });
   });
 

@@ -186,7 +186,7 @@ export function useTranscriptionPolling({
         });
 
         return true; // Continue polling
-      } catch (err) {
+      } catch {
         if (!isMounted) return false;
 
         const transcriptionError: TranscriptionErrorDTO = {

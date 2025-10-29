@@ -3,6 +3,7 @@
 ## Module: createGroup
 
 ### UT-groupService-01
+
 **Nazwa testu:** should_create_group_successfully_when_valid_currency_and_data  
 **Moduł / funkcja:** createGroup  
 **Cel testu:** Weryfikuje pomyślne utworzenie grupy z prawidłową walutą bazową i danymi zaproszeń  
@@ -15,6 +16,7 @@
 **Notatki / uwagi:** Requires mocking Supabase RPC call which is complex database transaction
 
 ### UT-groupService-02
+
 **Nazwa testu:** should_throw_currency_not_found_when_invalid_base_currency  
 **Moduł / funkcja:** createGroup  
 **Cel testu:** Weryfikuje rzucenie błędu gdy podana waluta bazowa nie istnieje  
@@ -27,6 +29,7 @@
 **Notatki / uwagi:** Tests early validation before expensive RPC call
 
 ### UT-groupService-03
+
 **Nazwa testu:** should_throw_transaction_error_when_rpc_fails  
 **Moduł / funkcja:** createGroup  
 **Cel testu:** Weryfikuje rzucenie błędu gdy transakcja RPC się nie powiedzie  
@@ -41,6 +44,7 @@
 ## Module: listGroups
 
 ### UT-groupService-04 [POMINIĘTY - zbyt złożony do unit testingu]
+
 **Nazwa testu:** should_return_paginated_groups_with_balances_when_user_has_groups
 **Moduł / funkcja:** listGroups
 **Cel testu:** Weryfikuje poprawne zwrócenie paginowanych grup z obliczeniami balansów
@@ -54,6 +58,7 @@
 **STATUS:** POMINIĘTY - funkcjonalność zbyt złożona do efektywnego unit testingu. Wymaga refaktoryzacji funkcji na mniejsze jednostki lub podejścia integracyjnego.
 
 ### UT-groupService-05
+
 **Nazwa testu:** should_return_empty_result_when_user_has_no_groups  
 **Moduł / funkcja:** listGroups  
 **Cel testu:** Weryfikuje zwrócenie pustej listy gdy użytkownik nie ma grup  
@@ -66,6 +71,7 @@
 **Notatki / uwagi:** Simple case but important for UI handling
 
 ### UT-groupService-06
+
 **Nazwa testu:** should_calculate_positive_balance_when_user_paid_more_than_owed  
 **Moduł / funkcja:** listGroups  
 **Cel testu:** Weryfikuje obliczenie dodatniego balansu dla użytkownika  
@@ -78,6 +84,7 @@
 **Notatki / uwagi:** Tests complex balance calculation logic
 
 ### UT-groupService-07
+
 **Nazwa testu:** should_calculate_negative_balance_when_user_owes_more_than_paid  
 **Moduł / funkcja:** listGroups  
 **Cel testu:** Weryfikuje obliczenie ujemnego balansu dla użytkownika  
@@ -90,6 +97,7 @@
 **Notatki / uwagi:** Tests negative balance calculation
 
 ### UT-groupService-08
+
 **Nazwa testu:** should_throw_error_when_groups_query_fails  
 **Moduł / funkcja:** listGroups  
 **Cel testu:** Weryfikuje obsługę błędów bazy danych  
@@ -104,6 +112,7 @@
 ## Module: getGroupCurrencies
 
 ### UT-groupService-09
+
 **Nazwa testu:** should_return_group_currencies_when_user_is_member  
 **Moduł / funkcja:** getGroupCurrencies  
 **Cel testu:** Weryfikuje zwrócenie walut grupy dla członka  
@@ -116,6 +125,7 @@
 **Notatki / uwagi:** Tests currency separation logic
 
 ### UT-groupService-10
+
 **Nazwa testu:** should_throw_error_when_user_not_group_member  
 **Moduł / funkcja:** getGroupCurrencies  
 **Cel testu:** Weryfikuje błąd dostępu dla nie-członka grupy  
@@ -128,6 +138,7 @@
 **Notatki / uwagi:** Security test for access control
 
 ### UT-groupService-11
+
 **Nazwa testu:** should_return_base_currency_fallback_when_currencies_missing  
 **Moduł / funkcja:** getGroupCurrencies  
 **Cel testu:** Weryfikuje fallback gdy brakuje danych walut  
@@ -142,6 +153,7 @@
 ## Module: getGroupDetails
 
 ### UT-groupService-12
+
 **Nazwa testu:** should_return_complete_group_details_when_user_is_member  
 **Moduł / funkcja:** getGroupDetails  
 **Cel testu:** Weryfikuje zwrócenie pełnych szczegółów grupy dla członka  
@@ -154,6 +166,7 @@
 **Notatki / uwagi:** Most comprehensive function requiring multiple query mocks
 
 ### UT-groupService-13
+
 **Nazwa testu:** should_throw_error_when_group_not_found_or_user_not_member  
 **Moduł / funkcja:** getGroupDetails  
 **Cel testu:** Weryfikuje błąd dostępu dla nieprawidłowej grupy/użytkownika  
@@ -166,6 +179,7 @@
 **Notatki / uwagi:** Critical security test
 
 ### UT-groupService-14
+
 **Nazwa testu:** should_handle_missing_invitations_gracefully  
 **Moduł / funkcja:** getGroupDetails  
 **Cel testu:** Weryfikuje łagodną obsługę błędów zaproszeń  
@@ -180,6 +194,7 @@
 ## Module: Error Classes
 
 ### UT-groupService-15
+
 **Nazwa testu:** should_create_currency_not_found_error_with_correct_message  
 **Moduł / funkcja:** CurrencyNotFoundError  
 **Cel testu:** Weryfikuje konstrukcję błędu waluty  
@@ -192,6 +207,7 @@
 **Notatki / uwagi:** Simple constructor test
 
 ### UT-groupService-16
+
 **Nazwa testu:** should_create_transaction_error_with_custom_message  
 **Moduł / funkcja:** TransactionError  
 **Cel testu:** Weryfikuje konstrukcję błędu transakcji  

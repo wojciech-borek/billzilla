@@ -6,17 +6,6 @@
 import type { APIRoute } from "astro";
 import type { AcceptInvitationResponseDTO, ErrorResponseDTO } from "../../../../types";
 
-interface InvitationWithGroup {
-  id: string;
-  email: string;
-  status: string;
-  group_id: string;
-  group: {
-    id: string;
-    name: string;
-  };
-}
-
 export const prerender = false;
 
 /**
@@ -124,20 +113,10 @@ export const POST: APIRoute = async ({ params, locals }) => {
     }
 
     // Use the atomic function to accept invitation and add user to group
-    console.log("Calling accept_invitation_transaction with:", {
-      invitation_id: invitationId,
-      user_id: user.id,
-      user_email: user.email,
-      invitation_email: invitation.email,
-      invitation_status: invitation.status,
-    });
-
     const { data: result, error: functionError } = await supabase.rpc("accept_invitation_transaction", {
       p_invitation_id: invitationId,
       p_user_id: user.id,
     });
-
-    console.log("Function call result:", { success: !functionError, error: functionError, data: result });
 
     if (functionError) {
       const errorResponse: ErrorResponseDTO = {
@@ -164,7 +143,7 @@ export const POST: APIRoute = async ({ params, locals }) => {
       status: 200,
       headers: { "Content-Type": "application/json" },
     });
-  } catch (error) {
+  } catch {
     const errorResponse: ErrorResponseDTO = {
       error: {
         code: "INTERNAL_ERROR",

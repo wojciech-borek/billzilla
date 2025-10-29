@@ -1,6 +1,6 @@
 import { expect } from "@playwright/test";
 import { DashboardPage } from "./page-objects/dashboard.page";
-import { authenticatedTestWithData, GROUP_TEMPLATES, test } from "./test-fixtures";
+import { authenticatedTestWithData, GROUP_TEMPLATES } from "./test-fixtures";
 
 // Note: Tests for unauthenticated users are moved to unauthenticated.spec.ts
 // These tests assume a logged-in user state
@@ -45,7 +45,7 @@ authenticatedTestWithData.describe.serial("Create Group Modal", () => {
     // Wait for either modal to close (success) or error to appear (failure)
     try {
       await expect(modal.modal).toBeHidden({ timeout: 5000 });
-    } catch (error) {
+    } catch (_error) {
       // If modal doesn't close, check if there's a form error
       const errorAlert = modal.page.locator('[role="alert"]').first();
       await expect(errorAlert).toBeVisible({ timeout: 5000 });
@@ -79,7 +79,7 @@ authenticatedTestWithData.describe.serial("Create Group Modal", () => {
     // Wait for either modal to close (success) or error to appear (failure)
     try {
       await expect(modal.modal).toBeHidden({ timeout: 5000 });
-    } catch (error) {
+    } catch (_error) {
       // If modal doesn't close, check if there's a form error
       const errorAlert = modal.page.locator('[role="alert"]').first();
       await expect(errorAlert).toBeVisible({ timeout: 5000 });

@@ -3,8 +3,7 @@
  * Refactored to use Specification Pattern, Builder Pattern, Repository Pattern, and Unit of Work
  */
 
-import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database } from "../../db/database.types";
+import type { SupabaseClient } from "../../db/supabase.client";
 import { calculateUserBalances } from "./balanceService";
 import { fetchGroupMembers, getGroupMemberDetails } from "./memberService";
 import type {
@@ -49,7 +48,7 @@ export { CurrencyNotFoundError, TransactionError, GroupAccessError, GroupDataErr
  * @throws {TransactionError} If the transaction fails
  */
 export async function createGroup(
-  supabase: SupabaseClient<Database>,
+  supabase: SupabaseClient,
   command: CreateGroupCommand,
   userId: string
 ): Promise<CreateGroupResponseDTO> {
@@ -72,7 +71,7 @@ function composeGroupListItems(
   }[],
   balancesByGroup: Map<string, number>,
   membersByGroup: Map<string, GroupMemberSummaryDTO[]>,
-  supabase: SupabaseClient<Database>
+  supabase: SupabaseClient
 ): GroupListItemDTO[] {
   const builder = GroupBuilderFactory.forGroupList(supabase);
 
@@ -107,7 +106,7 @@ function composeGroupListItems(
  * @throws {GroupDataError} If any data fetching operation fails
  */
 export async function listGroups(
-  supabase: SupabaseClient<Database>,
+  supabase: SupabaseClient,
   userId: string,
   options: {
     status?: GroupStatus;
@@ -192,7 +191,7 @@ export async function listGroups(
  * @throws {Error} If group not found or user is not a member
  */
 export async function getGroupCurrencies(
-  supabase: SupabaseClient<Database>,
+  supabase: SupabaseClient,
   groupId: string,
   userId: string
 ): Promise<GroupCurrenciesDTO> {
@@ -273,7 +272,7 @@ export async function getGroupCurrencies(
  * @throws {Error} If group not found or user is not a member
  */
 export async function getGroupDetails(
-  supabase: SupabaseClient<Database>,
+  supabase: SupabaseClient,
   groupId: string,
   userId: string
 ): Promise<GroupDetailDTO> {

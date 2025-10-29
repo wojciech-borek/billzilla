@@ -2,8 +2,7 @@
  * Balance service - handles business logic for balance calculations
  */
 
-import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database } from "../../db/database.types";
+import type { SupabaseClient } from "../../db/supabase.client";
 
 /**
  * Custom error for balance calculation failures
@@ -18,7 +17,7 @@ export class BalanceCalculationError extends Error {
 /**
  * Fetches expenses paid by user in specified groups
  */
-async function fetchUserExpenses(supabase: SupabaseClient<Database>, userId: string, groupIds: string[]) {
+async function fetchUserExpenses(supabase: SupabaseClient, userId: string, groupIds: string[]) {
   const { data: userExpenses, error: expensesError } = await supabase
     .from("expenses")
     .select("group_id, amount, currency_code")
@@ -35,7 +34,7 @@ async function fetchUserExpenses(supabase: SupabaseClient<Database>, userId: str
 /**
  * Fetches expense splits for user in specified groups
  */
-async function fetchUserExpenseSplits(supabase: SupabaseClient<Database>, userId: string, groupIds: string[]) {
+async function fetchUserExpenseSplits(supabase: SupabaseClient, userId: string, groupIds: string[]) {
   const { data: userSplits, error: splitsError } = await supabase
     .from("expense_splits")
     .select(
@@ -60,7 +59,7 @@ async function fetchUserExpenseSplits(supabase: SupabaseClient<Database>, userId
 /**
  * Fetches settlements involving user in specified groups
  */
-async function fetchUserSettlements(supabase: SupabaseClient<Database>, userId: string, groupIds: string[]) {
+async function fetchUserSettlements(supabase: SupabaseClient, userId: string, groupIds: string[]) {
   const { data: settlements, error: settlementsError } = await supabase
     .from("settlements")
     .select("group_id, amount, payer_id, payee_id")
@@ -78,7 +77,7 @@ async function fetchUserSettlements(supabase: SupabaseClient<Database>, userId: 
  * Fetches exchange rates for all group currencies
  */
 async function fetchExchangeRates(
-  supabase: SupabaseClient<Database>,
+  supabase: SupabaseClient,
   groupIds: string[]
 ): Promise<Map<string, Map<string, number>>> {
   const { data: groupCurrencies, error: currenciesError } = await supabase
@@ -96,7 +95,10 @@ async function fetchExchangeRates(
     if (!exchangeRates.has(gc.group_id)) {
       exchangeRates.set(gc.group_id, new Map());
     }
-    exchangeRates.get(gc.group_id)!.set(gc.currency_code, gc.exchange_rate);
+    const groupRates = exchangeRates.get(gc.group_id);
+    if (groupRates) {
+      groupRates.set(gc.currency_code, gc.exchange_rate);
+    }
   }
 
   return exchangeRates;
@@ -116,7 +118,7 @@ async function fetchExchangeRates(
  * @throws {BalanceCalculationError} If any data fetching operation fails
  */
 export async function calculateUserBalances(
-  supabase: SupabaseClient<Database>,
+  supabase: SupabaseClient,
   userId: string,
   groupIds: string[]
 ): Promise<Map<string, number>> {
@@ -149,7 +151,8 @@ export async function calculateUserBalances(
     for (const expense of userExpenses) {
       const rate = exchangeRates.get(expense.group_id)?.get(expense.currency_code) || 1.0;
       const amountInBase = expense.amount * rate;
-      balancesByGroup.set(expense.group_id, balancesByGroup.get(expense.group_id)! + amountInBase);
+      const currentBalance = balancesByGroup.get(expense.group_id) || 0;
+      balancesByGroup.set(expense.group_id, currentBalance + amountInBase);
     }
 
     // Subtract amounts owed by user (converted to base currency)
@@ -157,20 +160,23 @@ export async function calculateUserBalances(
       const expenseData = split.expenses as unknown as { group_id: string; currency_code: string };
       const rate = exchangeRates.get(expenseData.group_id)?.get(expenseData.currency_code) || 1.0;
       const amountInBase = split.amount * rate;
-      balancesByGroup.set(expenseData.group_id, balancesByGroup.get(expenseData.group_id)! - amountInBase);
+      const currentBalance = balancesByGroup.get(expenseData.group_id) || 0;
+      balancesByGroup.set(expenseData.group_id, currentBalance - amountInBase);
     }
 
     // Add settlements received by user
     for (const settlement of settlements) {
       if (settlement.payee_id === userId) {
-        balancesByGroup.set(settlement.group_id, balancesByGroup.get(settlement.group_id)! + settlement.amount);
+        const currentBalance = balancesByGroup.get(settlement.group_id) || 0;
+        balancesByGroup.set(settlement.group_id, currentBalance + settlement.amount);
       }
     }
 
     // Subtract settlements paid by user
     for (const settlement of settlements) {
       if (settlement.payer_id === userId) {
-        balancesByGroup.set(settlement.group_id, balancesByGroup.get(settlement.group_id)! - settlement.amount);
+        const currentBalance = balancesByGroup.get(settlement.group_id) || 0;
+        balancesByGroup.set(settlement.group_id, currentBalance - settlement.amount);
       }
     }
 

@@ -18,7 +18,7 @@ interface InviteEmailsInputProps {
  */
 export default function InviteEmailsInput({ control, errors }: InviteEmailsInputProps) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const { inputValue, inputError, addEmail, removeEmail, handleKeyDown, handleBlur, setInputValue, setInputError } =
+  const { inputValue, inputError, removeEmail, handleKeyDown, handleBlur, setInputValue, setInputError } =
     useEmailChips();
 
   return (

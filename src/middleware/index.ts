@@ -1,6 +1,6 @@
 import type { APIContext } from "astro";
 import { isValidRedirectUrl } from "../lib/utils/redirectValidation";
-import { createSupabaseServerClientFromCookieHeader } from "../lib/supabase.server";
+import { createSupabaseServerClientFromCookieHeader } from "../db/supabase.server";
 
 // Public routes that don't require authentication
 const PUBLIC_ROUTES = [
@@ -41,7 +41,7 @@ export const onRequest = async (context: APIContext, next: () => Promise<Respons
       } else {
         context.locals.user = profile;
       }
-    } catch (err) {
+    } catch {
       context.locals.user = null;
     }
   } else {

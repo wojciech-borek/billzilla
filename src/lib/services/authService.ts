@@ -2,7 +2,7 @@
  * Authentication service - handles business logic for authentication operations
  */
 
-import type { SupabaseClient } from "@supabase/supabase-js";
+import type { SupabaseClient } from "../../db/supabase.client";
 import type { SignupFormData } from "../schemas/authSchemas";
 
 /**

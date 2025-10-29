@@ -2,10 +2,6 @@ import { useCallback, useState } from "react";
 import { toast } from "sonner";
 import type { CreateGroupSuccessResult } from "../../../lib/schemas/groupSchemas";
 
-interface CreateGroupModalState {
-  isOpen: boolean;
-}
-
 interface CreateGroupModalActions {
   openModal: () => void;
   closeModal: () => void;
@@ -45,7 +41,7 @@ export function useCreateGroupModal(onGroupCreated?: () => Promise<void>) {
       }
       closeModal();
     },
-    [onGroupCreated]
+    [onGroupCreated, closeModal]
   );
 
   const actions: CreateGroupModalActions = {

@@ -2,8 +2,7 @@
  * Currency service - handles business logic for currency operations
  */
 
-import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database } from "../../db/database.types";
+import type { SupabaseClient } from "../../db/supabase.client";
 import type { GroupCurrencyDTO } from "../../types";
 
 /**
@@ -24,20 +23,13 @@ export class CurrencyOperationError extends Error {
  * @returns true if currency exists, false otherwise
  * @throws {CurrencyOperationError} If validation fails
  */
-export async function validateCurrencyExists(
-  supabase: SupabaseClient<Database>,
-  currencyCode: string
-): Promise<boolean> {
+export async function validateCurrencyExists(supabase: SupabaseClient, currencyCode: string): Promise<boolean> {
   // Input validation
   if (!currencyCode) {
     throw new CurrencyOperationError("validate currency", "Currency code is required");
   }
 
-  const { data: currency, error: currencyError } = await supabase
-    .from("currencies")
-    .select("code")
-    .eq("code", currencyCode)
-    .single();
+  const { error: currencyError } = await supabase.from("currencies").select("code").eq("code", currencyCode).single();
 
   if (currencyError) {
     if (currencyError.code === "PGRST116") {
@@ -60,10 +52,7 @@ export async function validateCurrencyExists(
  * @returns Array of group currencies with exchange rates
  * @throws {CurrencyOperationError} If data fetching fails
  */
-export async function fetchGroupCurrencies(
-  supabase: SupabaseClient<Database>,
-  groupId: string
-): Promise<GroupCurrencyDTO[]> {
+export async function fetchGroupCurrencies(supabase: SupabaseClient, groupId: string): Promise<GroupCurrencyDTO[]> {
   // Input validation
   if (!groupId) {
     throw new CurrencyOperationError("fetch group currencies", "Group ID is required");
@@ -102,7 +91,7 @@ export async function fetchGroupCurrencies(
  * @throws {CurrencyOperationError} If data fetching fails
  */
 export async function getExchangeRate(
-  supabase: SupabaseClient<Database>,
+  supabase: SupabaseClient,
   groupId: string,
   currencyCode: string
 ): Promise<number> {
@@ -141,7 +130,7 @@ export async function getExchangeRate(
  * @throws {CurrencyOperationError} If conversion fails
  */
 export async function convertCurrency(
-  supabase: SupabaseClient<Database>,
+  supabase: SupabaseClient,
   groupId: string,
   amount: number,
   fromCurrency: string,

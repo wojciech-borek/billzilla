@@ -71,6 +71,19 @@ export const GET: APIRoute = async ({ locals }) => {
     // Fetch group data for these invitations
     const { data: groups, error: groupsError } = await supabase.from("groups").select("id, name").in("id", groupIds);
 
+    if (groupsError) {
+      const errorResponse: ErrorResponseDTO = {
+        error: {
+          code: "DATABASE_ERROR",
+          message: "Failed to fetch group information",
+        },
+      };
+      return new Response(JSON.stringify(errorResponse), {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
     // Create a map of group data
     const groupMap = new Map(groups?.map((g) => [g.id, g]) || []);
 
@@ -78,13 +91,13 @@ export const GET: APIRoute = async ({ locals }) => {
     const invitationDTOs: InvitationDTO[] = invitations
       .filter((inv) => {
         const group = groupMap.get(inv.group_id);
-        if (!group) {
-          return false;
-        }
-        return true;
+        return group !== undefined;
       })
       .map((inv) => {
-        const group = groupMap.get(inv.group_id)!; // We already filtered, so it exists
+        const group = groupMap.get(inv.group_id);
+        if (!group) {
+          throw new Error("Group should exist after filtering");
+        }
         return {
           id: inv.id,
           email: inv.email,

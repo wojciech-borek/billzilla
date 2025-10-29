@@ -7,7 +7,7 @@ import {
   WhisperNetworkError,
   InvalidTranscriptionError,
 } from "../../lib/services/whisperService";
-import type { WhisperTranscriptionResponse, TranscriptionResult } from "../../types";
+import type { WhisperTranscriptionResponse } from "../../types";
 
 // Helper functions for common test patterns
 const createTestAudioBlob = (type = "audio/wav", size = 1024 * 1024) => {
@@ -17,12 +17,12 @@ const createTestAudioBlob = (type = "audio/wav", size = 1024 * 1024) => {
 };
 
 const setupServiceWithApiKey = (apiKey = "test-api-key") => {
-  (import.meta.env as any).OPENAI_API_KEY = apiKey;
+  (import.meta.env as Record<string, unknown>).OPENAI_API_KEY = apiKey;
   return new WhisperService();
 };
 
-const mockFetchResponse = (response: any) => {
-  (global.fetch as any).mockResolvedValueOnce(response);
+const mockFetchResponse = (response: Response) => {
+  (global.fetch as vi.MockedFunction<typeof fetch>).mockResolvedValueOnce(response);
 };
 
 const createMockApiErrorResponse = (status = 400, message = "Bad Request") => ({
@@ -32,7 +32,7 @@ const createMockApiErrorResponse = (status = 400, message = "Bad Request") => ({
   json: () => Promise.resolve({ error: { message } }),
 });
 
-const createMockSuccessResponse = (data: any) => ({
+const createMockSuccessResponse = (data: unknown) => ({
   ok: true,
   json: () => Promise.resolve(data),
 });
@@ -47,11 +47,13 @@ describe("WhisperService", () => {
     vi.restoreAllMocks();
 
     // Reset environment variables
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (import.meta.env as any).OPENAI_API_KEY = originalEnv.OPENAI_API_KEY;
   });
 
   afterEach(() => {
     // Restore original environment after each test
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (import.meta.env as any).OPENAI_API_KEY = originalEnv.OPENAI_API_KEY;
   });
 
@@ -59,6 +61,7 @@ describe("WhisperService", () => {
     it("should initialize successfully when API key provided in config", () => {
       // Arrange
       const config = { apiKey: "test-api-key" };
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (import.meta.env as any).OPENAI_API_KEY = undefined;
 
       // Act
@@ -71,6 +74,7 @@ describe("WhisperService", () => {
     it("should initialize successfully when API key provided in environment", () => {
       // Arrange
       const config = {};
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (import.meta.env as any).OPENAI_API_KEY = "env-api-key";
 
       // Act
@@ -83,7 +87,9 @@ describe("WhisperService", () => {
     it("should throw WhisperConfigurationError when no API key available", () => {
       // Arrange
       const config = {};
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const originalApiKey = (import.meta.env as any).OPENAI_API_KEY;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       delete (import.meta.env as any).OPENAI_API_KEY;
 
       try {
@@ -97,6 +103,7 @@ describe("WhisperService", () => {
         }).toThrow("OPENAI_API_KEY is not set in environment variables.");
       } finally {
         // Cleanup
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (import.meta.env as any).OPENAI_API_KEY = originalApiKey;
       }
     });
@@ -115,6 +122,7 @@ describe("WhisperService", () => {
 
       // Act & Assert
       expect(() => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (service as any).validateAudioFile(audioBlob);
       }).not.toThrow();
     });
@@ -125,9 +133,11 @@ describe("WhisperService", () => {
 
       // Act & Assert
       expect(() => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (service as any).validateAudioFile(audioBlob);
       }).toThrow(InvalidAudioFileError);
       expect(() => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (service as any).validateAudioFile(audioBlob);
       }).toThrow(/Audio file too large.*25MB.*30\.00MB/);
     });
@@ -138,9 +148,11 @@ describe("WhisperService", () => {
 
       // Act & Assert
       expect(() => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (service as any).validateAudioFile(audioBlob);
       }).toThrow(InvalidAudioFileError);
       expect(() => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (service as any).validateAudioFile(audioBlob);
       }).toThrow(/Unsupported audio format.*audio\/aac/);
     });
@@ -151,6 +163,7 @@ describe("WhisperService", () => {
 
       // Act & Assert
       supportedFormats.forEach((format) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const result = (service as any).isSupportedFormat(format);
         expect(result).toBe(true);
       });
@@ -170,6 +183,7 @@ describe("WhisperService", () => {
       const params = { audioBlob };
 
       // Act
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const formData = (service as any).prepareFormData(params);
 
       // Assert
@@ -185,6 +199,7 @@ describe("WhisperService", () => {
       const params = { audioBlob, language: "pl" };
 
       // Act
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const formData = (service as any).prepareFormData(params);
 
       // Assert
@@ -197,6 +212,7 @@ describe("WhisperService", () => {
       const params = { audioBlob, prompt: "Transkrypcja paragonu fiskalnego" };
 
       // Act
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const formData = (service as any).prepareFormData(params);
 
       // Assert
@@ -216,6 +232,7 @@ describe("WhisperService", () => {
 
       // Act & Assert
       testCases.forEach(({ mimeType, expectedExtension }) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const result = (service as any).getFileExtension(mimeType);
         expect(result).toBe(expectedExtension);
       });
@@ -247,6 +264,7 @@ describe("WhisperService", () => {
       mockFetchResponse(createMockSuccessResponse(mockResponse));
 
       // Act
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const result = await (service as any).makeApiRequest(formData);
 
       // Assert
@@ -271,19 +289,24 @@ describe("WhisperService", () => {
 
       // Test error type
       mockFetchResponse(createMockApiErrorResponse(400, errorMessage));
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await expect((service as any).makeApiRequest(formData)).rejects.toThrow(WhisperApiError);
 
       // Test error message
       mockFetchResponse(createMockApiErrorResponse(400, errorMessage));
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await expect((service as any).makeApiRequest(formData)).rejects.toThrow(errorMessage);
 
       // Test error properties
       mockFetchResponse(createMockApiErrorResponse(400, errorMessage));
       try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         await (service as any).makeApiRequest(formData);
       } catch (error) {
         expect(error).toBeInstanceOf(WhisperApiError);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         expect((error as any).status).toBe(400);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         expect((error as any).apiMessage).toBe(errorMessage);
       }
     });
@@ -294,11 +317,15 @@ describe("WhisperService", () => {
       const networkError = new Error("Network request failed");
 
       // Test error type
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (global.fetch as any).mockRejectedValueOnce(networkError);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await expect((service as any).makeApiRequest(formData)).rejects.toThrow(WhisperNetworkError);
 
       // Test error message
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (global.fetch as any).mockRejectedValueOnce(networkError);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await expect((service as any).makeApiRequest(formData)).rejects.toThrow(
         "Failed to connect to OpenAI Whisper API: Network request failed"
       );
@@ -321,6 +348,7 @@ describe("WhisperService", () => {
       };
 
       // Act
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const result = (service as any).parseTranscriptionResponse(apiResponse);
 
       // Assert
@@ -344,9 +372,11 @@ describe("WhisperService", () => {
 
       // Act & Assert
       expect(() => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (service as any).parseTranscriptionResponse(apiResponse);
       }).toThrow(InvalidTranscriptionError);
       expect(() => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (service as any).parseTranscriptionResponse(apiResponse);
       }).toThrow("Invalid API response: missing or invalid text field");
     });
@@ -361,9 +391,11 @@ describe("WhisperService", () => {
 
       // Act & Assert
       expect(() => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (service as any).parseTranscriptionResponse(apiResponse);
       }).toThrow(InvalidTranscriptionError);
       expect(() => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (service as any).parseTranscriptionResponse(apiResponse);
       }).toThrow("Transcription resulted in empty text");
     });
@@ -387,9 +419,13 @@ describe("WhisperService", () => {
       };
 
       // Mock all internal methods
-      vi.spyOn(service as any, "validateAudioFile").mockImplementation(() => {});
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      vi.spyOn(service as any, "validateAudioFile").mockImplementation(() => undefined);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       vi.spyOn(service as any, "prepareFormData").mockReturnValue(new FormData());
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       vi.spyOn(service as any, "makeApiRequest").mockResolvedValue(mockResponse);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       vi.spyOn(service as any, "parseTranscriptionResponse").mockReturnValue(mockResponse);
 
       // Act
@@ -397,9 +433,13 @@ describe("WhisperService", () => {
 
       // Assert
       expect(result).toEqual(mockResponse);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect((service as any).validateAudioFile).toHaveBeenCalledWith(audioBlob);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect((service as any).prepareFormData).toHaveBeenCalledWith(params);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect((service as any).makeApiRequest).toHaveBeenCalled();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect((service as any).parseTranscriptionResponse).toHaveBeenCalledWith(mockResponse);
     });
 
@@ -410,6 +450,7 @@ describe("WhisperService", () => {
       const validationError = new InvalidAudioFileError("File too large");
 
       // Test error type
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       vi.spyOn(service as any, "validateAudioFile").mockImplementation(() => {
         throw validationError;
       });
@@ -417,6 +458,7 @@ describe("WhisperService", () => {
 
       // Test error message
       const service2 = setupServiceWithApiKey();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       vi.spyOn(service2 as any, "validateAudioFile").mockImplementation(() => {
         throw validationError;
       });
@@ -430,15 +472,21 @@ describe("WhisperService", () => {
       const apiError = new WhisperApiError(400, "Bad Request");
 
       // Test error type
-      vi.spyOn(service as any, "validateAudioFile").mockImplementation(() => {});
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      vi.spyOn(service as any, "validateAudioFile").mockImplementation(() => undefined);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       vi.spyOn(service as any, "prepareFormData").mockReturnValue(new FormData());
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       vi.spyOn(service as any, "makeApiRequest").mockRejectedValue(apiError);
       await expect(service.transcribeAudio(params)).rejects.toThrow(WhisperApiError);
 
       // Test error message
       const service2 = setupServiceWithApiKey();
-      vi.spyOn(service2 as any, "validateAudioFile").mockImplementation(() => {});
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      vi.spyOn(service2 as any, "validateAudioFile").mockImplementation(() => undefined);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       vi.spyOn(service2 as any, "prepareFormData").mockReturnValue(new FormData());
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       vi.spyOn(service2 as any, "makeApiRequest").mockRejectedValue(apiError);
       await expect(service2.transcribeAudio(params)).rejects.toThrow("Bad Request");
     });
@@ -450,6 +498,7 @@ describe("WhisperService", () => {
       const unexpectedError = "String error";
 
       // Test error type
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       vi.spyOn(service as any, "validateAudioFile").mockImplementation(() => {
         throw unexpectedError;
       });
@@ -457,6 +506,7 @@ describe("WhisperService", () => {
 
       // Test error message
       const service2 = setupServiceWithApiKey();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       vi.spyOn(service2 as any, "validateAudioFile").mockImplementation(() => {
         throw unexpectedError;
       });

@@ -1,12 +1,60 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database } from "../../db/database.types";
+import type { SupabaseClient } from "../../db/supabase.client";
 import type { CreateExpenseCommand, ExpenseDTO } from "../../types";
-import { createExpenseSchema, type CreateExpenseSchemaType } from "../schemas/expenseSchemas";
 import { z } from "zod";
+
+// Type definitions for better type safety
+interface GroupMembershipData {
+  id: string;
+  base_currency_code: string;
+  group_currencies: {
+    currency_code: string;
+    exchange_rate: number;
+  }[];
+  group_members: {
+    profile_id: string;
+    status: string;
+  }[];
+}
+
+interface CurrencyConfig {
+  currency_code: string;
+  exchange_rate: number;
+}
+
+interface CompleteExpenseData {
+  id: string;
+  group_id: string;
+  description: string;
+  amount: number;
+  currency_code: string;
+  expense_date: string;
+  created_at: string;
+  payer_id: string;
+  created_by: string;
+  profiles: {
+    id: string;
+    full_name: string | null;
+    avatar_url: string | null;
+  };
+  expense_splits: {
+    profile_id: string;
+    amount: number;
+    profiles: {
+      id: string;
+      full_name: string | null;
+      avatar_url: string | null;
+    };
+  }[];
+}
 
 // Import refactored components
 import { ExpenseRepository } from "./repositories/ExpenseRepository";
-import { ExpenseValidationError, ExpenseAccessError, ExpenseTransactionError, ExpenseDataError } from "./errors/expenseErrors";
+import {
+  ExpenseValidationError,
+  ExpenseAccessError,
+  ExpenseTransactionError,
+  ExpenseDataError,
+} from "./errors/expenseErrors";
 
 // Re-export error classes for backward compatibility
 export { ExpenseValidationError, ExpenseAccessError, ExpenseTransactionError, ExpenseDataError };
@@ -58,7 +106,6 @@ const basicExpenseValidationSchema = z.object({
 });
 
 type BasicExpenseValidationType = z.infer<typeof basicExpenseValidationSchema>;
-
 
 /**
  * Command class for creating expenses with basic format validation
@@ -119,13 +166,13 @@ export class ValidatedExpenseCommand {
  */
 export class ExpenseUnitOfWork {
   private expenseId: string | null = null;
-  private currencyConfig: any = null;
+  private currencyConfig: CurrencyConfig | null = null;
   private readonly repository: ExpenseRepository;
   private readonly groupId: string;
   private readonly userId: string;
   private readonly command: ValidatedExpenseCommand;
 
-  constructor(supabase: SupabaseClient<Database>, groupId: string, userId: string, command: ValidatedExpenseCommand) {
+  constructor(supabase: SupabaseClient, groupId: string, userId: string, command: ValidatedExpenseCommand) {
     this.repository = new ExpenseRepository(supabase);
     this.groupId = groupId;
     this.userId = userId;
@@ -144,7 +191,7 @@ export class ExpenseUnitOfWork {
       await this.validateParticipants(groupData);
 
       // Create expense
-      const expenseData = await this.createExpense();
+      await this.createExpense();
 
       // Create expense splits
       await this.createExpenseSplits();
@@ -163,12 +210,12 @@ export class ExpenseUnitOfWork {
   private async validateGroupMembership() {
     try {
       return await this.repository.fetchGroupMembershipAndCurrencies(this.groupId, this.userId);
-    } catch (error) {
+    } catch {
       throw new ExpenseAccessError();
     }
   }
 
-  private async validateParticipants(groupData: any) {
+  private async validateParticipants(groupData: GroupMembershipData) {
     // Get all active group members using repository
     const groupMembers = await this.repository.fetchActiveGroupMembers(this.groupId);
     if (!groupMembers) {
@@ -189,9 +236,7 @@ export class ExpenseUnitOfWork {
     }
 
     // Validate currency is configured for the group
-    const currencyConfig = groupData.group_currencies?.find(
-      (gc: any) => gc.currency_code === this.command.currency_code
-    );
+    const currencyConfig = groupData.group_currencies?.find((gc) => gc.currency_code === this.command.currency_code);
     if (!currencyConfig) {
       throw new ExpenseValidationError(`Currency ${this.command.currency_code} is not configured for this group`);
     }
@@ -228,28 +273,36 @@ export class ExpenseUnitOfWork {
 
       this.expenseId = expenseData.id;
       return expenseData;
-    } catch (error) {
+    } catch {
       throw new ExpenseTransactionError("Failed to create expense");
     }
   }
 
   private async createExpenseSplits() {
+    if (!this.expenseId) {
+      throw new ExpenseTransactionError("Expense ID not set");
+    }
+
     try {
       const splitInserts = this.command.splits.map((split) => ({
-        expense_id: this.expenseId!,
+        expense_id: this.expenseId,
         profile_id: split.profile_id,
         amount: split.amount,
       }));
 
       await this.repository.createExpenseSplits(splitInserts);
-    } catch (error) {
+    } catch {
       throw new ExpenseTransactionError("Failed to create expense splits");
     }
   }
 
   private async fetchCompleteExpense(): Promise<ExpenseDTO> {
+    if (!this.expenseId) {
+      throw new ExpenseDataError("fetch created expense", "Expense ID not set");
+    }
+
     try {
-      const completeExpense = await this.repository.fetchCompleteExpense(this.expenseId!);
+      const completeExpense = (await this.repository.fetchCompleteExpense(this.expenseId)) as CompleteExpenseData;
 
       // Calculate amount in base currency using the currency config from validation
       const amountInBaseCurrency = this.currencyConfig
@@ -278,18 +331,13 @@ export class ExpenseUnitOfWork {
           full_name: createdByProfile.full_name ?? "",
           avatar_url: createdByProfile.avatar_url ?? null,
         },
-      splits: completeExpense.expense_splits.map((split: any) => {
-        const splitProfile = split.profiles as unknown as {
-          id: string;
-          full_name: string | null;
-          avatar_url: string | null;
-        };
-        return {
-          profile_id: split.profile_id,
-          full_name: splitProfile.full_name,
-          amount: split.amount,
-        };
-      }),
+        splits: completeExpense.expense_splits.map((split) => {
+          return {
+            profile_id: split.profile_id,
+            full_name: split.profiles.full_name,
+            amount: split.amount,
+          };
+        }),
       };
 
       return expenseDTO;
@@ -306,7 +354,7 @@ export class ExpenseUnitOfWork {
 }
 
 export async function createExpense(
-  supabase: SupabaseClient<Database>,
+  supabase: SupabaseClient,
   groupId: string,
   userId: string,
   command: CreateExpenseCommand,

@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { renderHook, act } from "@testing-library/react";
-import type { AuthError } from "@supabase/supabase-js";
 import { useLogout } from "../../lib/hooks/useLogout";
 import {
   createLogoutTestFixture,
@@ -114,7 +113,7 @@ describe("useLogout", () => {
       const mockUseSupabaseAuth = createMockUseSupabaseAuth({ supabase: mockClient });
 
       // Mock to never resolve to test synchronous state change
-      vi.mocked(mockClient.auth.signOut).mockImplementation(() => new Promise(() => {}));
+      vi.mocked(mockClient.auth.signOut).mockImplementation(() => new Promise(() => undefined));
       vi.mocked(useSupabaseAuth).mockReturnValue(mockUseSupabaseAuth);
 
       const { result } = renderHook(() => useLogout());

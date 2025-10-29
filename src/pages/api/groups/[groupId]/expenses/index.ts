@@ -5,11 +5,7 @@
 
 import type { APIRoute } from "astro";
 import { createExpenseSchema } from "../../../../../lib/schemas/expenseSchemas";
-import {
-  createExpense,
-  ExpenseValidationError,
-  ExpenseAccessError,
-} from "../../../../../lib/services/expenseService";
+import { createExpense, ExpenseValidationError, ExpenseAccessError } from "../../../../../lib/services/expenseService";
 import type { ErrorResponseDTO } from "../../../../../types";
 
 export const prerender = false;
@@ -65,7 +61,7 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
     let requestBody: unknown;
     try {
       requestBody = await request.json();
-    } catch (error) {
+    } catch {
       const errorResponse: ErrorResponseDTO = {
         error: {
           code: "INVALID_JSON",

@@ -1,6 +1,12 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database } from "@/db/database.types";
+import type { SupabaseClient } from "@/db/supabase.client";
+
+// Type for invalid test cases that may have null/undefined values
+interface InvalidGroupCreationTestCase {
+  name?: string | null;
+  base_currency_code?: string | null;
+  invite_emails?: string[];
+}
 import {
   UserIsActiveGroupMemberSpecification,
   CurrencyExistsSpecification,
@@ -28,47 +34,40 @@ import {
 } from "./testHelpers";
 
 // Test fixtures for specification testing
-const createBasicSpecTestFixture = <T extends { new (client: SupabaseClient<Database>): any }>(
-  SpecClass: T,
-  mockSetup: (client: SupabaseClient<Database>) => void
+const createBasicSpecTestFixture = <TSpec>(
+  SpecClass: new (client: SupabaseClient) => TSpec,
+  mockSetup: (client: SupabaseClient) => void
 ) => ({
-  setup: (mockSupabase: SupabaseClient<Database>) => {
+  setup: (mockSupabase: SupabaseClient): TSpec => {
     mockSetup(mockSupabase);
     return new SpecClass(mockSupabase);
-  }
+  },
 });
 
-const createSyncSpecTestFixture = <T extends { new (): any }>(SpecClass: T) => ({
-  setup: () => new SpecClass()
+const createSyncSpecTestFixture = <TSpec>(SpecClass: new () => TSpec) => ({
+  setup: (): TSpec => new SpecClass(),
 });
 
 // Specification-specific mock fixtures
 const membershipSpecFixtures = {
-  activeMember: (client: SupabaseClient<Database>) =>
-    mockUserActiveMembership(client, TEST_GROUP_ID, TEST_USER_ID, true),
-  inactiveMember: (client: SupabaseClient<Database>) =>
-    mockUserActiveMembership(client, TEST_GROUP_ID, TEST_USER_ID, false)
+  activeMember: (client: SupabaseClient) => mockUserActiveMembership(client, TEST_GROUP_ID, TEST_USER_ID, true),
+  inactiveMember: (client: SupabaseClient) => mockUserActiveMembership(client, TEST_GROUP_ID, TEST_USER_ID, false),
 };
 
 const currencySpecFixtures = {
-  exists: (client: SupabaseClient<Database>) =>
-    mockCurrencyExists(client, TEST_CURRENCY_CODE, true),
-  notExists: (client: SupabaseClient<Database>) =>
-    mockCurrencyExists(client, TEST_INVALID_CURRENCY_CODE, false)
+  exists: (client: SupabaseClient) => mockCurrencyExists(client, TEST_CURRENCY_CODE, true),
+  notExists: (client: SupabaseClient) => mockCurrencyExists(client, TEST_INVALID_CURRENCY_CODE, false),
 };
 
 const groupCurrencySpecFixtures = {
-  configured: (client: SupabaseClient<Database>) =>
+  configured: (client: SupabaseClient) =>
     mockCurrencyConfiguredForGroup(client, TEST_GROUP_ID, TEST_CURRENCY_CODE, true),
-  notConfigured: (client: SupabaseClient<Database>) =>
-    mockCurrencyConfiguredForGroup(client, TEST_GROUP_ID, "EUR", false)
+  notConfigured: (client: SupabaseClient) => mockCurrencyConfiguredForGroup(client, TEST_GROUP_ID, "EUR", false),
 };
 
 const groupSpecFixtures = {
-  existsAndActive: (client: SupabaseClient<Database>) =>
-    mockGroupExistsAndActive(client, TEST_GROUP_ID, true),
-  notExistsOrInactive: (client: SupabaseClient<Database>) =>
-    mockGroupExistsAndActive(client, TEST_GROUP_ID, false)
+  existsAndActive: (client: SupabaseClient) => mockGroupExistsAndActive(client, TEST_GROUP_ID, true),
+  notExistsOrInactive: (client: SupabaseClient) => mockGroupExistsAndActive(client, TEST_GROUP_ID, false),
 };
 
 // Parameterized test data tables
@@ -78,7 +77,7 @@ const groupNameValidationTestCases = [
   { input: undefined, expected: false, description: "undefined value" },
   { input: "", expected: false, description: "empty string" },
   { input: "   ", expected: false, description: "whitespace only" },
-  { input: "a".repeat(100), expected: true, description: "very long name" }
+  { input: "a".repeat(100), expected: true, description: "very long name" },
 ];
 
 const currencyCodeValidationTestCases = [
@@ -91,16 +90,10 @@ const currencyCodeValidationTestCases = [
   { input: "US", expected: true, description: "short currency code" },
   { input: "USDT", expected: true, description: "4-character currency code" },
   { input: "123", expected: true, description: "numeric currency code" },
-  { input: "A", expected: true, description: "single character currency code" }
+  { input: "A", expected: true, description: "single character currency code" },
 ];
 
-const compositeSpecTestMatrix = [
-  { specA: true, specB: true, andResult: true, orResult: true },
-  { specA: true, specB: false, andResult: false, orResult: true },
-  { specA: false, specB: false, andResult: false, orResult: false }
-];
-
-const groupCreationInvalidTestCases = [
+const groupCreationInvalidTestCases: [string, InvalidGroupCreationTestCase][] = [
   ["empty name", { name: "", base_currency_code: TEST_CURRENCY_CODE }],
   ["empty currency code", { name: "Test Group", base_currency_code: "" }],
   ["both empty", { name: "", base_currency_code: "" }],
@@ -109,14 +102,14 @@ const groupCreationInvalidTestCases = [
   ["undefined name", { name: undefined, base_currency_code: TEST_CURRENCY_CODE }],
   ["undefined currency", { name: "Test Group", base_currency_code: undefined }],
   ["whitespace name", { name: "   ", base_currency_code: TEST_CURRENCY_CODE }],
-  ["whitespace currency", { name: "Test Group", base_currency_code: "   " }]
+  ["whitespace currency", { name: "Test Group", base_currency_code: "   " }],
 ];
 
 describe("Group Specifications", () => {
-  let mockSupabase: SupabaseClient<Database>;
+  let mockSupabase: SupabaseClient;
 
   beforeEach(() => {
-    mockSupabase = createMockSupabaseClient();
+    mockSupabase = createMockSupabaseClient() as unknown as SupabaseClient;
   });
 
   afterEach(() => {
@@ -154,10 +147,7 @@ describe("Group Specifications", () => {
   describe("CurrencyExistsSpecification", () => {
     it("should return true when currency exists", async () => {
       // Arrange
-      const specFixture = createBasicSpecTestFixture(
-        CurrencyExistsSpecification,
-        currencySpecFixtures.exists
-      );
+      const specFixture = createBasicSpecTestFixture(CurrencyExistsSpecification, currencySpecFixtures.exists);
       const spec = specFixture.setup(mockSupabase);
 
       // Act & Assert
@@ -167,10 +157,7 @@ describe("Group Specifications", () => {
 
     it("should throw CurrencyNotFoundError when currency does not exist", async () => {
       // Arrange
-      const specFixture = createBasicSpecTestFixture(
-        CurrencyExistsSpecification,
-        currencySpecFixtures.notExists
-      );
+      const specFixture = createBasicSpecTestFixture(CurrencyExistsSpecification, currencySpecFixtures.notExists);
       const spec = specFixture.setup(mockSupabase);
 
       // Act & Assert
@@ -210,24 +197,18 @@ describe("Group Specifications", () => {
     const specFixture = createSyncSpecTestFixture(GroupNameValidSpecification);
     const spec = specFixture.setup();
 
-    it.each(groupNameValidationTestCases)(
-      "should validate $description -> $expected",
-      ({ input, expected }) => {
-        expect(spec.isSatisfiedBy(input as any)).toBe(expected);
-      }
-    );
+    it.each(groupNameValidationTestCases)("should validate $description -> $expected", ({ input, expected }) => {
+      expect(spec.isSatisfiedBy(input as string)).toBe(expected);
+    });
   });
 
   describe("GroupBaseCurrencyValidSpecification", () => {
     const specFixture = createSyncSpecTestFixture(GroupBaseCurrencyValidSpecification);
     const spec = specFixture.setup();
 
-    it.each(currencyCodeValidationTestCases)(
-      "should validate $description -> $expected",
-      ({ input, expected }) => {
-        expect(spec.isSatisfiedBy(input as any)).toBe(expected);
-      }
-    );
+    it.each(currencyCodeValidationTestCases)("should validate $description -> $expected", ({ input, expected }) => {
+      expect(spec.isSatisfiedBy(input as string)).toBe(expected);
+    });
   });
 
   describe("GroupExistsAndActiveSpecification", () => {
@@ -323,10 +304,7 @@ describe("Group Specifications", () => {
   describe("GroupCreationValidSpecification", () => {
     it("should return true when group creation command is valid", async () => {
       // Arrange
-      const specFixture = createBasicSpecTestFixture(
-        GroupCreationValidSpecification,
-        currencySpecFixtures.exists
-      );
+      const specFixture = createBasicSpecTestFixture(GroupCreationValidSpecification, currencySpecFixtures.exists);
       const spec = specFixture.setup(mockSupabase);
       const command = createValidGroupCreationCommand();
 
@@ -335,20 +313,16 @@ describe("Group Specifications", () => {
       expect(result).toBe(true);
     });
 
-    it.each(groupCreationInvalidTestCases)(
-      "should throw error for %s",
-      async (_, command) => {
-        const spec = new GroupCreationValidSpecification(mockSupabase);
-        await expect(spec.isSatisfiedBy(command)).rejects.toThrow("Invalid group creation parameters");
-      }
-    );
+    it.each(groupCreationInvalidTestCases)("should throw error for %s", async (_, command) => {
+      const spec = new GroupCreationValidSpecification(mockSupabase);
+      await expect(spec.isSatisfiedBy(command as { name: string; base_currency_code: string })).rejects.toThrow(
+        "Invalid group creation parameters"
+      );
+    });
 
     it("should throw CurrencyNotFoundError when currency does not exist", async () => {
       // Arrange
-      const specFixture = createBasicSpecTestFixture(
-        GroupCreationValidSpecification,
-        currencySpecFixtures.notExists
-      );
+      const specFixture = createBasicSpecTestFixture(GroupCreationValidSpecification, currencySpecFixtures.notExists);
       const spec = specFixture.setup(mockSupabase);
       const command = createValidGroupCreationCommand({ base_currency_code: TEST_INVALID_CURRENCY_CODE });
 

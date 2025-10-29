@@ -33,7 +33,7 @@ try {
   } else {
     loadError = "Nie udało się załadować danych grupy";
   }
-} catch (error) {
+} catch {
   loadError = "Wystąpił błąd podczas ładowania danych grupy";
 }
 
@@ -51,7 +51,7 @@ const handleExpenseCreated = () => {
       groupCurrencies={groupCurrencies}
       currentUserId={user.id}
       isOpen={true}
-      onClose={() => (window.location.href = "/")}
+      onClose={() => (globalThis.location.href = "/")}
       onExpenseCreated={handleExpenseCreated}
       isLoading={false}
       error={loadError}

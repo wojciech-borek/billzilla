@@ -3,7 +3,7 @@
  * These types are used for presentation layer, mapped from DTOs
  */
 
-import type { GroupRole, GroupMemberStatus } from "@/types";
+import type { GroupRole } from "@/types";
 
 export interface AvatarVM {
   profileId: string;

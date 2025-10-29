@@ -1,10 +1,27 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database } from "../../../db/database.types";
+import type { SupabaseClient } from "../../../db/supabase.client";
 import type { CreateGroupCommand, CreateGroupResponseDTO, InvitationResultDTO } from "../../../types";
 import { GroupRepository } from "../repositories/GroupRepository";
 import { GroupBuilderFactory } from "../builders/GroupBuilder";
 import { CurrencyNotFoundError, TransactionError, GroupDataError } from "../errors/groupErrors";
 import { GroupCreationValidSpecification } from "../specifications/groupSpecifications";
+
+// Type definitions for group creation data
+interface CreatedGroupData {
+  id: string;
+  name: string;
+  base_currency_code: string;
+  added_members?: {
+    profile_id: string;
+    email: string;
+    full_name: string | null;
+    status: string;
+  }[];
+  created_invitations?: {
+    id: string;
+    email: string;
+    status: string;
+  }[];
+}
 
 /**
  * Unit of Work pattern for group creation operations
@@ -16,7 +33,7 @@ export class GroupCreationUnitOfWork {
   private createdGroupId: string | null = null;
 
   constructor(
-    private supabase: SupabaseClient<Database>,
+    private supabase: SupabaseClient,
     private command: CreateGroupCommand,
     private userId: string
   ) {
@@ -59,7 +76,7 @@ export class GroupCreationUnitOfWork {
     const spec = new GroupCreationValidSpecification(this.supabase);
     const isValid = await spec.isSatisfiedBy({
       name: this.command.name,
-      base_currency_code: this.command.base_currency_code
+      base_currency_code: this.command.base_currency_code,
     });
 
     if (!isValid) {
@@ -70,7 +87,7 @@ export class GroupCreationUnitOfWork {
   /**
    * Create the group using the repository
    */
-  private async createGroup(): Promise<any> {
+  private async createGroup(): Promise<CreatedGroupData> {
     try {
       const groupData = await this.repository.createGroupAtomically({
         groupName: this.command.name,
@@ -92,10 +109,10 @@ export class GroupCreationUnitOfWork {
   /**
    * Parse invitation results from the database response
    */
-  private parseInvitationResults(groupData: any): InvitationResultDTO {
+  private parseInvitationResults(groupData: CreatedGroupData): InvitationResultDTO {
     return {
       added_members: Array.isArray(groupData.added_members)
-        ? groupData.added_members.map((member: any) => ({
+        ? groupData.added_members.map((member) => ({
             profile_id: member.profile_id,
             email: member.email,
             full_name: member.full_name,
@@ -103,7 +120,7 @@ export class GroupCreationUnitOfWork {
           }))
         : [],
       created_invitations: Array.isArray(groupData.created_invitations)
-        ? groupData.created_invitations.map((inv: any) => ({
+        ? groupData.created_invitations.map((inv) => ({
             id: inv.id,
             email: inv.email,
             status: inv.status,
@@ -115,9 +132,9 @@ export class GroupCreationUnitOfWork {
   /**
    * Build the final response DTO
    */
-  private buildResponse(groupData: any, invitationResults: InvitationResultDTO): CreateGroupResponseDTO {
+  private buildResponse(groupData: CreatedGroupData, invitationResults: InvitationResultDTO): CreateGroupResponseDTO {
     // Remove database-specific fields and return clean response
-    const { added_members, created_invitations, ...cleanGroupData } = groupData;
+    const { added_members: _added_members, created_invitations: _created_invitations, ...cleanGroupData } = groupData;
 
     return this.builder
       .withGroupData(cleanGroupData)

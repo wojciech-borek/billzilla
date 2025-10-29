@@ -1,14 +1,14 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 import { GroupRepository } from "../../../lib/services/repositories/GroupRepository";
 import {
   setupRepositoryTest,
   mockGroupRepositoryQuery,
   mockRpcQuery,
-  mockMembershipVerification
+  mockMembershipVerification,
 } from "../testHelpers";
 
 describe("GroupRepository", () => {
-  let mockSupabaseClient: any;
+  let mockSupabaseClient: ReturnType<typeof setupRepositoryTest>["mockSupabaseClient"];
   let groupRepository: GroupRepository;
 
   beforeEach(() => {

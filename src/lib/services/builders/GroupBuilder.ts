@@ -1,4 +1,4 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
+import type { SupabaseClient } from "../../../db/supabase.client";
 import type { Database } from "../../../db/database.types";
 import type {
   CreateGroupResponseDTO,
@@ -7,30 +7,33 @@ import type {
   GroupMemberSummaryDTO,
   GroupCurrencyDTO,
   PendingInvitationDTO,
-  GroupRole
+  GroupRole,
+  InvitationResultDTO,
 } from "../../../types";
 
 /**
  * Builder pattern for constructing group-related DTOs
  * Allows gradual construction of complex group objects with related data
  */
+type GroupData = Database["public"]["Tables"]["groups"]["Row"];
+
 export class GroupBuilder {
-  private supabase: SupabaseClient<Database>;
-  private groupData: any = null;
+  private supabase: SupabaseClient;
+  private groupData: GroupData | null = null;
   private members: GroupMemberSummaryDTO[] = [];
   private currencies: GroupCurrencyDTO[] = [];
   private invitations: PendingInvitationDTO[] = [];
   private userRole: GroupRole = "member";
-  private userBalance: number = 0;
+  private userBalance = 0;
 
-  constructor(supabase: SupabaseClient<Database>) {
+  constructor(supabase: SupabaseClient) {
     this.supabase = supabase;
   }
 
   /**
    * Set the base group data
    */
-  withGroupData(groupData: any): GroupBuilder {
+  withGroupData(groupData: GroupData): GroupBuilder {
     this.groupData = groupData;
     return this;
   }
@@ -103,10 +106,6 @@ export class GroupBuilder {
       throw new Error("Group data is required to build GroupDetailDTO");
     }
 
-    // Separate base currency from additional currencies
-    const baseCurrency = this.currencies.find(gc => gc.code === this.groupData.base_currency_code);
-    const additionalCurrencies = this.currencies.filter(gc => gc.code !== this.groupData.base_currency_code);
-
     return {
       id: this.groupData.id,
       name: this.groupData.name,
@@ -123,7 +122,7 @@ export class GroupBuilder {
   /**
    * Build a CreateGroupResponseDTO for group creation
    */
-  buildCreateGroupResponse(invitationsResult: any): CreateGroupResponseDTO {
+  buildCreateGroupResponse(invitationsResult: InvitationResultDTO): CreateGroupResponseDTO {
     if (!this.groupData) {
       throw new Error("Group data is required to build CreateGroupResponseDTO");
     }
@@ -150,27 +149,27 @@ export class GroupBuilder {
 }
 
 /**
- * Factory methods for common GroupBuilder configurations
+ * Factory functions for common GroupBuilder configurations
  */
-export class GroupBuilderFactory {
+export const GroupBuilderFactory = {
   /**
    * Create a builder pre-configured for group list items
    */
-  static forGroupList(supabase: SupabaseClient<Database>): GroupBuilder {
+  forGroupList(supabase: SupabaseClient): GroupBuilder {
     return new GroupBuilder(supabase);
-  }
+  },
 
   /**
    * Create a builder pre-configured for group details
    */
-  static forGroupDetail(supabase: SupabaseClient<Database>): GroupBuilder {
+  forGroupDetail(supabase: SupabaseClient): GroupBuilder {
     return new GroupBuilder(supabase);
-  }
+  },
 
   /**
    * Create a builder pre-configured for group creation response
    */
-  static forGroupCreation(supabase: SupabaseClient<Database>): GroupBuilder {
+  forGroupCreation(supabase: SupabaseClient): GroupBuilder {
     return new GroupBuilder(supabase);
-  }
-}
+  },
+} as const;

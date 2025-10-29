@@ -1,6 +1,4 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { createClient } from "@supabase/supabase-js";
-import type { Database } from "@/db/database.types";
 import {
   createGroup,
   listGroups,
@@ -9,53 +7,24 @@ import {
   CurrencyNotFoundError,
   TransactionError,
 } from "@/lib/services/groupService";
-import { createMockCreateGroupCommand } from "./testHelpers";
+import {
+  createMockCreateGroupCommand,
+  createMockSupabaseClient,
+  resetMockSupabaseClient,
+  type MockSupabaseClient,
+} from "./testHelpers";
 
-// Mock Supabase
-vi.mock("@supabase/supabase-js", () => ({
-  createClient: vi.fn(),
-}));
-
-// Mock the supabase client
-const mockSupabase = {
-  from: vi.fn().mockReturnThis(),
-  select: vi.fn().mockReturnThis(),
-  eq: vi.fn().mockReturnThis(),
-  single: vi.fn(),
-  rpc: vi.fn(),
-  order: vi.fn().mockReturnThis(),
-  range: vi.fn().mockReturnThis(),
-  in: vi.fn().mockReturnThis(),
-  or: vi.fn().mockReturnThis(),
-  count: vi.fn().mockReturnThis(),
-  head: vi.fn().mockReturnThis(),
-};
+let mockSupabaseClient: MockSupabaseClient;
 
 beforeEach(() => {
-  vi.clearAllMocks();
-  // Reset mock implementations
-  Object.values(mockSupabase).forEach((mock) => {
-    if (typeof mock === "function" && "mockReset" in mock) {
-      mock.mockReset();
-    }
-  });
-  // Setup default chainable mocks
-  mockSupabase.from.mockReturnValue(mockSupabase);
-  mockSupabase.select.mockReturnValue(mockSupabase);
-  mockSupabase.eq.mockReturnValue(mockSupabase);
-  mockSupabase.order.mockReturnValue(mockSupabase);
-  mockSupabase.range.mockReturnValue(mockSupabase);
-  mockSupabase.in.mockReturnValue(mockSupabase);
-  mockSupabase.or.mockReturnValue(mockSupabase);
-  mockSupabase.count.mockReturnValue(mockSupabase);
-  mockSupabase.head.mockReturnValue(mockSupabase);
+  mockSupabaseClient = createMockSupabaseClient();
+  resetMockSupabaseClient(mockSupabaseClient);
 });
 
 describe("GroupService", () => {
   describe("createGroup", () => {
     it("should_create_group_successfully_when_valid_currency_and_data", async () => {
       // Arrange
-      const mockSupabaseClient = mockSupabase as any;
       const command = createMockCreateGroupCommand();
       const userId = "user-123";
 
@@ -138,7 +107,7 @@ describe("GroupService", () => {
 
     it("should_throw_currency_not_found_when_invalid_base_currency", async () => {
       // Arrange
-      const mockSupabaseClient = mockSupabase as any;
+
       const command = createMockCreateGroupCommand({
         base_currency_code: "INVALID",
         invite_emails: [],
@@ -165,7 +134,7 @@ describe("GroupService", () => {
 
     it("should_throw_transaction_error_when_rpc_fails", async () => {
       // Arrange
-      const mockSupabaseClient = mockSupabase as any;
+
       const command = createMockCreateGroupCommand({
         invite_emails: [],
       });
@@ -203,8 +172,8 @@ describe("GroupService", () => {
   describe("listGroups", () => {
     it("should_return_empty_result_when_user_has_no_groups", async () => {
       // Arrange
-      const mockSupabaseClient = {
-        ...mockSupabase,
+      const customMockClient = {
+        ...mockSupabaseClient,
         from: vi
           .fn()
           .mockReturnValueOnce({
@@ -231,13 +200,15 @@ describe("GroupService", () => {
               })),
             })),
           }),
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any;
 
       const userId = "user-no-groups";
       const options = { status: "active" as const, limit: 50, offset: 0 };
 
       // Act
-      const result = await listGroups(mockSupabaseClient, userId, options);
+      const result = await listGroups(customMockClient, userId, options);
 
       // Assert
       expect(result).toEqual({
@@ -254,8 +225,8 @@ describe("GroupService", () => {
       const groupId = "group-123";
       const options = { status: "active" as const, limit: 50, offset: 0 };
 
-      const mockSupabaseClient = {
-        ...mockSupabase,
+      const customMockClient = {
+        ...mockSupabaseClient,
         from: vi
           .fn()
           // Groups query
@@ -379,10 +350,11 @@ describe("GroupService", () => {
               }),
             })),
           }),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any;
 
       // Act
-      const result = await listGroups(mockSupabaseClient, userId, options);
+      const result = await listGroups(customMockClient, userId, options);
 
       // Assert
       expect(result.data).toHaveLength(1);
@@ -399,8 +371,8 @@ describe("GroupService", () => {
       const groupId = "group-123";
       const options = { status: "active" as const, limit: 50, offset: 0 };
 
-      const mockSupabaseClient = {
-        ...mockSupabase,
+      const customMockClient = {
+        ...mockSupabaseClient,
         from: vi
           .fn()
           // Groups query
@@ -524,10 +496,11 @@ describe("GroupService", () => {
               }),
             })),
           }),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any;
 
       // Act
-      const result = await listGroups(mockSupabaseClient, userId, options);
+      const result = await listGroups(customMockClient, userId, options);
 
       // Assert
       expect(result.data).toHaveLength(1);
@@ -545,8 +518,8 @@ describe("GroupService", () => {
       const groupId = "group-123";
       const options = { status: "active" as const, limit: 50, offset: 0 };
 
-      const mockSupabaseClient = {
-        ...mockSupabase,
+      const customMockClient = {
+        ...mockSupabaseClient,
         from: vi
           .fn()
           // Groups query
@@ -682,10 +655,11 @@ describe("GroupService", () => {
               }),
             })),
           }),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any;
 
       // Act - Test balance for the PAYER (who actually paid)
-      const result = await listGroups(mockSupabaseClient, payerId, options);
+      const result = await listGroups(customMockClient, payerId, options);
 
       // Assert - Payer should have positive balance (paid 100, owes 50)
       expect(result.data).toHaveLength(1);
@@ -703,8 +677,8 @@ describe("GroupService", () => {
       const groupId = "group-123";
       const options = { status: "active" as const, limit: 50, offset: 0 };
 
-      const mockSupabaseClient = {
-        ...mockSupabase,
+      const customMockClient = {
+        ...mockSupabaseClient,
         from: vi
           .fn()
           // Groups query
@@ -834,10 +808,11 @@ describe("GroupService", () => {
               }),
             })),
           }),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any;
 
       // Act - Test balance for the CREATOR (who didn't pay)
-      const result = await listGroups(mockSupabaseClient, creatorId, options);
+      const result = await listGroups(customMockClient, creatorId, options);
 
       // Assert - Creator should have negative balance (paid 0, owes 50)
       expect(result.data).toHaveLength(1);
@@ -853,8 +828,8 @@ describe("GroupService", () => {
       const userId = "user-123";
       const options = { status: "active" as const, limit: 50, offset: 0 };
 
-      const mockSupabaseClient = {
-        ...mockSupabase,
+      const customMockClient = {
+        ...mockSupabaseClient,
         from: vi
           .fn()
           // Groups query fails
@@ -872,36 +847,37 @@ describe("GroupService", () => {
               })),
             })),
           }),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any;
 
       // Act & Assert
-      await expect(listGroups(mockSupabaseClient, userId, options)).rejects.toThrow("Failed to fetch groups");
+      await expect(listGroups(customMockClient, userId, options)).rejects.toThrow("Failed to fetch groups");
 
-      expect(mockSupabaseClient.from).toHaveBeenCalledWith("groups");
+      expect(customMockClient.from).toHaveBeenCalledWith("groups");
     });
   });
 
   describe("getGroupCurrencies", () => {
     it("should_return_group_currencies_when_user_is_member", async () => {
       // Arrange
-      const mockSupabaseClient = mockSupabase as any;
+
       const groupId = "group-123";
       const userId = "user-123";
 
       // Mock membership verification success
-      mockSupabaseClient.from.mockReturnValueOnce(mockSupabase);
-      mockSupabaseClient.select.mockReturnValueOnce(mockSupabase);
-      mockSupabaseClient.eq.mockReturnValueOnce(mockSupabase);
-      mockSupabaseClient.eq.mockReturnValueOnce(mockSupabase);
+      mockSupabaseClient.from.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.select.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.eq.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.eq.mockReturnValueOnce(mockSupabaseClient);
       mockSupabaseClient.single.mockResolvedValueOnce({
         data: { group_id: groupId },
         error: null,
       });
 
       // Mock group base currency
-      mockSupabaseClient.from.mockReturnValueOnce(mockSupabase);
-      mockSupabaseClient.select.mockReturnValueOnce(mockSupabase);
-      mockSupabaseClient.eq.mockReturnValueOnce(mockSupabase);
+      mockSupabaseClient.from.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.select.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.eq.mockReturnValueOnce(mockSupabaseClient);
       mockSupabaseClient.single.mockResolvedValueOnce({
         data: { base_currency_code: "USD" },
         error: null,
@@ -925,9 +901,9 @@ describe("GroupService", () => {
           currencies: { name: "British Pound" },
         },
       ];
-      mockSupabaseClient.from.mockReturnValueOnce(mockSupabase);
-      mockSupabaseClient.select.mockReturnValueOnce(mockSupabase);
-      mockSupabaseClient.eq.mockReturnValueOnce(mockSupabase);
+      mockSupabaseClient.from.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.select.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.eq.mockReturnValueOnce(mockSupabaseClient);
       mockSupabaseClient.order.mockResolvedValueOnce({
         data: mockCurrenciesData,
         error: null,
@@ -964,15 +940,15 @@ describe("GroupService", () => {
 
     it("should_throw_error_when_user_not_group_member", async () => {
       // Arrange
-      const mockSupabaseClient = mockSupabase as any;
+
       const groupId = "group-123";
       const userId = "non-member-user";
 
       // Mock membership verification failure (no membership found)
-      mockSupabaseClient.from.mockReturnValueOnce(mockSupabase);
-      mockSupabaseClient.select.mockReturnValueOnce(mockSupabase);
-      mockSupabaseClient.eq.mockReturnValueOnce(mockSupabase);
-      mockSupabaseClient.eq.mockReturnValueOnce(mockSupabase);
+      mockSupabaseClient.from.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.select.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.eq.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.eq.mockReturnValueOnce(mockSupabaseClient);
       mockSupabaseClient.single.mockResolvedValueOnce({
         data: null,
         error: { message: "No membership found" },
@@ -990,33 +966,33 @@ describe("GroupService", () => {
 
     it("should_return_base_currency_fallback_when_currencies_missing", async () => {
       // Arrange
-      const mockSupabaseClient = mockSupabase as any;
+
       const groupId = "group-123";
       const userId = "user-123";
 
       // Mock membership verification success
-      mockSupabaseClient.from.mockReturnValueOnce(mockSupabase);
-      mockSupabaseClient.select.mockReturnValueOnce(mockSupabase);
-      mockSupabaseClient.eq.mockReturnValueOnce(mockSupabase);
-      mockSupabaseClient.eq.mockReturnValueOnce(mockSupabase);
+      mockSupabaseClient.from.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.select.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.eq.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.eq.mockReturnValueOnce(mockSupabaseClient);
       mockSupabaseClient.single.mockResolvedValueOnce({
         data: { group_id: groupId },
         error: null,
       });
 
       // Mock group base currency
-      mockSupabaseClient.from.mockReturnValueOnce(mockSupabase);
-      mockSupabaseClient.select.mockReturnValueOnce(mockSupabase);
-      mockSupabaseClient.eq.mockReturnValueOnce(mockSupabase);
+      mockSupabaseClient.from.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.select.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.eq.mockReturnValueOnce(mockSupabaseClient);
       mockSupabaseClient.single.mockResolvedValueOnce({
         data: { base_currency_code: "USD" },
         error: null,
       });
 
       // Mock currencies query returns empty data
-      mockSupabaseClient.from.mockReturnValueOnce(mockSupabase);
-      mockSupabaseClient.select.mockReturnValueOnce(mockSupabase);
-      mockSupabaseClient.eq.mockReturnValueOnce(mockSupabase);
+      mockSupabaseClient.from.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.select.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.eq.mockReturnValueOnce(mockSupabaseClient);
       mockSupabaseClient.order.mockResolvedValueOnce({
         data: [], // No currencies found
         error: null,
@@ -1040,16 +1016,16 @@ describe("GroupService", () => {
   describe("getGroupDetails", () => {
     it("should_return_complete_group_details_when_user_is_member", async () => {
       // Arrange
-      const mockSupabaseClient = mockSupabase as any;
+
       const groupId = "group-123";
       const userId = "user-123";
 
       // Mock verifyGroupMembership query (returns true for membership)
-      mockSupabaseClient.from.mockReturnValueOnce(mockSupabase);
-      mockSupabaseClient.select.mockReturnValueOnce(mockSupabase);
-      mockSupabaseClient.eq.mockReturnValueOnce(mockSupabase);
-      mockSupabaseClient.eq.mockReturnValueOnce(mockSupabase);
-      mockSupabaseClient.eq.mockReturnValueOnce(mockSupabase);
+      mockSupabaseClient.from.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.select.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.eq.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.eq.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.eq.mockReturnValueOnce(mockSupabaseClient);
       mockSupabaseClient.single.mockResolvedValueOnce({
         data: { group_id: groupId },
         error: null,
@@ -1064,11 +1040,11 @@ describe("GroupService", () => {
         created_at: "2024-01-01T00:00:00Z",
         group_members: [{ role: "member", status: "active", joined_at: "2024-01-01T00:00:00Z" }],
       };
-      mockSupabaseClient.from.mockReturnValueOnce(mockSupabase);
-      mockSupabaseClient.select.mockReturnValueOnce(mockSupabase);
-      mockSupabaseClient.eq.mockReturnValueOnce(mockSupabase);
-      mockSupabaseClient.eq.mockReturnValueOnce(mockSupabase);
-      mockSupabaseClient.eq.mockReturnValueOnce(mockSupabase);
+      mockSupabaseClient.from.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.select.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.eq.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.eq.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.eq.mockReturnValueOnce(mockSupabaseClient);
       mockSupabaseClient.single.mockResolvedValueOnce({
         data: mockGroupData,
         error: null,
@@ -1103,10 +1079,10 @@ describe("GroupService", () => {
           },
         },
       ];
-      mockSupabaseClient.from.mockReturnValueOnce(mockSupabase);
-      mockSupabaseClient.select.mockReturnValueOnce(mockSupabase);
-      mockSupabaseClient.eq.mockReturnValueOnce(mockSupabase);
-      mockSupabaseClient.eq.mockReturnValueOnce(mockSupabase);
+      mockSupabaseClient.from.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.select.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.eq.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.eq.mockReturnValueOnce(mockSupabaseClient);
       mockSupabaseClient.order.mockResolvedValueOnce({
         data: mockMembersData,
         error: null,
@@ -1125,9 +1101,9 @@ describe("GroupService", () => {
           currencies: { name: "Euro" },
         },
       ];
-      mockSupabaseClient.from.mockReturnValueOnce(mockSupabase);
-      mockSupabaseClient.select.mockReturnValueOnce(mockSupabase);
-      mockSupabaseClient.eq.mockReturnValueOnce(mockSupabase);
+      mockSupabaseClient.from.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.select.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.eq.mockReturnValueOnce(mockSupabaseClient);
       mockSupabaseClient.order.mockResolvedValueOnce({
         data: mockCurrenciesData,
         error: null,
@@ -1142,10 +1118,10 @@ describe("GroupService", () => {
           created_at: "2024-01-01T00:00:00Z",
         },
       ];
-      mockSupabaseClient.from.mockReturnValueOnce(mockSupabase);
-      mockSupabaseClient.select.mockReturnValueOnce(mockSupabase);
-      mockSupabaseClient.eq.mockReturnValueOnce(mockSupabase);
-      mockSupabaseClient.eq.mockReturnValueOnce(mockSupabase);
+      mockSupabaseClient.from.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.select.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.eq.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.eq.mockReturnValueOnce(mockSupabaseClient);
       mockSupabaseClient.order.mockResolvedValueOnce({
         data: mockInvitationsData,
         error: null,
@@ -1207,16 +1183,16 @@ describe("GroupService", () => {
 
     it("should_throw_error_when_group_not_found_or_user_not_member", async () => {
       // Arrange
-      const mockSupabaseClient = mockSupabase as any;
+
       const groupId = "invalid-group";
       const userId = "user-123";
 
       // Mock verifyGroupMembership query returns no membership
-      mockSupabaseClient.from.mockReturnValueOnce(mockSupabase);
-      mockSupabaseClient.select.mockReturnValueOnce(mockSupabase);
-      mockSupabaseClient.eq.mockReturnValueOnce(mockSupabase);
-      mockSupabaseClient.eq.mockReturnValueOnce(mockSupabase);
-      mockSupabaseClient.eq.mockReturnValueOnce(mockSupabase);
+      mockSupabaseClient.from.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.select.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.eq.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.eq.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.eq.mockReturnValueOnce(mockSupabaseClient);
       mockSupabaseClient.single.mockResolvedValueOnce({
         data: null,
         error: { code: "PGRST116", message: "No membership found" },
@@ -1234,16 +1210,16 @@ describe("GroupService", () => {
 
     it("should_handle_missing_invitations_gracefully", async () => {
       // Arrange
-      const mockSupabaseClient = mockSupabase as any;
+
       const groupId = "group-123";
       const userId = "user-123";
 
       // Mock verifyGroupMembership query (returns true for membership)
-      mockSupabaseClient.from.mockReturnValueOnce(mockSupabase);
-      mockSupabaseClient.select.mockReturnValueOnce(mockSupabase);
-      mockSupabaseClient.eq.mockReturnValueOnce(mockSupabase);
-      mockSupabaseClient.eq.mockReturnValueOnce(mockSupabase);
-      mockSupabaseClient.eq.mockReturnValueOnce(mockSupabase);
+      mockSupabaseClient.from.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.select.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.eq.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.eq.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.eq.mockReturnValueOnce(mockSupabaseClient);
       mockSupabaseClient.single.mockResolvedValueOnce({
         data: { group_id: groupId },
         error: null,
@@ -1258,11 +1234,11 @@ describe("GroupService", () => {
         created_at: "2024-01-01T00:00:00Z",
         group_members: [{ role: "member", status: "active", joined_at: "2024-01-01T00:00:00Z" }],
       };
-      mockSupabaseClient.from.mockReturnValueOnce(mockSupabase);
-      mockSupabaseClient.select.mockReturnValueOnce(mockSupabase);
-      mockSupabaseClient.eq.mockReturnValueOnce(mockSupabase);
-      mockSupabaseClient.eq.mockReturnValueOnce(mockSupabase);
-      mockSupabaseClient.eq.mockReturnValueOnce(mockSupabase);
+      mockSupabaseClient.from.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.select.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.eq.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.eq.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.eq.mockReturnValueOnce(mockSupabaseClient);
       mockSupabaseClient.single.mockResolvedValueOnce({
         data: mockGroupData,
         error: null,
@@ -1284,10 +1260,10 @@ describe("GroupService", () => {
           },
         },
       ];
-      mockSupabaseClient.from.mockReturnValueOnce(mockSupabase);
-      mockSupabaseClient.select.mockReturnValueOnce(mockSupabase);
-      mockSupabaseClient.eq.mockReturnValueOnce(mockSupabase);
-      mockSupabaseClient.eq.mockReturnValueOnce(mockSupabase);
+      mockSupabaseClient.from.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.select.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.eq.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.eq.mockReturnValueOnce(mockSupabaseClient);
       mockSupabaseClient.order.mockResolvedValueOnce({
         data: mockMembersData,
         error: null,
@@ -1301,19 +1277,19 @@ describe("GroupService", () => {
           currencies: { name: "US Dollar" },
         },
       ];
-      mockSupabaseClient.from.mockReturnValueOnce(mockSupabase);
-      mockSupabaseClient.select.mockReturnValueOnce(mockSupabase);
-      mockSupabaseClient.eq.mockReturnValueOnce(mockSupabase);
+      mockSupabaseClient.from.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.select.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.eq.mockReturnValueOnce(mockSupabaseClient);
       mockSupabaseClient.order.mockResolvedValueOnce({
         data: mockCurrenciesData,
         error: null,
       });
 
       // Mock invitations query to fail
-      mockSupabaseClient.from.mockReturnValueOnce(mockSupabase);
-      mockSupabaseClient.select.mockReturnValueOnce(mockSupabase);
-      mockSupabaseClient.eq.mockReturnValueOnce(mockSupabase);
-      mockSupabaseClient.eq.mockReturnValueOnce(mockSupabase);
+      mockSupabaseClient.from.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.select.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.eq.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.eq.mockReturnValueOnce(mockSupabaseClient);
       mockSupabaseClient.order.mockResolvedValueOnce({
         data: null,
         error: { message: "Invitations query failed" },

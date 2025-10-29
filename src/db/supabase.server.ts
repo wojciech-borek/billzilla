@@ -1,6 +1,7 @@
-// src/lib/supabase.server.ts
+// src/db/supabase.server.ts
 import { createServerClient } from "@supabase/ssr";
 import cookie from "cookie";
+import type { Database } from "./database.types";
 
 export function createSupabaseServerClientFromCookieHeader(
   cookieHeader: string | null,
@@ -22,10 +23,12 @@ export function createSupabaseServerClientFromCookieHeader(
     },
   };
 
-  return createServerClient(
+  return createServerClient<Database>(
     // public URL + anon key — safe to use on server. NEVER expose service_role to client.
     import.meta.env.PUBLIC_SUPABASE_URL,
     import.meta.env.PUBLIC_SUPABASE_ANON_KEY,
     { cookies: adapter }
   );
 }
+
+export type SupabaseServerClient = ReturnType<typeof createSupabaseServerClientFromCookieHeader>;
