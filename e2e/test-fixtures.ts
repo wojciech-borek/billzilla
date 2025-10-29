@@ -1,3 +1,5 @@
+/* eslint-disable no-empty-pattern */
+/* eslint-disable react-hooks/rules-of-hooks */
 import { test as base, Page, expect } from "@playwright/test";
 import { createClient } from "@supabase/supabase-js";
 
@@ -100,7 +102,7 @@ export const authenticatedTest = base.extend<{
     try {
       await expect(createGroupButton).toBeVisible({ timeout: 3000 });
       console.log("Already authenticated via storageState");
-    } catch (error) {
+    } catch (_error) {
       // StorageState didn't work, perform UI login
       console.log("StorageState not loaded, performing UI login...");
 
@@ -155,7 +157,7 @@ export const authenticatedTest = base.extend<{
         await supabase.from("groups").delete().like("name", "Test Group%");
 
         // Don't sign out to preserve browser session for subsequent tests
-      } catch (error) {
+      } catch (_error) {
         // Cleanup errors are logged but don't fail the test
       }
     };

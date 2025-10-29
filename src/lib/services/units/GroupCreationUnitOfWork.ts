@@ -134,7 +134,7 @@ export class GroupCreationUnitOfWork {
    */
   private buildResponse(groupData: CreatedGroupData, invitationResults: InvitationResultDTO): CreateGroupResponseDTO {
     // Remove database-specific fields and return clean response
-    const { added_members, created_invitations, ...cleanGroupData } = groupData;
+    const { added_members: _added_members, created_invitations: _created_invitations, ...cleanGroupData } = groupData;
 
     return this.builder
       .withGroupData(cleanGroupData)

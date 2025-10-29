@@ -898,7 +898,7 @@ export const setupExpenseMocks = (
             select: vi.fn().mockReturnThis(),
             insert: vi.fn().mockReturnThis(),
             delete: vi.fn().mockReturnThis(),
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+
             eq: vi.fn().mockImplementation((_field: string, _value: unknown) => {
               // Groups query has chained eq() calls, return query builder that eventually resolves
               return {

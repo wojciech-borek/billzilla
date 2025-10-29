@@ -1,6 +1,5 @@
 import { config } from "dotenv";
 import { defineConfig, devices } from "@playwright/test";
-import globalSetup from "./e2e/global-setup";
 
 config({ path: ".env.test" });
 

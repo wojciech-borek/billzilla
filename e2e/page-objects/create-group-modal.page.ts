@@ -42,7 +42,7 @@ export class CreateGroupModal {
     // Wait for modal content to be visible using the data-testid
     try {
       await this.modal.waitFor({ state: "visible", timeout: 10000 });
-    } catch (error) {
+    } catch (_error) {
       // Fallback: try to find modal by role or text if data-testid fails
       console.log("Modal data-testid not found, trying fallback locator");
       const fallbackModal = this.page.getByRole("dialog").filter({ hasText: "Utwórz nową grupę" });
