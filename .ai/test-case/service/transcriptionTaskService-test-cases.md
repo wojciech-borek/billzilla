@@ -126,10 +126,10 @@
 **Nazwa testu:** `should_calculate_combined_confidence_when_llm_provides_score`  
 **Moduł / funkcja:** `TranscriptionTaskService.processTask`  
 **Cel testu:** Weryfikacja kalkulacji combined confidence score (70% LLM + 30% heuristic)  
-**Wejście / dane testowe:** Expense data z extraction_confidence: 0.8, heuristic confidence: 0.6  
+**Wejście / dane testowe:** Expense data z extraction*confidence: 0.8, heuristic confidence: 0.6  
 **Setup / izolacja:** Mock wszystkich zależności  
 **Kroki testowe:** Arrange - setup mocks z konkretnymi wartościami, Act - processTask, Assert - sprawdź obliczony confidence  
-**Oczekiwany rezultat:** Final confidence = 0.7 _ 0.8 + 0.3 _ 0.6 = 0.68  
+**Oczekiwany rezultat:** Final confidence = 0.7 * 0.8 + 0.3 \_ 0.6 = 0.68  
 **Priorytet:** średni  
 **Edge cases:** LLM confidence = 1.0, heuristic = 0.0; różne kombinacje wartości  
 **Notatki / uwagi:** Testuje logikę weighted average confidence
