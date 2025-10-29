@@ -65,11 +65,13 @@ export async function fetchGroupMembers(
     const groupId = member.group_id;
     const profile = member.profiles as unknown as { id: string; full_name: string | null; avatar_url: string | null };
 
-    if (!membersByGroup.has(groupId)) {
-      membersByGroup.set(groupId, []);
+    let groupMembersList = membersByGroup.get(groupId);
+    if (!groupMembersList) {
+      groupMembersList = [];
+      membersByGroup.set(groupId, groupMembersList);
     }
 
-    membersByGroup.get(groupId)!.push({
+    groupMembersList.push({
       profile_id: member.profile_id,
       full_name: profile.full_name,
       avatar_url: profile.avatar_url,

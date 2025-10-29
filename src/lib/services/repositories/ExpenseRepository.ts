@@ -1,6 +1,50 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "../../../db/database.types";
 
+// Type definitions for repository return types
+interface CompleteExpenseData {
+  id: string;
+  group_id: string;
+  description: string;
+  amount: number;
+  currency_code: string;
+  expense_date: string;
+  created_at: string;
+  payer_id: string;
+  created_by: string;
+  profiles: {
+    id: string;
+    full_name: string | null;
+    avatar_url: string | null;
+  };
+  expense_splits: {
+    profile_id: string;
+    amount: number;
+    profiles: {
+      id: string;
+      full_name: string | null;
+      avatar_url: string | null;
+    };
+  }[];
+}
+
+interface GroupExpenseData {
+  id: string;
+  group_id: string;
+  description: string;
+  amount: number;
+  currency_code: string;
+  expense_date: string;
+  created_at: string;
+  payer_id: string;
+  created_by: string;
+  profiles: {
+    id: string;
+    full_name: string | null;
+    avatar_url: string | null;
+  };
+}
+
 /**
  * Repository pattern for expense-related database operations
  * Encapsulates all data access logic for expenses
@@ -125,7 +169,7 @@ export class ExpenseRepository {
   /**
    * Fetch complete expense with all related data
    */
-  async fetchCompleteExpense(expenseId: string): Promise<any> {
+  async fetchCompleteExpense(expenseId: string): Promise<CompleteExpenseData> {
     const { data: completeExpense, error: fetchError } = await this.supabase
       .from("expenses")
       .select(
@@ -184,7 +228,7 @@ export class ExpenseRepository {
       orderBy?: "created_at" | "expense_date" | "amount";
       orderDirection?: "asc" | "desc";
     }
-  ): Promise<any[]> {
+  ): Promise<GroupExpenseData[]> {
     const { limit = 50, offset = 0, orderBy = "created_at", orderDirection = "desc" } = options || {};
 
     // First verify user is member of the group

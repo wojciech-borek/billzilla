@@ -15,18 +15,18 @@ export interface Specification<T> {
 /**
  * Abstract base class for group specifications
  */
-export abstract class GroupSpecification implements Specification<any> {
-  abstract isSatisfiedBy(candidate: any): Promise<boolean> | boolean;
+export abstract class GroupSpecification<T = unknown> implements Specification<T> {
+  abstract isSatisfiedBy(candidate: T): Promise<boolean> | boolean;
 
-  and(other: Specification<any>): Specification<any> {
+  and(other: Specification<T>): Specification<T> {
     return new AndSpecification(this, other);
   }
 
-  or(other: Specification<any>): Specification<any> {
+  or(other: Specification<T>): Specification<T> {
     return new OrSpecification(this, other);
   }
 
-  not(): Specification<any> {
+  not(): Specification<T> {
     return new NotSpecification(this);
   }
 }
