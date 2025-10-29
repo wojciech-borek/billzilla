@@ -42,8 +42,18 @@ export function ExpenseBasicInfo({
           <CardTitle className="text-lg">Informacje podstawowe</CardTitle>
           <VoiceInputButton
             groupId={groupId}
-            onTranscriptionComplete={onTranscriptionComplete || (() => {})}
-            onTranscriptionError={onTranscriptionError || (() => {})}
+            onTranscriptionComplete={
+              onTranscriptionComplete ||
+              (() => {
+                // Default transcription complete handler - no-op
+              })
+            }
+            onTranscriptionError={
+              onTranscriptionError ||
+              (() => {
+                // Default transcription error handler - no-op
+              })
+            }
             disabled={isLoading}
           />
         </div>

@@ -54,7 +54,7 @@ export function useInvitationManagement(
         });
       }
     },
-    [query.accept, onChanged]
+    [query, onChanged]
   );
 
   const declineInvitation = useCallback(
@@ -81,7 +81,7 @@ export function useInvitationManagement(
         });
       }
     },
-    [query.decline]
+    [query]
   );
 
   return {

@@ -111,7 +111,7 @@ export function useGroupsList({ status = "active", limit = 20 }: UseGroupsListPa
 
   useEffect(() => {
     fetchGroups(true, 0);
-  }, [status, limit]); // Removed fetchGroups from deps to avoid infinite loop
+  }, [fetchGroups, status, limit]);
 
   const hasMore = state.data.length < state.total;
 

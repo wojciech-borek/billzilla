@@ -87,7 +87,7 @@ export function VoiceInputButton({
     try {
       // Start recording
       await startRecording();
-    } catch (error) {
+    } catch {
       // Error is handled in the hook
     }
   }, [isRecording, isProcessing, disabled, startRecording]);
@@ -106,7 +106,7 @@ export function VoiceInputButton({
       // The upload will set taskId in the hook state, which will trigger
       // VoiceTranscriptionStatus component to show and handle polling
       await uploadAudio(audioBlob, groupId);
-    } catch (error) {
+    } catch {
       toast.error("Błąd podczas zatrzymywania nagrywania");
       reset();
     }

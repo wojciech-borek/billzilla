@@ -46,7 +46,7 @@ export function useExpenseModal(onExpenseCreated?: () => Promise<void>) {
         groupCurrencies: groupData.group_currencies || [],
         isLoading: false,
       });
-    } catch (error) {
+    } catch {
       toast.error("Nie udało się załadować danych grupy");
       setState((prev) => ({ ...prev, isLoading: false }));
     }

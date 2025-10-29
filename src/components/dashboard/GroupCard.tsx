@@ -37,8 +37,8 @@ export default function GroupCard({ group, onAddExpense }: GroupCardProps) {
   const balanceColor = getBalanceColor(group.myBalance);
 
   return (
-    <article
-      className="group relative flex cursor-pointer flex-col rounded-2xl border border-gray-100 bg-card p-6 shadow-md shadow-green-100/50 transition-all duration-300 ease-out hover:border-primary hover:shadow-lg hover:shadow-green-100 hover:-translate-y-1 focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-2"
+    <button
+      className="group relative flex w-full cursor-pointer flex-col rounded-2xl border border-gray-100 bg-card p-6 text-left shadow-md shadow-green-100/50 transition-all duration-300 ease-out hover:border-primary hover:shadow-lg hover:shadow-green-100 hover:-translate-y-1 focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-2"
       onClick={handleCardClick}
       onMouseEnter={handleMouseEnter}
       onKeyDown={(e) => {
@@ -47,8 +47,6 @@ export default function GroupCard({ group, onAddExpense }: GroupCardProps) {
           handleCardClick();
         }
       }}
-      role="button"
-      tabIndex={0}
       aria-label={`Otwórz grupę ${group.name}`}
     >
       {/* Header */}
@@ -86,6 +84,6 @@ export default function GroupCard({ group, onAddExpense }: GroupCardProps) {
           Dodaj wydatek
         </Button>
       </div>
-    </article>
+    </button>
   );
 }

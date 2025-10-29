@@ -1,6 +1,5 @@
 import React from "react";
 
-import { type CreateExpenseFormValues } from "@/lib/schemas/expenseSchemas";
 import { useExpenseForm } from "@/lib/hooks/useExpenseForm";
 import { useExpenseFormIntegration } from "@/lib/hooks/useExpenseFormIntegration";
 import { ExpenseFormHeader } from "./ExpenseFormHeader";
@@ -61,7 +60,7 @@ export function ExpenseForm({
     formState: { errors, isValid },
   } = form;
 
-  const onFormSubmit = async (data: CreateExpenseFormValues) => {
+  const onFormSubmit = async () => {
     try {
       const expense = await submitExpense(groupId);
       await onSubmit(expense);

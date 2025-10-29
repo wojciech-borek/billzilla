@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import type { InvitationDTO, AcceptInvitationResponseDTO, DeclineInvitationResponseDTO } from "@/types";
+import type { InvitationDTO } from "@/types";
 import type { InvitationCardVM, InvitationsQueryState } from "../types";
 
 interface InvitationActionResult {
@@ -87,8 +87,6 @@ export function useInvitationsList(): InvitationsQueryState & {
         throw new Error(errorData.error?.message || `Failed to accept invitation: ${response.status}`);
       }
 
-      const result: AcceptInvitationResponseDTO = await response.json();
-
       // Remove the accepted invitation from the list
       setState((prev) => ({
         ...prev,
@@ -122,8 +120,6 @@ export function useInvitationsList(): InvitationsQueryState & {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.error?.message || `Failed to decline invitation: ${response.status}`);
       }
-
-      const result: DeclineInvitationResponseDTO = await response.json();
 
       // Remove the declined invitation from the list
       setState((prev) => ({
