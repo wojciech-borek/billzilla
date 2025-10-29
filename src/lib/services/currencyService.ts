@@ -33,11 +33,7 @@ export async function validateCurrencyExists(
     throw new CurrencyOperationError("validate currency", "Currency code is required");
   }
 
-  const { data: currency, error: currencyError } = await supabase
-    .from("currencies")
-    .select("code")
-    .eq("code", currencyCode)
-    .single();
+  const { error: currencyError } = await supabase.from("currencies").select("code").eq("code", currencyCode).single();
 
   if (currencyError) {
     if (currencyError.code === "PGRST116") {

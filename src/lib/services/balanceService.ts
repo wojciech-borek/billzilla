@@ -96,7 +96,10 @@ async function fetchExchangeRates(
     if (!exchangeRates.has(gc.group_id)) {
       exchangeRates.set(gc.group_id, new Map());
     }
-    exchangeRates.get(gc.group_id)!.set(gc.currency_code, gc.exchange_rate);
+    const groupRates = exchangeRates.get(gc.group_id);
+    if (groupRates) {
+      groupRates.set(gc.currency_code, gc.exchange_rate);
+    }
   }
 
   return exchangeRates;
@@ -149,7 +152,8 @@ export async function calculateUserBalances(
     for (const expense of userExpenses) {
       const rate = exchangeRates.get(expense.group_id)?.get(expense.currency_code) || 1.0;
       const amountInBase = expense.amount * rate;
-      balancesByGroup.set(expense.group_id, balancesByGroup.get(expense.group_id)! + amountInBase);
+      const currentBalance = balancesByGroup.get(expense.group_id) || 0;
+      balancesByGroup.set(expense.group_id, currentBalance + amountInBase);
     }
 
     // Subtract amounts owed by user (converted to base currency)
@@ -157,20 +161,23 @@ export async function calculateUserBalances(
       const expenseData = split.expenses as unknown as { group_id: string; currency_code: string };
       const rate = exchangeRates.get(expenseData.group_id)?.get(expenseData.currency_code) || 1.0;
       const amountInBase = split.amount * rate;
-      balancesByGroup.set(expenseData.group_id, balancesByGroup.get(expenseData.group_id)! - amountInBase);
+      const currentBalance = balancesByGroup.get(expenseData.group_id) || 0;
+      balancesByGroup.set(expenseData.group_id, currentBalance - amountInBase);
     }
 
     // Add settlements received by user
     for (const settlement of settlements) {
       if (settlement.payee_id === userId) {
-        balancesByGroup.set(settlement.group_id, balancesByGroup.get(settlement.group_id)! + settlement.amount);
+        const currentBalance = balancesByGroup.get(settlement.group_id) || 0;
+        balancesByGroup.set(settlement.group_id, currentBalance + settlement.amount);
       }
     }
 
     // Subtract settlements paid by user
     for (const settlement of settlements) {
       if (settlement.payer_id === userId) {
-        balancesByGroup.set(settlement.group_id, balancesByGroup.get(settlement.group_id)! - settlement.amount);
+        const currentBalance = balancesByGroup.get(settlement.group_id) || 0;
+        balancesByGroup.set(settlement.group_id, currentBalance - settlement.amount);
       }
     }
 

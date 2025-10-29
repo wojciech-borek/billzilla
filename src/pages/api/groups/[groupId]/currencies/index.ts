@@ -56,7 +56,7 @@ export const GET: APIRoute = async ({ params, locals }) => {
     }
 
     // Fetch group currencies
-    const currenciesData = await getGroupCurrencies(locals.supabase, groupId, locals.user.id);
+    const currenciesData: GroupCurrenciesDTO = await getGroupCurrencies(locals.supabase, groupId, locals.user.id);
 
     return new Response(JSON.stringify(currenciesData), {
       status: 200,

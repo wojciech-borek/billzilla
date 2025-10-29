@@ -17,19 +17,23 @@ export function useLoginForm(redirectTo: string) {
       setApiError(null);
 
       try {
-        const { error } = await signIn({ email: formData.email!, password: formData.password! });
+        // After validation, formData is guaranteed to match LoginFormData type
+        const validatedData = formData as LoginFormData;
+        const { error } = await signIn({ email: validatedData.email, password: validatedData.password });
         if (error) {
           setApiError(getAuthErrorMessage(error));
           setIsLoading(false);
           return;
         }
+        // Navigate after successful login
+        // eslint-disable-next-line react-compiler/react-compiler
         window.location.href = redirectTo;
       } catch (err) {
         setApiError(getAuthErrorMessage(err));
         setIsLoading(false);
       }
     },
-    [formData.email, formData.password, redirectTo, setApiError, setIsLoading, signIn, validate]
+    [formData, redirectTo, setApiError, setIsLoading, signIn, validate]
   );
 
   return { formData, errors, isLoading, apiError, handleChange, handleSubmit };

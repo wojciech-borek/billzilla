@@ -86,7 +86,7 @@ export const GET: APIRoute = async ({ url, locals }) => {
       status: 200,
       headers: { "Content-Type": "application/json" },
     });
-  } catch (error) {
+  } catch {
     // Handle unexpected errors
     const errorResponse: ErrorResponseDTO = {
       error: {
@@ -138,7 +138,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     let body: unknown;
     try {
       body = await request.json();
-    } catch (error) {
+    } catch {
       const errorResponse: ErrorResponseDTO = {
         error: {
           code: "INVALID_JSON",

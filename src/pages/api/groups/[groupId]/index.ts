@@ -55,13 +55,13 @@ export const GET: APIRoute = async ({ params, locals }) => {
     }
 
     // Fetch group details from database
-    const groupData = await getGroupDetails(locals.supabase, groupId, locals.user.id);
+    const groupData: GroupDetailDTO = await getGroupDetails(locals.supabase, groupId, locals.user.id);
 
     return new Response(JSON.stringify(groupData), {
       status: 200,
       headers: { "Content-Type": "application/json" },
     });
-  } catch (error) {
+  } catch {
     const errorResponse: ErrorResponseDTO = {
       error: {
         code: "INTERNAL_SERVER_ERROR",
