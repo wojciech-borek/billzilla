@@ -1,6 +1,13 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/db/database.types";
+
+// Type for invalid test cases that may have null/undefined values
+interface InvalidGroupCreationTestCase {
+  name?: string | null;
+  base_currency_code?: string | null;
+  invite_emails?: string[];
+}
 import {
   UserIsActiveGroupMemberSpecification,
   CurrencyExistsSpecification,
@@ -28,18 +35,18 @@ import {
 } from "./testHelpers";
 
 // Test fixtures for specification testing
-const createBasicSpecTestFixture = <T extends new (client: SupabaseClient<Database>) => any>(
-  SpecClass: T,
+const createBasicSpecTestFixture = <TSpec>(
+  SpecClass: new (client: SupabaseClient<Database>) => TSpec,
   mockSetup: (client: SupabaseClient<Database>) => void
 ) => ({
-  setup: (mockSupabase: SupabaseClient<Database>) => {
+  setup: (mockSupabase: SupabaseClient<Database>): TSpec => {
     mockSetup(mockSupabase);
     return new SpecClass(mockSupabase);
   },
 });
 
-const createSyncSpecTestFixture = <T extends new () => any>(SpecClass: T) => ({
-  setup: () => new SpecClass(),
+const createSyncSpecTestFixture = <TSpec>(SpecClass: new () => TSpec) => ({
+  setup: (): TSpec => new SpecClass(),
 });
 
 // Specification-specific mock fixtures
@@ -90,13 +97,7 @@ const currencyCodeValidationTestCases = [
   { input: "A", expected: true, description: "single character currency code" },
 ];
 
-const compositeSpecTestMatrix = [
-  { specA: true, specB: true, andResult: true, orResult: true },
-  { specA: true, specB: false, andResult: false, orResult: true },
-  { specA: false, specB: false, andResult: false, orResult: false },
-];
-
-const groupCreationInvalidTestCases = [
+const groupCreationInvalidTestCases: [string, InvalidGroupCreationTestCase][] = [
   ["empty name", { name: "", base_currency_code: TEST_CURRENCY_CODE }],
   ["empty currency code", { name: "Test Group", base_currency_code: "" }],
   ["both empty", { name: "", base_currency_code: "" }],
@@ -201,7 +202,7 @@ describe("Group Specifications", () => {
     const spec = specFixture.setup();
 
     it.each(groupNameValidationTestCases)("should validate $description -> $expected", ({ input, expected }) => {
-      expect(spec.isSatisfiedBy(input as any)).toBe(expected);
+      expect(spec.isSatisfiedBy(input as string)).toBe(expected);
     });
   });
 
@@ -210,7 +211,7 @@ describe("Group Specifications", () => {
     const spec = specFixture.setup();
 
     it.each(currencyCodeValidationTestCases)("should validate $description -> $expected", ({ input, expected }) => {
-      expect(spec.isSatisfiedBy(input as any)).toBe(expected);
+      expect(spec.isSatisfiedBy(input as string)).toBe(expected);
     });
   });
 
@@ -318,7 +319,9 @@ describe("Group Specifications", () => {
 
     it.each(groupCreationInvalidTestCases)("should throw error for %s", async (_, command) => {
       const spec = new GroupCreationValidSpecification(mockSupabase);
-      await expect(spec.isSatisfiedBy(command)).rejects.toThrow("Invalid group creation parameters");
+      await expect(spec.isSatisfiedBy(command as { name: string; base_currency_code: string })).rejects.toThrow(
+        "Invalid group creation parameters"
+      );
     });
 
     it("should throw CurrencyNotFoundError when currency does not exist", async () => {

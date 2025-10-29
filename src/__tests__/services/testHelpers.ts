@@ -2,14 +2,14 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { ExpenseValidationError } from "../../lib/services/expenseService";
 
 // Factory functions for test data
-export const createMockCreateGroupCommand = (overrides: Partial<any> = {}) => ({
+export const createMockCreateGroupCommand = (overrides: Record<string, unknown> = {}) => ({
   name: "Test Group",
   base_currency_code: "USD",
   invite_emails: ["user1@test.com", "user2@test.com"],
   ...overrides,
 });
 
-export const createMockGroupDetail = (overrides: Partial<any> = {}) => ({
+export const createMockGroupDetail = (overrides: Record<string, unknown> = {}) => ({
   id: "group-123",
   name: "Test Group",
   base_currency_code: "USD",
@@ -18,7 +18,7 @@ export const createMockGroupDetail = (overrides: Partial<any> = {}) => ({
   ...overrides,
 });
 
-export const createMockGroupMember = (overrides: Partial<any> = {}) => ({
+export const createMockGroupMember = (overrides: Record<string, unknown> = {}) => ({
   profile_id: "user-123",
   full_name: "Test User",
   email: "test@example.com",
@@ -29,14 +29,14 @@ export const createMockGroupMember = (overrides: Partial<any> = {}) => ({
   ...overrides,
 });
 
-export const createMockGroupCurrency = (overrides: Partial<any> = {}) => ({
+export const createMockGroupCurrency = (overrides: Record<string, unknown> = {}) => ({
   code: "USD",
   name: "US Dollar",
   exchange_rate: 1.0,
   ...overrides,
 });
 
-export const createMockGroupDetailDTO = (overrides: Partial<any> = {}) => ({
+export const createMockGroupDetailDTO = (overrides: Record<string, unknown> = {}) => ({
   id: "group-123",
   name: "Test Group",
   base_currency_code: "USD",
@@ -49,7 +49,7 @@ export const createMockGroupDetailDTO = (overrides: Partial<any> = {}) => ({
   ...overrides,
 });
 
-export const createMockPendingInvitation = (overrides: Partial<any> = {}) => ({
+export const createMockPendingInvitation = (overrides: Record<string, unknown> = {}) => ({
   id: "inv-1",
   email: "pending@example.com",
   status: "pending" as const,
@@ -57,7 +57,7 @@ export const createMockPendingInvitation = (overrides: Partial<any> = {}) => ({
   ...overrides,
 });
 
-export const createMockGroupListItem = (overrides: Partial<any> = {}) => ({
+export const createMockGroupListItem = (overrides: Record<string, unknown> = {}) => ({
   id: "group-123",
   name: "Test Group",
   base_currency_code: "USD",
@@ -256,7 +256,7 @@ export const mockGroupCurrenciesQuery = (client: SupabaseClient, currencies: any
 };
 
 // Test data builders for complex scenarios
-export const createMockGroupWithMembers = (overrides: Partial<any> = {}) => ({
+export const createMockGroupWithMembers = (overrides: Record<string, unknown> = {}) => ({
   id: "group-123",
   name: "Test Group",
   base_currency_code: "USD",
@@ -266,7 +266,7 @@ export const createMockGroupWithMembers = (overrides: Partial<any> = {}) => ({
   ...overrides,
 });
 
-export const createMockGroupMemberData = (overrides: Partial<any> = {}) => ({
+export const createMockGroupMemberData = (overrides: Record<string, unknown> = {}) => ({
   group_id: "group-123",
   profile_id: "user-123",
   status: "active" as const,
@@ -280,14 +280,14 @@ export const createMockGroupMemberData = (overrides: Partial<any> = {}) => ({
   ...overrides,
 });
 
-export const createMockExpenseData = (overrides: Partial<any> = {}) => ({
+export const createMockExpenseData = (overrides: Record<string, unknown> = {}) => ({
   group_id: "group-123",
   amount: 100,
   currency_code: "USD",
   ...overrides,
 });
 
-export const createMockSplitData = (overrides: Partial<any> = {}) => ({
+export const createMockSplitData = (overrides: Record<string, unknown> = {}) => ({
   amount: 50,
   expenses: {
     group_id: "group-123",
@@ -296,7 +296,7 @@ export const createMockSplitData = (overrides: Partial<any> = {}) => ({
   ...overrides,
 });
 
-export const createMockSettlementData = (overrides: Partial<any> = {}) => ({
+export const createMockSettlementData = (overrides: Record<string, unknown> = {}) => ({
   id: "settlement-123",
   payer_id: "user-123",
   payee_id: "123e4567-e89b-12d3-a456-426614174000",
@@ -487,7 +487,7 @@ export const setupRepositoryTest = <T>(RepositoryClass: new (client: SupabaseCli
 };
 
 // Expense Service specific fixtures and mock builders
-export const createMockExpenseCommand = (overrides: Partial<any> = {}): any => ({
+export const createMockExpenseCommand = (overrides: Record<string, unknown> = {}): any => ({
   description: "Lunch at restaurant",
   amount: 50.0,
   currency_code: "USD",
@@ -500,7 +500,7 @@ export const createMockExpenseCommand = (overrides: Partial<any> = {}): any => (
   ...overrides,
 });
 
-export const createMockExpenseInsert = (overrides: Partial<any> = {}) => ({
+export const createMockExpenseInsert = (overrides: Record<string, unknown> = {}) => ({
   id: "expense-123",
   group_id: "group-123",
   description: "Lunch at restaurant",
@@ -512,7 +512,7 @@ export const createMockExpenseInsert = (overrides: Partial<any> = {}) => ({
   ...overrides,
 });
 
-export const createMockCompleteExpense = (overrides: Partial<any> = {}) => ({
+export const createMockCompleteExpense = (overrides: Record<string, unknown> = {}) => ({
   ...createMockExpenseInsert(),
   created_at: "2024-01-15T10:00:00Z",
   profiles: {
@@ -543,7 +543,7 @@ export const createMockCompleteExpense = (overrides: Partial<any> = {}) => ({
   ...overrides,
 });
 
-export const createMockExpenseGroup = (overrides: Partial<any> = {}) => ({
+export const createMockExpenseGroup = (overrides: Record<string, unknown> = {}) => ({
   id: "group-123",
   base_currency_code: "USD",
   group_currencies: [
@@ -676,7 +676,7 @@ export const expectExpenseValidationError = async (promise: Promise<any>, expect
   }
 };
 
-export const expectExpenseDTO = (result: any, expected: Partial<any>) => {
+export const expectExpenseDTO = (result: any, expected: Record<string, unknown>) => {
   expect(result).toMatchObject(expected);
 };
 
@@ -745,20 +745,20 @@ export const TEST_CURRENCY_CODE = "USD";
 export const TEST_INVALID_CURRENCY_CODE = "INVALID";
 
 // Helper functions for common specification tests
-export const createValidGroupCreationCommand = (overrides: Partial<any> = {}) => ({
+export const createValidGroupCreationCommand = (overrides: Record<string, unknown> = {}) => ({
   name: "Test Group",
   base_currency_code: TEST_CURRENCY_CODE,
   ...overrides,
 });
 
-export const createInvalidGroupCreationCommand = (overrides: Partial<any> = {}) => ({
+export const createInvalidGroupCreationCommand = (overrides: Record<string, unknown> = {}) => ({
   name: "",
   base_currency_code: "",
   ...overrides,
 });
 
 // Auth-specific mock helpers
-export const createMockAuthSupabaseClient = (authOverrides: Partial<any> = {}): SupabaseClient => {
+export const createMockAuthSupabaseClient = (authOverrides: Record<string, unknown> = {}): SupabaseClient => {
   const mockClient = createMockSupabaseClient();
   const mockClientAny = mockClient as any;
 
@@ -776,7 +776,7 @@ export const createMockAuthSupabaseClient = (authOverrides: Partial<any> = {}): 
   return mockClient;
 };
 
-export const createMockUseSupabaseAuth = (overrides: Partial<any> = {}) => ({
+export const createMockUseSupabaseAuth = (overrides: Record<string, unknown> = {}) => ({
   supabase: createMockAuthSupabaseClient(),
   signIn: vi.fn(),
   signUp: vi.fn(),

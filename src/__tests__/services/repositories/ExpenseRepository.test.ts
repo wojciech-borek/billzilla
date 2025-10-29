@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 import { ExpenseRepository } from "../../../lib/services/repositories/ExpenseRepository";
 import {
   setupRepositoryTest,
@@ -10,7 +10,7 @@ import {
 } from "../testHelpers";
 
 describe("ExpenseRepository", () => {
-  let mockSupabaseClient: any;
+  let mockSupabaseClient: ReturnType<typeof setupRepositoryTest>["mockSupabaseClient"];
   let expenseRepository: ExpenseRepository;
 
   beforeEach(() => {

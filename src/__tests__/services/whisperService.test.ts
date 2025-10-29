@@ -7,7 +7,7 @@ import {
   WhisperNetworkError,
   InvalidTranscriptionError,
 } from "../../lib/services/whisperService";
-import type { WhisperTranscriptionResponse, TranscriptionResult } from "../../types";
+import type { WhisperTranscriptionResponse } from "../../types";
 
 // Helper functions for common test patterns
 const createTestAudioBlob = (type = "audio/wav", size = 1024 * 1024) => {
@@ -17,12 +17,12 @@ const createTestAudioBlob = (type = "audio/wav", size = 1024 * 1024) => {
 };
 
 const setupServiceWithApiKey = (apiKey = "test-api-key") => {
-  (import.meta.env as any).OPENAI_API_KEY = apiKey;
+  (import.meta.env as Record<string, unknown>).OPENAI_API_KEY = apiKey;
   return new WhisperService();
 };
 
-const mockFetchResponse = (response: any) => {
-  (global.fetch as any).mockResolvedValueOnce(response);
+const mockFetchResponse = (response: Response) => {
+  (global.fetch as vi.MockedFunction<typeof fetch>).mockResolvedValueOnce(response);
 };
 
 const createMockApiErrorResponse = (status = 400, message = "Bad Request") => ({
@@ -387,7 +387,7 @@ describe("WhisperService", () => {
       };
 
       // Mock all internal methods
-      vi.spyOn(service as any, "validateAudioFile").mockImplementation(() => {});
+      vi.spyOn(service as any, "validateAudioFile").mockImplementation(() => undefined);
       vi.spyOn(service as any, "prepareFormData").mockReturnValue(new FormData());
       vi.spyOn(service as any, "makeApiRequest").mockResolvedValue(mockResponse);
       vi.spyOn(service as any, "parseTranscriptionResponse").mockReturnValue(mockResponse);
@@ -430,14 +430,14 @@ describe("WhisperService", () => {
       const apiError = new WhisperApiError(400, "Bad Request");
 
       // Test error type
-      vi.spyOn(service as any, "validateAudioFile").mockImplementation(() => {});
+      vi.spyOn(service as any, "validateAudioFile").mockImplementation(() => undefined);
       vi.spyOn(service as any, "prepareFormData").mockReturnValue(new FormData());
       vi.spyOn(service as any, "makeApiRequest").mockRejectedValue(apiError);
       await expect(service.transcribeAudio(params)).rejects.toThrow(WhisperApiError);
 
       // Test error message
       const service2 = setupServiceWithApiKey();
-      vi.spyOn(service2 as any, "validateAudioFile").mockImplementation(() => {});
+      vi.spyOn(service2 as any, "validateAudioFile").mockImplementation(() => undefined);
       vi.spyOn(service2 as any, "prepareFormData").mockReturnValue(new FormData());
       vi.spyOn(service2 as any, "makeApiRequest").mockRejectedValue(apiError);
       await expect(service2.transcribeAudio(params)).rejects.toThrow("Bad Request");

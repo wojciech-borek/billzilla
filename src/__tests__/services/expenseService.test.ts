@@ -8,19 +8,15 @@ import {
   ExpenseTransactionError,
   ExpenseDataError,
 } from "../../lib/services/expenseService";
-import type { CreateExpenseCommand, ExpenseDTO } from "../../types";
 import {
   createMockSupabaseClient,
   createMockExpenseCommand,
-  createMockExpenseGroup,
-  createMockExpenseActiveMembers,
   createMockExpenseInsert,
   createMockCompleteExpense,
   setupExpenseMocks,
   expectExpenseValidationError,
   expectExpenseDTO,
   createValidExpenseScenario,
-  createGroupNotFoundScenario,
   createPayerNotMemberScenario,
   createCurrencyNotConfiguredScenario,
   createExpenseInsertFailureScenario,
@@ -42,7 +38,7 @@ describe("ExpenseService", () => {
     vi.clearAllMocks();
     const mockClient = createMockSupabaseClient();
     setupExpenseMocks(mockClient, {});
-    mockCreateClient.mockReturnValue(mockClient as any);
+    mockCreateClient.mockReturnValue(mockClient as ReturnType<typeof createClient<Database>>);
     supabase = createClient<Database>("url", "key");
   });
 
@@ -62,7 +58,7 @@ describe("ExpenseService", () => {
         expenseSelect: scenario.expenseSelect,
         expenseSplitsInsert: scenario.expenseSplitsInsert,
       });
-      mockCreateClient.mockReturnValue(mockClient as any);
+      mockCreateClient.mockReturnValue(mockClient as ReturnType<typeof createClient<Database>>);
       supabase = createClient<Database>("url", "key");
 
       // Act
@@ -122,7 +118,7 @@ describe("ExpenseService", () => {
         groups: { data: scenario.groupData, error: null },
         groupMembers: { data: scenario.activeMembers, error: null },
       });
-      mockCreateClient.mockReturnValue(mockClient as any);
+      mockCreateClient.mockReturnValue(mockClient as ReturnType<typeof createClient<Database>>);
       supabase = createClient<Database>("url", "key");
 
       // Act & Assert
@@ -174,7 +170,7 @@ describe("ExpenseService", () => {
         expenseSelect: { data: mockCompleteExpenseEUR, error: null },
         expenseSplitsInsert: scenario.expenseSplitsInsert,
       });
-      mockCreateClient.mockReturnValue(mockClient as any);
+      mockCreateClient.mockReturnValue(mockClient as ReturnType<typeof createClient<Database>>);
       supabase = createClient<Database>("url", "key");
 
       // Act
@@ -201,7 +197,7 @@ describe("ExpenseService", () => {
       setupExpenseMocks(mockClient, {
         groups: { data: null, error: { message: "Not found" } },
       });
-      mockCreateClient.mockReturnValue(mockClient as any);
+      mockCreateClient.mockReturnValue(mockClient as ReturnType<typeof createClient<Database>>);
       supabase = createClient<Database>("url", "key");
 
       // Act & Assert
@@ -231,7 +227,7 @@ describe("ExpenseService", () => {
         groups: { data: scenario.groupData, error: null },
         groupMembers: { data: scenario.activeMembers, error: null },
       });
-      mockCreateClient.mockReturnValue(mockClient as any);
+      mockCreateClient.mockReturnValue(mockClient as ReturnType<typeof createClient<Database>>);
       supabase = createClient<Database>("url", "key");
 
       // Act & Assert
@@ -261,7 +257,7 @@ describe("ExpenseService", () => {
         groups: { data: scenario.groupData, error: null },
         groupMembers: { data: scenario.activeMembers, error: null },
       });
-      mockCreateClient.mockReturnValue(mockClient as any);
+      mockCreateClient.mockReturnValue(mockClient as ReturnType<typeof createClient<Database>>);
       supabase = createClient<Database>("url", "key");
 
       // Act & Assert
@@ -285,7 +281,7 @@ describe("ExpenseService", () => {
         groupMembers: { data: scenario.activeMembers, error: null },
         expenseInsert: scenario.expenseInsert,
       });
-      mockCreateClient.mockReturnValue(mockClient as any);
+      mockCreateClient.mockReturnValue(mockClient as ReturnType<typeof createClient<Database>>);
       supabase = createClient<Database>("url", "key");
 
       // Act & Assert
@@ -313,7 +309,7 @@ describe("ExpenseService", () => {
         expenseInsert: scenario.expenseInsert,
         expenseSplitsInsert: scenario.expenseSplitsInsert,
       });
-      mockCreateClient.mockReturnValue(mockClient as any);
+      mockCreateClient.mockReturnValue(mockClient as ReturnType<typeof createClient<Database>>);
       supabase = createClient<Database>("url", "key");
 
       // Act & Assert
@@ -342,7 +338,7 @@ describe("ExpenseService", () => {
         expenseSelect: scenario.expenseSelect,
         expenseSplitsInsert: scenario.expenseSplitsInsert,
       });
-      mockCreateClient.mockReturnValue(mockClient as any);
+      mockCreateClient.mockReturnValue(mockClient as ReturnType<typeof createClient<Database>>);
       supabase = createClient<Database>("url", "key");
 
       // Act & Assert
@@ -377,7 +373,7 @@ describe("ExpenseService", () => {
         groups: { data: scenario.groupData, error: null },
         groupMembers: { data: scenario.activeMembers, error: null },
       });
-      mockCreateClient.mockReturnValue(mockClient as any);
+      mockCreateClient.mockReturnValue(mockClient as ReturnType<typeof createClient<Database>>);
       supabase = createClient<Database>("url", "key");
 
       // Act & Assert - should pass splits validation (empty array is allowed)

@@ -1,14 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import type { SupabaseClient } from "@supabase/supabase-js";
+import type { SupabaseClient, AuthError } from "@supabase/supabase-js";
 import { SignupError, signupUser } from "../../lib/services/authService";
 import type { SignupFormData } from "../../lib/schemas/authSchemas";
-
-// Mock Supabase client
-const mockSupabaseClient = {
-  auth: {
-    signUp: vi.fn(),
-  },
-} as unknown as SupabaseClient;
 
 describe("SignupError", () => {
   describe("UT-authService-01: should_create_error_with_message_and_original_error_when_constructed", () => {
@@ -101,7 +94,7 @@ describe("signupUser", () => {
         code: "user_already_registered",
         status: 400,
         name: "AuthError",
-      } as any;
+      } as AuthError;
       vi.mocked(mockSupabaseClient.auth.signUp).mockResolvedValue({
         data: { user: null, session: null },
         error: supabaseError,

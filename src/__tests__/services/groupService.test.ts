@@ -55,7 +55,7 @@ describe("GroupService", () => {
   describe("createGroup", () => {
     it("should_create_group_successfully_when_valid_currency_and_data", async () => {
       // Arrange
-      const mockSupabaseClient = mockSupabase as any;
+      const mockSupabaseClient = mockSupabase as ReturnType<typeof createClient<Database>>;
       const command = createMockCreateGroupCommand();
       const userId = "user-123";
 
@@ -138,7 +138,7 @@ describe("GroupService", () => {
 
     it("should_throw_currency_not_found_when_invalid_base_currency", async () => {
       // Arrange
-      const mockSupabaseClient = mockSupabase as any;
+      const mockSupabaseClient = mockSupabase as ReturnType<typeof createClient<Database>>;
       const command = createMockCreateGroupCommand({
         base_currency_code: "INVALID",
         invite_emails: [],
@@ -165,7 +165,7 @@ describe("GroupService", () => {
 
     it("should_throw_transaction_error_when_rpc_fails", async () => {
       // Arrange
-      const mockSupabaseClient = mockSupabase as any;
+      const mockSupabaseClient = mockSupabase as ReturnType<typeof createClient<Database>>;
       const command = createMockCreateGroupCommand({
         invite_emails: [],
       });
@@ -884,7 +884,7 @@ describe("GroupService", () => {
   describe("getGroupCurrencies", () => {
     it("should_return_group_currencies_when_user_is_member", async () => {
       // Arrange
-      const mockSupabaseClient = mockSupabase as any;
+      const mockSupabaseClient = mockSupabase as ReturnType<typeof createClient<Database>>;
       const groupId = "group-123";
       const userId = "user-123";
 
@@ -964,7 +964,7 @@ describe("GroupService", () => {
 
     it("should_throw_error_when_user_not_group_member", async () => {
       // Arrange
-      const mockSupabaseClient = mockSupabase as any;
+      const mockSupabaseClient = mockSupabase as ReturnType<typeof createClient<Database>>;
       const groupId = "group-123";
       const userId = "non-member-user";
 
@@ -990,7 +990,7 @@ describe("GroupService", () => {
 
     it("should_return_base_currency_fallback_when_currencies_missing", async () => {
       // Arrange
-      const mockSupabaseClient = mockSupabase as any;
+      const mockSupabaseClient = mockSupabase as ReturnType<typeof createClient<Database>>;
       const groupId = "group-123";
       const userId = "user-123";
 
@@ -1040,7 +1040,7 @@ describe("GroupService", () => {
   describe("getGroupDetails", () => {
     it("should_return_complete_group_details_when_user_is_member", async () => {
       // Arrange
-      const mockSupabaseClient = mockSupabase as any;
+      const mockSupabaseClient = mockSupabase as ReturnType<typeof createClient<Database>>;
       const groupId = "group-123";
       const userId = "user-123";
 
@@ -1207,7 +1207,7 @@ describe("GroupService", () => {
 
     it("should_throw_error_when_group_not_found_or_user_not_member", async () => {
       // Arrange
-      const mockSupabaseClient = mockSupabase as any;
+      const mockSupabaseClient = mockSupabase as ReturnType<typeof createClient<Database>>;
       const groupId = "invalid-group";
       const userId = "user-123";
 
@@ -1234,7 +1234,7 @@ describe("GroupService", () => {
 
     it("should_handle_missing_invitations_gracefully", async () => {
       // Arrange
-      const mockSupabaseClient = mockSupabase as any;
+      const mockSupabaseClient = mockSupabase as ReturnType<typeof createClient<Database>>;
       const groupId = "group-123";
       const userId = "user-123";
 

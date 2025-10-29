@@ -329,7 +329,6 @@ describe("PasswordResetService", () => {
   });
 
   describe("requestPasswordReset", () => {
-    const originalImportMeta = import.meta;
     const originalWindow = global.window;
 
     beforeEach(() => {
