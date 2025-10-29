@@ -11,6 +11,7 @@ System autentykacji Billzilla implementuje kompletny interfejs użytkownika zgod
 #### /login.astro
 
 **Struktura:**
+
 ```
 Layout.astro (showHeader: true)
 └── LoginForm.tsx (client:load)
@@ -23,6 +24,7 @@ Layout.astro (showHeader: true)
 ```
 
 **Logika SSR:**
+
 - Odczyt sesji i przekierowanie na `/` jeśli zalogowany
 - Odczyt parametrów URL: `error`, `error_description`, `redirect`
 - Walidacja parametru `redirect` (bezpieczeństwo Open Redirect)
@@ -30,6 +32,7 @@ Layout.astro (showHeader: true)
 #### /signup.astro
 
 **Struktura:**
+
 ```
 Layout.astro (showHeader: true)
 └── SignupForm.tsx (client:load)
@@ -47,6 +50,7 @@ Layout.astro (showHeader: true)
 #### /reset-password.astro
 
 **Struktura:**
+
 ```
 Layout.astro (showHeader: true)
 └── ResetPasswordForm.tsx (client:load)
@@ -62,6 +66,7 @@ Layout.astro (showHeader: true)
 #### /auth/confirm.astro
 
 **Struktura:**
+
 ```
 Layout.astro (showHeader: true)
 └── EmailConfirmationMessage.tsx (client:load)
@@ -74,6 +79,7 @@ Layout.astro (showHeader: true)
 #### LoginForm.tsx
 
 **Props:**
+
 ```typescript
 interface LoginFormProps {
   errorMessage?: string;
@@ -82,6 +88,7 @@ interface LoginFormProps {
 ```
 
 **Odpowiedzialności:**
+
 - Zarządzanie stanem formularza przez `useAuthForm` (email, password)
 - Walidacja client-side (Zod schema)
 - Wywołanie `signIn` z `useSupabaseAuth`
@@ -95,6 +102,7 @@ interface LoginFormProps {
 #### SignupForm.tsx
 
 **Props:**
+
 ```typescript
 interface SignupFormProps {
   successMessage?: string;
@@ -103,6 +111,7 @@ interface SignupFormProps {
 ```
 
 **Odpowiedzialności:**
+
 - Zarządzanie stanem formularza przez `useAuthForm` (full_name, email, password, confirm_password)
 - Walidacja client-side (Zod schema)
 - Wywołanie `signup` z `useSignup` hook'a
@@ -115,6 +124,7 @@ interface SignupFormProps {
 #### ResetPasswordForm.tsx
 
 **Props:**
+
 ```typescript
 interface ResetPasswordFormProps {
   mode: "request" | "reset";
@@ -125,6 +135,7 @@ interface ResetPasswordFormProps {
 ```
 
 **Odpowiedzialności:**
+
 - Dwutorowa logika: `RequestPasswordResetForm` vs `SetNewPasswordForm`
 - `RequestPasswordResetForm`: używa `useAuthForm` + `usePasswordReset`
 - `SetNewPasswordForm`: używa `useAuthForm` + `useSetNewPassword`
@@ -135,6 +146,7 @@ interface ResetPasswordFormProps {
 #### GoogleOAuthButton.tsx
 
 **Props:**
+
 ```typescript
 interface GoogleOAuthButtonProps {
   mode: "login" | "signup";
@@ -143,6 +155,7 @@ interface GoogleOAuthButtonProps {
 ```
 
 **Odpowiedzialności:**
+
 - Wywołanie `supabase.auth.signInWithOAuth({ provider: 'google' })`
 - Ustawienie odpowiedniego redirect URL
 - Wyświetlanie ikony Google i tekstu przycisku
@@ -151,6 +164,7 @@ interface GoogleOAuthButtonProps {
 #### UserMenu.tsx
 
 **Props:**
+
 ```typescript
 interface UserMenuProps {
   user: {
@@ -163,6 +177,7 @@ interface UserMenuProps {
 ```
 
 **Odpowiedzialności:**
+
 - Wyświetlanie avatara użytkownika (inicjały jeśli brak zdjęcia)
 - Wyświetlanie nazwy i email w dropdown
 - Dropdown menu z opcjami wylogowania przez `useLogout`
@@ -174,19 +189,23 @@ interface UserMenuProps {
 ### Paleta kolorów Billzilla
 
 **Primary Actions:**
+
 - Tło: `bg-primary` (#49A067)
 - Tekst: `text-white`
 - Hover: `hover:bg-primary-dark` (#0E2E24)
 
 **Secondary Actions:**
+
 - OAuth button: `bg-white border-2 border-gray-200 hover:border-primary`
 
 **Backgrounds:**
+
 - Strony auth: `bg-background` (#F9FAF8)
 - Karty/formularze: `bg-white`
 - Granice: `border-gray-100`
 
 **Text:**
+
 - Nagłówki: `text-foreground` (#0C2231) `font-bold tracking-tight`
 - Tekst główny: `text-gray-700`
 - Placeholder: `text-gray-400`
@@ -195,32 +214,31 @@ interface UserMenuProps {
 ### Komponenty UI (Shadcn/ui)
 
 #### Button
+
 ```tsx
-<Button className="w-full bg-primary hover:bg-primary-dark rounded-xl transition-all duration-300">
-  Zaloguj się
-</Button>
+<Button className="w-full bg-primary hover:bg-primary-dark rounded-xl transition-all duration-300">Zaloguj się</Button>
 ```
 
 #### Input
+
 ```tsx
 <Input className="rounded-lg border-gray-200 focus:border-primary focus:ring-primary/40" />
 ```
 
 #### Card/Form Container
+
 ```tsx
-<Card className="bg-white rounded-2xl shadow-md shadow-green-100 p-8 max-w-md mx-auto">
-  {/* Form content */}
-</Card>
+<Card className="bg-white rounded-2xl shadow-md shadow-green-100 p-8 max-w-md mx-auto">{/* Form content */}</Card>
 ```
 
 #### Label
+
 ```tsx
-<Label className="text-sm font-medium text-foreground">
-  Adres e-mail
-</Label>
+<Label className="text-sm font-medium text-foreground">Adres e-mail</Label>
 ```
 
 #### FormField (Custom Component)
+
 ```tsx
 <FormField
   id="email"
@@ -236,6 +254,7 @@ interface UserMenuProps {
 ```
 
 #### StatusMessage (Custom Component)
+
 ```tsx
 <StatusMessage type="success" message="Operacja zakończona pomyślnie!" />
 <StatusMessage type="error" message="Wystąpił błąd" />
@@ -245,6 +264,7 @@ interface UserMenuProps {
 ### Layout stron auth
 
 **Typowa struktura strony logowania:**
+
 ```astro
 <Layout title="Zaloguj się | Billzilla" showHeader={true}>
   <main class="min-h-screen bg-background flex items-center justify-center p-4">
@@ -252,9 +272,7 @@ interface UserMenuProps {
       <!-- Logo -->
       <div class="text-center mb-8">
         <img src="/billzilla-logo.png" alt="Billzilla" class="h-20 w-20 mx-auto rounded-2xl" />
-        <h1 class="mt-4 text-3xl font-bold tracking-tight text-foreground">
-          Witaj z powrotem!
-        </h1>
+        <h1 class="mt-4 text-3xl font-bold tracking-tight text-foreground">Witaj z powrotem!</h1>
         <p class="mt-2 text-gray-600">Zaloguj się do swojego konta</p>
       </div>
 
@@ -279,12 +297,12 @@ interface UserMenuProps {
 
 ### Formularz rejestracji - przyjazne komunikaty
 
-| Pole             | Label                   | Placeholder                           | Komunikat błędu |
-|------------------|-------------------------|---------------------------------------|------------------|
-| full_name        | "Jak mamy Cię nazywać?" | "np. Janusz123, Kasia, MonsterSlayer" | "To pole jest wymagane" / "Nazwa musi mieć minimum 2 znaki" |
-| email            | "Adres e-mail"          | "twoj@email.com"                      | "Adres e-mail jest wymagany" / "Nieprawidłowy format" |
+| Pole             | Label                   | Placeholder                           | Komunikat błędu                                                           |
+| ---------------- | ----------------------- | ------------------------------------- | ------------------------------------------------------------------------- |
+| full_name        | "Jak mamy Cię nazywać?" | "np. Janusz123, Kasia, MonsterSlayer" | "To pole jest wymagane" / "Nazwa musi mieć minimum 2 znaki"               |
+| email            | "Adres e-mail"          | "twoj@email.com"                      | "Adres e-mail jest wymagany" / "Nieprawidłowy format"                     |
 | password         | "Hasło"                 | "••••••••"                            | "Hasło musi mieć minimum 8 znaków" / "Hasło musi zawierać cyfrę i literę" |
-| confirm_password | "Powtórz hasło"         | "••••••••"                            | "Hasła muszą być identyczne" |
+| confirm_password | "Powtórz hasło"         | "••••••••"                            | "Hasła muszą być identyczne"                                              |
 
 ### Filozofia komunikatów
 
@@ -296,6 +314,7 @@ interface UserMenuProps {
 ## 5. Google OAuth Button styling
 
 **Zgodnie z Google Brand Guidelines:**
+
 ```tsx
 <Button
   variant="outline"
@@ -312,16 +331,19 @@ interface UserMenuProps {
 ## 6. Typografia
 
 ### Nagłówki
+
 - H1: `text-3xl font-bold tracking-tight text-foreground`
 - H2: `text-2xl font-bold tracking-tight text-foreground`
 - H3: `text-xl font-semibold text-foreground`
 
 ### Body text
+
 - Normal: `text-base font-normal text-gray-700`
 - Small: `text-sm text-gray-600`
 - Tiny: `text-xs text-gray-500`
 
 ### Links
+
 ```tsx
 <a href="/signup" class="text-primary hover:text-primary-dark font-medium transition-colors">
   Zarejestruj się
@@ -345,6 +367,7 @@ interface UserMenuProps {
 ## 8. Loading states i animacje
 
 ### Loading buttons
+
 ```tsx
 <Button disabled={isLoading}>
   {isLoading ? (
@@ -359,7 +382,9 @@ interface UserMenuProps {
 ```
 
 ### Transitions
+
 Wszystkie komponenty używają:
+
 - `transition-all duration-300 ease-out`
 - `hover:scale-105` dla subtle scale effects
 - `hover:opacity-80` dla linków i ikon
@@ -367,17 +392,20 @@ Wszystkie komponenty używają:
 ## 9. Obsługa błędów UI
 
 ### Błędy walidacji
+
 - Wyświetlane pod polami formularza (czerwony tekst z ikoną)
 - Natychmiastowe czyszczenie błędu przy zmianie wartości pola
 - Obsługa `aria-invalid` i `aria-describedby` dla accessibility
 
 ### Błędy API
+
 - Wyświetlane jako alert nad formularzem przez `Alert` komponent
 - Wyświetlane przez `StatusMessage` komponent w bardziej złożonych przypadkach
 - Mapowane przez `getAuthErrorMessage()` na przyjazne komunikaty w języku polskim
 - Obsługa różnych typów błędów: walidacja, API, OAuth, network
 
 ### Success messages
+
 - **Signup Success:** "Konto zostało utworzone pomyślnie! Sprawdź swoją skrzynkę e-mail i kliknij w link aktywacyjny, aby dokończyć rejestrację. Jeśli nie widzisz wiadomości, sprawdź folder spam."
 - **Password Reset Requested:** "Link do resetowania hasła został wysłany na Twój adres e-mail."
 - **Password Changed:** "Hasło zostało zmienione pomyślnie. Możesz się teraz zalogować."
@@ -386,21 +414,25 @@ Wszystkie komponenty używają:
 ## 10. Accessibility (WCAG)
 
 ### Keyboard navigation
+
 - Wszystkie formularze dostępne z klawiatury
 - Tab order logiczny i przewidywalny
 - Enter do submit formularzy
 
 ### Screen readers
+
 - Odpowiednie `aria-label` i `aria-describedby`
 - Komunikaty błędów ogłaszane przez screen readers
 - Focus indicators widoczne
 
 ### Semantic HTML
+
 - Prawidłowe użycie `<label>` dla pól formularza
 - Role i landmarks gdzie potrzebne
 - Semantic headings (h1, h2, etc.)
 
 ### Color contrast
+
 - Kontrast kolorów spełnia WCAG AA
 - Focus states wyraźnie widoczne
 - Error states wyraźnie wyróżnione
@@ -408,44 +440,52 @@ Wszystkie komponenty używają:
 ## 11. Komponenty modalne i overlay
 
 ### Loading overlay
+
 ```tsx
-{isLoading && (
-  <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-    <div className="bg-white rounded-lg p-6 flex items-center gap-3">
-      <Loader2 className="h-6 w-6 animate-spin" />
-      <span>Trwa logowanie...</span>
+{
+  isLoading && (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg p-6 flex items-center gap-3">
+        <Loader2 className="h-6 w-6 animate-spin" />
+        <span>Trwa logowanie...</span>
+      </div>
     </div>
-  </div>
-)}
+  );
+}
 ```
 
 ### Error toast
+
 ```tsx
-{error && (
-  <div className="fixed top-4 right-4 bg-red-50 border border-red-200 rounded-lg p-4 max-w-sm z-50">
-    <div className="flex items-center gap-2">
-      <AlertCircle className="h-5 w-5 text-red-600" />
-      <p className="text-red-800">{error}</p>
+{
+  error && (
+    <div className="fixed top-4 right-4 bg-red-50 border border-red-200 rounded-lg p-4 max-w-sm z-50">
+      <div className="flex items-center gap-2">
+        <AlertCircle className="h-5 w-5 text-red-600" />
+        <p className="text-red-800">{error}</p>
+      </div>
     </div>
-  </div>
-)}
+  );
+}
 ```
 
 ## 12. Form validation UX
 
 ### Real-time validation
+
 - Walidacja przy blur (opuszczenie pola)
 - Nie blokuje submit - pokazuje błędy po próbie wysłania
 - Czyszczenie błędów przy wprowadzaniu poprawek
 
 ### Password strength indicator
+
 ```tsx
 <div className="space-y-2">
   <Input type="password" placeholder="••••••••" />
   <div className="flex gap-1">
-    <div className={`h-1 flex-1 rounded ${strength >= 1 ? 'bg-red-400' : 'bg-gray-200'}`} />
-    <div className={`h-1 flex-1 rounded ${strength >= 2 ? 'bg-yellow-400' : 'bg-gray-200'}`} />
-    <div className={`h-1 flex-1 rounded ${strength >= 3 ? 'bg-green-400' : 'bg-gray-200'}`} />
+    <div className={`h-1 flex-1 rounded ${strength >= 1 ? "bg-red-400" : "bg-gray-200"}`} />
+    <div className={`h-1 flex-1 rounded ${strength >= 2 ? "bg-yellow-400" : "bg-gray-200"}`} />
+    <div className={`h-1 flex-1 rounded ${strength >= 3 ? "bg-green-400" : "bg-gray-200"}`} />
   </div>
   <p className="text-xs text-gray-600">
     {strength === 0 && "Hasło musi mieć minimum 8 znaków"}
@@ -459,29 +499,29 @@ Wszystkie komponenty używają:
 ## 13. Dark mode considerations
 
 ### CSS Variables
+
 ```css
 :root {
-  --background: #F9FAF8;
-  --foreground: #0C2231;
-  --primary: #49A067;
-  --primary-dark: #0E2E24;
+  --background: #f9faf8;
+  --foreground: #0c2231;
+  --primary: #49a067;
+  --primary-dark: #0e2e24;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0C2231;
-    --foreground: #F9FAF8;
-    --primary: #49A067;
-    --primary-dark: #7BCAA8;
+    --background: #0c2231;
+    --foreground: #f9faf8;
+    --primary: #49a067;
+    --primary-dark: #7bcaa8;
   }
 }
 ```
 
 ### Conditional styling
+
 ```tsx
-<div className="bg-background text-foreground">
-  {/* Content adapts to theme */}
-</div>
+<div className="bg-background text-foreground">{/* Content adapts to theme */}</div>
 ```
 
 ## 14. Etapy implementacji UI

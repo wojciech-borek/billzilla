@@ -7,7 +7,7 @@ import type {
   GroupMemberSummaryDTO,
   GroupCurrencyDTO,
   PendingInvitationDTO,
-  GroupRole
+  GroupRole,
 } from "../../../types";
 
 /**
@@ -21,7 +21,7 @@ export class GroupBuilder {
   private currencies: GroupCurrencyDTO[] = [];
   private invitations: PendingInvitationDTO[] = [];
   private userRole: GroupRole = "member";
-  private userBalance: number = 0;
+  private userBalance = 0;
 
   constructor(supabase: SupabaseClient<Database>) {
     this.supabase = supabase;
@@ -104,8 +104,8 @@ export class GroupBuilder {
     }
 
     // Separate base currency from additional currencies
-    const baseCurrency = this.currencies.find(gc => gc.code === this.groupData.base_currency_code);
-    const additionalCurrencies = this.currencies.filter(gc => gc.code !== this.groupData.base_currency_code);
+    const baseCurrency = this.currencies.find((gc) => gc.code === this.groupData.base_currency_code);
+    const additionalCurrencies = this.currencies.filter((gc) => gc.code !== this.groupData.base_currency_code);
 
     return {
       id: this.groupData.id,

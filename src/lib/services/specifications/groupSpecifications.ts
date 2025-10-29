@@ -111,11 +111,7 @@ export class CurrencyExistsSpecification extends GroupSpecification {
   }
 
   async isSatisfiedBy(currencyCode: string): Promise<boolean> {
-    const { data, error } = await this.supabase
-      .from("currencies")
-      .select("code")
-      .eq("code", currencyCode)
-      .single();
+    const { data, error } = await this.supabase.from("currencies").select("code").eq("code", currencyCode).single();
 
     if (error || !data) {
       throw new CurrencyNotFoundError(currencyCode);

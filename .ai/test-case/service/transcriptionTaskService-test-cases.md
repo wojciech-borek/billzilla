@@ -3,6 +3,7 @@
 ## Task Management Methods
 
 ### UT-TASK-CREATE-001
+
 **Nazwa testu:** `should_create_task_successfully_when_valid_params_provided`  
 **Moduł / funkcja:** `TranscriptionTaskService.createTask`  
 **Cel testu:** Weryfikacja tworzenia nowego zadania transkrypcji z poprawnymi parametrami  
@@ -15,6 +16,7 @@
 **Notatki / uwagi:** Testuje podstawowy happy path tworzenia zadania
 
 ### UT-TASK-CREATE-002
+
 **Nazwa testu:** `should_throw_error_when_database_insert_fails`  
 **Moduł / funkcja:** `TranscriptionTaskService.createTask`  
 **Cel testu:** Weryfikacja obsługi błędu podczas tworzenia zadania  
@@ -27,6 +29,7 @@
 **Notatki / uwagi:** Testuje error handling dla operacji bazy danych
 
 ### UT-TASK-GET-001
+
 **Nazwa testu:** `should_return_task_when_exists_and_user_has_access`  
 **Moduł / funkcja:** `TranscriptionTaskService.getTask`  
 **Cel testu:** Weryfikacja pobierania zadania przez właściciela  
@@ -39,6 +42,7 @@
 **Notatki / uwagi:** Testuje podstawowe pobieranie zadania z RLS
 
 ### UT-TASK-GET-002
+
 **Nazwa testu:** `should_throw_task_not_found_error_when_task_does_not_exist`  
 **Moduł / funkcja:** `TranscriptionTaskService.getTask`  
 **Cel testu:** Weryfikacja obsługi nieistniejącego zadania  
@@ -51,6 +55,7 @@
 **Notatki / uwagi:** Testuje custom error class dla nieistniejących zadań
 
 ### UT-TASK-GET-003
+
 **Nazwa testu:** `should_throw_error_when_database_query_fails`  
 **Moduł / funkcja:** `TranscriptionTaskService.getTask`  
 **Cel testu:** Weryfikacja obsługi błędów bazy danych podczas pobierania  
@@ -63,6 +68,7 @@
 **Notatki / uwagi:** Testuje ogólne błędy bazy danych (nie 404)
 
 ### UT-TASK-COMPLETE-001
+
 **Nazwa testu:** `should_update_task_to_completed_with_results`  
 **Moduł / funkcja:** `TranscriptionTaskService.completeTask`  
 **Cel testu:** Weryfikacja aktualizacji zadania na completed ze wszystkimi danymi  
@@ -75,6 +81,7 @@
 **Notatki / uwagi:** Testuje zakończenie zadania sukcesem
 
 ### UT-TASK-COMPLETE-002
+
 **Nazwa testu:** `should_throw_error_when_task_update_fails`  
 **Moduł / funkcja:** `TranscriptionTaskService.completeTask`  
 **Cel testu:** Weryfikacja obsługi błędu podczas aktualizacji zadania  
@@ -87,6 +94,7 @@
 **Notatki / uwagi:** Testuje error handling dla update operacji
 
 ### UT-TASK-FAIL-001
+
 **Nazwa testu:** `should_update_task_to_failed_with_error_details`  
 **Moduł / funkcja:** `TranscriptionTaskService.failTask`  
 **Cel testu:** Weryfikacja aktualizacji zadania na failed z detalami błędu  
@@ -101,6 +109,7 @@
 ## Processing Pipeline Methods
 
 ### UT-PROCESS-001
+
 **Nazwa testu:** `should_process_task_successfully_through_complete_pipeline`  
 **Moduł / funkcja:** `TranscriptionTaskService.processTask`  
 **Cel testu:** Weryfikacja pełnego przetwarzania zadania od audio do wyniku  
@@ -113,18 +122,20 @@
 **Notatki / uwagi:** Testuje główny happy path procesu przetwarzania
 
 ### UT-PROCESS-002
+
 **Nazwa testu:** `should_calculate_combined_confidence_when_llm_provides_score`  
 **Moduł / funkcja:** `TranscriptionTaskService.processTask`  
 **Cel testu:** Weryfikacja kalkulacji combined confidence score (70% LLM + 30% heuristic)  
 **Wejście / dane testowe:** Expense data z extraction_confidence: 0.8, heuristic confidence: 0.6  
 **Setup / izolacja:** Mock wszystkich zależności  
 **Kroki testowe:** Arrange - setup mocks z konkretnymi wartościami, Act - processTask, Assert - sprawdź obliczony confidence  
-**Oczekiwany rezultat:** Final confidence = 0.7 * 0.8 + 0.3 * 0.6 = 0.68  
+**Oczekiwany rezultat:** Final confidence = 0.7 _ 0.8 + 0.3 _ 0.6 = 0.68  
 **Priorytet:** średni  
 **Edge cases:** LLM confidence = 1.0, heuristic = 0.0; różne kombinacje wartości  
 **Notatki / uwagi:** Testuje logikę weighted average confidence
 
 ### UT-PROCESS-003
+
 **Nazwa testu:** `should_use_heuristic_confidence_when_llm_does_not_provide_score`  
 **Moduł / funkcja:** `TranscriptionTaskService.processTask`  
 **Cel testu:** Weryfikacja fallback do heuristic confidence gdy LLM nie podaje wartości  
@@ -137,6 +148,7 @@
 **Notatki / uwagi:** Testuje fallback logic dla confidence calculation
 
 ### UT-PROCESS-004
+
 **Nazwa testu:** `should_fail_task_and_rethrow_error_when_whisper_transcription_fails`  
 **Moduł / funkcja:** `TranscriptionTaskService.processTask`  
 **Cel testu:** Weryfikacja obsługi błędu w etapie transkrypcji  
@@ -149,6 +161,7 @@
 **Notatki / uwagi:** Testuje error handling w pipeline
 
 ### UT-PROCESS-005
+
 **Nazwa testu:** `should_fail_task_and_rethrow_error_when_llm_extraction_fails`  
 **Moduł / funkcja:** `TranscriptionTaskService.processTask`  
 **Cel testu:** Weryfikacja obsługi błędu w etapie ekstrakcji danych  
@@ -163,6 +176,7 @@
 ## Group Context Methods
 
 ### UT-GROUP-CTX-001
+
 **Nazwa testu:** `should_return_complete_group_context_for_active_member`  
 **Moduł / funkcja:** `TranscriptionTaskService.getGroupContext`  
 **Cel testu:** Weryfikacja pobierania pełnego kontekstu grupy dla aktywnego członka  
@@ -175,6 +189,7 @@
 **Notatki / uwagi:** Testuje podstawowe pobieranie kontekstu grupy
 
 ### UT-GROUP-CTX-002
+
 **Nazwa testu:** `should_throw_group_context_error_when_user_not_active_member`  
 **Moduł / funkcja:** `TranscriptionTaskService.getGroupContext`  
 **Cel testu:** Weryfikacja odmowy dostępu dla nieaktywnego członka  
@@ -187,6 +202,7 @@
 **Notatki / uwagi:** Testuje RLS i access control
 
 ### UT-GROUP-CTX-003
+
 **Nazwa testu:** `should_throw_group_context_error_when_members_fetch_fails`  
 **Moduł / funkcja:** `TranscriptionTaskService.getGroupContext`  
 **Cel testu:** Weryfikacja obsługi błędu podczas pobierania członków grupy  
@@ -199,6 +215,7 @@
 **Notatki / uwagi:** Testuje error handling w kontekście grupy
 
 ### UT-GROUP-CTX-004
+
 **Nazwa testu:** `should_filter_out_members_without_email_in_context`  
 **Moduł / funkcja:** `TranscriptionTaskService.getGroupContext`  
 **Cel testu:** Weryfikacja filtrowania członków bez email  
@@ -213,6 +230,7 @@
 ## Helper Methods (Private)
 
 ### UT-HELPER-WHISPER-001
+
 **Nazwa testu:** `should_build_whisper_prompt_with_group_and_members_info`  
 **Moduł / funkcja:** `TranscriptionTaskService.buildWhisperPrompt` (pośrednio przez processTask)  
 **Cel testu:** Weryfikacja budowy prompt dla Whisper z kontekstem grupy  
@@ -225,6 +243,7 @@
 **Notatki / uwagi:** Testuje prompt engineering dla Whisper
 
 ### UT-HELPER-LLM-001
+
 **Nazwa testu:** `should_build_comprehensive_llm_context_with_instructions`  
 **Moduł / funkcja:** `TranscriptionTaskService.buildLLMContext` (pośrednio przez processTask)  
 **Cel testu:** Weryfikacja budowy kontekstu dla LLM z instrukcjami ekstrakcji  
@@ -237,6 +256,7 @@
 **Notatki / uwagi:** Testuje prompt engineering dla LLM
 
 ### UT-HELPER-CONFIDENCE-001
+
 **Nazwa testu:** `should_calculate_high_confidence_for_complete_expense_data`  
 **Moduł / funkcja:** `TranscriptionTaskService.calculateHeuristicConfidence` (pośrednio przez processTask)  
 **Cel testu:** Weryfikacja wysokiej pewności dla kompletnych danych wydatku  
@@ -249,6 +269,7 @@
 **Notatki / uwagi:** Testuje confidence calculation logic
 
 ### UT-HELPER-CONFIDENCE-002
+
 **Nazwa testu:** `should_calculate_medium_confidence_for_basic_expense_data`  
 **Moduł / funkcja:** `TranscriptionTaskService.calculateHeuristicConfidence`  
 **Cel testu:** Weryfikacja średniej pewności dla podstawowych danych  
@@ -261,6 +282,7 @@
 **Notatki / uwagi:** Testuje confidence dla minimalnych danych
 
 ### UT-HELPER-CONFIDENCE-003
+
 **Nazwa testu:** `should_apply_penalty_for_incorrect_splits_sum`  
 **Moduł / funkcja:** `TranscriptionTaskService.calculateHeuristicConfidence`  
 **Cel testu:** Weryfikacja kary za niepoprawną sumę splits  
@@ -275,6 +297,7 @@
 ## Custom Error Classes
 
 ### UT-ERROR-001
+
 **Nazwa testu:** `should_create_task_not_found_error_with_task_id`  
 **Moduł / funkcja:** TaskNotFoundError constructor  
 **Cel testu:** Weryfikacja tworzenia custom error dla nieistniejącego zadania  
@@ -287,6 +310,7 @@
 **Notatki / uwagi:** Testuje custom error class instantiation
 
 ### UT-ERROR-002
+
 **Nazwa testu:** `should_create_task_processing_error_with_code_and_message`  
 **Moduł / funkcja:** TaskProcessingError constructor  
 **Cel testu:** Weryfikacja tworzenia error z kodem i wiadomością  
@@ -301,6 +325,7 @@
 ## Summary
 
 Najważniejsze moduły do pokrycia unit testami to:
+
 1. **Processing Pipeline** (`processTask`) - główna logika biznesowa wymagająca kompleksowego testowania integracji z zewnętrznymi serwisami
 2. **Task Management** (`createTask`, `getTask`, `completeTask`, `failTask`) - krytyczne operacje CRUD na zadaniach z obsługą błędów
 3. **Group Context** (`getGroupContext`) - dostęp do danych grupy z kontrolą uprawnień i walidacją

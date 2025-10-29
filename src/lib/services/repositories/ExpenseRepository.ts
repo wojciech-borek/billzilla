@@ -11,17 +11,20 @@ export class ExpenseRepository {
   /**
    * Fetch group membership and basic info for validation
    */
-  async fetchGroupMembershipAndCurrencies(groupId: string, userId: string): Promise<{
+  async fetchGroupMembershipAndCurrencies(
+    groupId: string,
+    userId: string
+  ): Promise<{
     id: string;
     base_currency_code: string;
-    group_currencies: Array<{
+    group_currencies: {
       currency_code: string;
       exchange_rate: number;
-    }>;
-    group_members: Array<{
+    }[];
+    group_members: {
       profile_id: string;
       status: string;
-    }>;
+    }[];
   }> {
     const { data: groupData, error: groupError } = await this.supabase
       .from("groups")
@@ -54,9 +57,12 @@ export class ExpenseRepository {
   /**
    * Fetch all active group members
    */
-  async fetchActiveGroupMembers(groupId: string): Promise<Array<{
-    profile_id: string;
-  }> | null> {
+  async fetchActiveGroupMembers(groupId: string): Promise<
+    | {
+        profile_id: string;
+      }[]
+    | null
+  > {
     const result = await this.supabase
       .from("group_members")
       .select("profile_id")
@@ -64,7 +70,8 @@ export class ExpenseRepository {
       .eq("status", "active");
 
     // Handle both real Supabase responses {data, error} and test mocks that return data directly
-    const { data: groupMembers, error: membersError } = result.data !== undefined ? result : { data: result, error: null };
+    const { data: groupMembers, error: membersError } =
+      result.data !== undefined ? result : { data: result, error: null };
 
     if (membersError) {
       throw new Error("Database error while fetching group members");
@@ -101,14 +108,14 @@ export class ExpenseRepository {
   /**
    * Create expense splits
    */
-  async createExpenseSplits(splits: Array<{
-    expense_id: string;
-    profile_id: string;
-    amount: number;
-  }>): Promise<void> {
-    const { error: splitsInsertError } = await this.supabase
-      .from("expense_splits")
-      .insert(splits);
+  async createExpenseSplits(
+    splits: {
+      expense_id: string;
+      profile_id: string;
+      amount: number;
+    }[]
+  ): Promise<void> {
+    const { error: splitsInsertError } = await this.supabase.from("expense_splits").insert(splits);
 
     if (splitsInsertError) {
       throw new Error("Failed to create expense splits");
@@ -162,27 +169,23 @@ export class ExpenseRepository {
    * Delete expense (for rollback purposes)
    */
   async deleteExpense(expenseId: string): Promise<void> {
-    await this.supabase
-      .from("expenses")
-      .delete()
-      .eq("id", expenseId);
+    await this.supabase.from("expenses").delete().eq("id", expenseId);
   }
 
   /**
    * Fetch expenses for a group (for future use - listing expenses)
    */
-  async fetchGroupExpenses(groupId: string, userId: string, options?: {
-    limit?: number;
-    offset?: number;
-    orderBy?: 'created_at' | 'expense_date' | 'amount';
-    orderDirection?: 'asc' | 'desc';
-  }): Promise<any[]> {
-    const {
-      limit = 50,
-      offset = 0,
-      orderBy = 'created_at',
-      orderDirection = 'desc'
-    } = options || {};
+  async fetchGroupExpenses(
+    groupId: string,
+    userId: string,
+    options?: {
+      limit?: number;
+      offset?: number;
+      orderBy?: "created_at" | "expense_date" | "amount";
+      orderDirection?: "asc" | "desc";
+    }
+  ): Promise<any[]> {
+    const { limit = 50, offset = 0, orderBy = "created_at", orderDirection = "desc" } = options || {};
 
     // First verify user is member of the group
     const isMember = await this.verifyGroupMembership(groupId, userId);
@@ -192,7 +195,8 @@ export class ExpenseRepository {
 
     const { data: expenses, error: expensesError } = await this.supabase
       .from("expenses")
-      .select(`
+      .select(
+        `
         id,
         group_id,
         description,
@@ -216,9 +220,10 @@ export class ExpenseRepository {
             avatar_url
           )
         )
-      `)
+      `
+      )
       .eq("group_id", groupId)
-      .order(orderBy, { ascending: orderDirection === 'asc' })
+      .order(orderBy, { ascending: orderDirection === "asc" })
       .range(offset, offset + limit - 1);
 
     if (expensesError) {

@@ -3,6 +3,7 @@
 ## validateAndEstablishSession
 
 ### UT-PRS-VAES-001
+
 **Nazwa testu:** should_return_success_when_valid_session_tokens_provided  
 **Moduł / funkcja:** PasswordResetService.validateAndEstablishSession  
 **Cel testu:** Weryfikacja poprawnego ustawiania sesji przy użyciu accessToken i refreshToken  
@@ -12,9 +13,10 @@
 **Oczekiwany rezultat:** { success: true }  
 **Priorytet:** wysoki  
 **Edge cases:** Brak accessToken (tylko refreshToken), pusty accessToken  
-**Notatki / uwagi:** Testuje priorytetową ścieżkę dla hosted session flow  
+**Notatki / uwagi:** Testuje priorytetową ścieżkę dla hosted session flow
 
 ### UT-PRS-VAES-002
+
 **Nazwa testu:** should_return_error_when_setSession_fails  
 **Moduł / funkcja:** PasswordResetService.validateAndEstablishSession  
 **Cel testu:** Weryfikacja obsługi błędu podczas ustawiania sesji  
@@ -24,9 +26,10 @@
 **Oczekiwany rezultat:** { success: false, error: przetworzona wiadomość błędu przez getAuthErrorMessage }  
 **Priorytet:** wysoki  
 **Edge cases:** Network timeout, invalid token format  
-**Notatki / uwagi:** Testuje obsługę błędów z Supabase  
+**Notatki / uwagi:** Testuje obsługę błędów z Supabase
 
 ### UT-PRS-VAES-003
+
 **Nazwa testu:** should_return_error_when_no_valid_token_provided  
 **Moduł / funkcja:** PasswordResetService.validateAndEstablishSession  
 **Cel testu:** Weryfikacja walidacji obecności tokenu  
@@ -36,21 +39,23 @@
 **Oczekiwany rezultat:** { success: false, error: "Brak prawidłowego tokenu resetowania hasła" }  
 **Priorytet:** wysoki  
 **Edge cases:** token = null, tokenHash = undefined  
-**Notatki / uwagi:** Testuje early return dla nieprawidłowych danych wejściowych  
+**Notatki / uwagi:** Testuje early return dla nieprawidłowych danych wejściowych
 
 ### UT-PRS-VAES-004
-**Nazwa testu:** should_verify_pkce_token_successfully  
+
+**Nazwa testu:** should*verify_pkce_token_successfully  
 **Moduł / funkcja:** PasswordResetService.validateAndEstablishSession  
-**Cel testu:** Weryfikacja obsługi PKCE tokenów zaczynających się od "pkce_"  
-**Wejście / dane testowe:** tokens = { token: "pkce_valid_token_hash" }  
+**Cel testu:** Weryfikacja obsługi PKCE tokenów zaczynających się od "pkce*"  
+**Wejście / dane testowe:** tokens = { token: "pkce*valid_token_hash" }  
 **Setup / izolacja:** Mock supabase.auth.verifyOtp() aby zwracał { error: null } dla type: "recovery"  
 **Kroki testowe:** Arrange: Utwórz instancję PasswordResetService z zamockowanym supabase; Act: Wywołaj validateAndEstablishSession z PKCE tokenem; Assert: Sprawdź czy wywołano verifyOtp z prawidłowym token_hash  
 **Oczekiwany rezultat:** { success: true }  
 **Priorytet:** średni  
-**Edge cases:** PKCE token bez prefixu "pkce_", tokenHash zamiast token  
-**Notatki / uwagi:** Testuje specyficzną logikę rozpoznawania PKCE tokenów  
+**Edge cases:** PKCE token bez prefixu "pkce*", tokenHash zamiast token  
+**Notatki / uwagi:** Testuje specyficzną logikę rozpoznawania PKCE tokenów
 
 ### UT-PRS-VAES-005
+
 **Nazwa testu:** should_verify_regular_token_successfully  
 **Moduł / funkcja:** PasswordResetService.validateAndEstablishSession  
 **Cel testu:** Weryfikacja obsługi zwykłych tokenów hash  
@@ -60,9 +65,10 @@
 **Oczekiwany rezultat:** { success: true }  
 **Priorytet:** średni  
 **Edge cases:** Zarówno token jak i tokenHash podane (priorytet token), nieprawidłowy format hash  
-**Notatki / uwagi:** Testuje standardową ścieżkę weryfikacji tokenów  
+**Notatki / uwagi:** Testuje standardową ścieżkę weryfikacji tokenów
 
 ### UT-PRS-VAES-006
+
 **Nazwa testu:** should_return_error_when_verifyOtp_fails  
 **Moduł / funkcja:** PasswordResetService.validateAndEstablishSession  
 **Cel testu:** Weryfikacja obsługi błędu podczas weryfikacji OTP  
@@ -72,9 +78,10 @@
 **Oczekiwany rezultat:** { success: false, error: przetworzona wiadomość błędu przez getAuthErrorMessage }  
 **Priorytet:** wysoki  
 **Edge cases:** Expired token, malformed token  
-**Notatki / uwagi:** Testuje obsługę błędów w ścieżce OTP  
+**Notatki / uwagi:** Testuje obsługę błędów w ścieżce OTP
 
 ### UT-PRS-VAES-007
+
 **Nazwa testu:** should_handle_unexpected_exception  
 **Moduł / funkcja:** PasswordResetService.validateAndEstablishSession  
 **Cel testu:** Weryfikacja obsługi nieoczekiwanych wyjątków  
@@ -84,11 +91,12 @@
 **Oczekiwany rezultat:** { success: false, error: przetworzona wiadomość błędu przez getAuthErrorMessage }  
 **Priorytet:** niski  
 **Edge cases:** Network errors, Supabase service unavailable  
-**Notatki / uwagi:** Testuje catch block dla nieoczekiwanych błędów  
+**Notatki / uwagi:** Testuje catch block dla nieoczekiwanych błędów
 
 ## updatePassword
 
 ### UT-PRS-UP-001
+
 **Nazwa testu:** should_update_password_and_sign_out_successfully  
 **Moduł / funkcja:** PasswordResetService.updatePassword  
 **Cel testu:** Weryfikacja kompletnego flow aktualizacji hasła z wylogowaniem  
@@ -98,9 +106,10 @@
 **Oczekiwany rezultat:** { success: true }, signOut wywołany dokładnie raz  
 **Priorytet:** wysoki  
 **Edge cases:** Hasło bez znaków specjalnych, bardzo długie hasło  
-**Notatki / uwagi:** Testuje główną ścieżkę sukcesu z wymaganym signOut dla bezpieczeństwa  
+**Notatki / uwagi:** Testuje główną ścieżkę sukcesu z wymaganym signOut dla bezpieczeństwa
 
 ### UT-PRS-UP-002
+
 **Nazwa testu:** should_return_error_when_updateUser_fails  
 **Moduł / funkcja:** PasswordResetService.updatePassword  
 **Cel testu:** Weryfikacja obsługi błędu podczas aktualizacji hasła  
@@ -110,9 +119,10 @@
 **Oczekiwany rezultat:** { success: false, error: przetworzona wiadomość błędu przez getAuthErrorMessage }, signOut nie wywołany  
 **Priorytet:** wysoki  
 **Edge cases:** Password policy violation, user not authenticated  
-**Notatki / uwagi:** Testuje że signOut nie jest wykonywany przy błędzie aktualizacji  
+**Notatki / uwagi:** Testuje że signOut nie jest wykonywany przy błędzie aktualizacji
 
 ### UT-PRS-UP-003
+
 **Nazwa testu:** should_handle_exception_during_signOut  
 **Moduł / funkcja:** PasswordResetService.updatePassword  
 **Cel testu:** Weryfikacja zachowania gdy updateUser się powiedzie ale signOut zawiedzie  
@@ -122,9 +132,10 @@
 **Oczekiwany rezultat:** { success: true } (signOut failure nie wpływa na wynik)  
 **Priorytet:** średni  
 **Edge cases:** Network issues during signOut, session already expired  
-**Notatki / uwagi:** Testuje że błąd signOut nie psuje pozytywnego wyniku aktualizacji hasła  
+**Notatki / uwagi:** Testuje że błąd signOut nie psuje pozytywnego wyniku aktualizacji hasła
 
 ### UT-PRS-UP-004
+
 **Nazwa testu:** should_handle_unexpected_exception  
 **Moduł / funkcja:** PasswordResetService.updatePassword  
 **Cel testu:** Weryfikacja obsługi nieoczekiwanych wyjątków w całym flow  
@@ -134,11 +145,12 @@
 **Oczekiwany rezultat:** { success: false, error: przetworzona wiadomość błędu przez getAuthErrorMessage }  
 **Priorytet:** niski  
 **Edge cases:** Supabase service unavailable, network timeout  
-**Notatki / uwagi:** Testuje catch block dla nieoczekiwanych błędów  
+**Notatki / uwagi:** Testuje catch block dla nieoczekiwanych błędów
 
 ## requestPasswordReset
 
 ### UT-PRS-RPR-001
+
 **Nazwa testu:** should_request_reset_in_development_environment  
 **Moduł / funkcja:** PasswordResetService.requestPasswordReset  
 **Cel testu:** Weryfikacja generowania prawidłowego redirect URL w środowisku deweloperskim  
@@ -148,9 +160,10 @@
 **Oczekiwany rezultat:** { success: true }, redirectTo = "http://localhost:3000/auth/recovery"  
 **Priorytet:** wysoki  
 **Edge cases:** import.meta.env.DEV = false, niestandardowy port localhost  
-**Notatki / uwagi:** Testuje logikę warunkową dla środowiska development  
+**Notatki / uwagi:** Testuje logikę warunkową dla środowiska development
 
 ### UT-PRS-RPR-002
+
 **Nazwa testu:** should_request_reset_in_production_environment  
 **Moduł / funkcja:** PasswordResetService.requestPasswordReset  
 **Cel testu:** Weryfikacja generowania prawidłowego redirect URL w środowisku produkcyjnym  
@@ -160,9 +173,10 @@
 **Oczekiwany rezultat:** { success: true }, redirectTo = "https://app.example.com/auth/recovery"  
 **Priorytet:** wysoki  
 **Edge cases:** HTTP vs HTTPS, subdomain handling  
-**Notatki / uwagi:** Testuje produkcyjną ścieżkę generowania URL  
+**Notatki / uwagi:** Testuje produkcyjną ścieżkę generowania URL
 
 ### UT-PRS-RPR-003
+
 **Nazwa testu:** should_return_error_when_resetPasswordForEmail_fails  
 **Moduł / funkcja:** PasswordResetService.requestPasswordReset  
 **Cel testu:** Weryfikacja obsługi błędu podczas wysyłania żądania resetowania  
@@ -172,9 +186,10 @@
 **Oczekiwany rezultat:** { success: false, error: przetworzona wiadomość błędu przez getAuthErrorMessage }  
 **Priorytet:** wysoki  
 **Edge cases:** Invalid email format, user not found, rate limiting  
-**Notatki / uwagi:** Testuje obsługę błędów z Supabase resetPasswordForEmail  
+**Notatki / uwagi:** Testuje obsługę błędów z Supabase resetPasswordForEmail
 
 ### UT-PRS-RPR-004
+
 **Nazwa testu:** should_handle_unexpected_exception  
 **Moduł / funkcja:** PasswordResetService.requestPasswordReset  
 **Cel testu:** Weryfikacja obsługi nieoczekiwanych wyjątków  
@@ -184,9 +199,10 @@
 **Oczekiwany rezultat:** { success: false, error: przetworzona wiadomość błędu przez getAuthErrorMessage }  
 **Priorytet:** niski  
 **Edge cases:** Network errors, Supabase service unavailable  
-**Notatki / uwagi:** Testuje catch block dla nieoczekiwanych błędów  
+**Notatki / uwagi:** Testuje catch block dla nieoczekiwanych błędów
 
 ### UT-PRS-RPR-005
+
 **Nazwa testu:** should_validate_email_parameter  
 **Moduł / funkcja:** PasswordResetService.requestPasswordReset  
 **Cel testu:** Weryfikacja przekazywania email do Supabase  
@@ -196,11 +212,12 @@
 **Oczekiwany rezultat:** resetPasswordForEmail wywołany z prawidłowym emailem i redirectTo  
 **Priorytet:** średni  
 **Edge cases:** Empty email, malformed email, very long email  
-**Notatki / uwagi:** Testuje że parametr email jest prawidłowo przekazywany do Supabase  
+**Notatki / uwagi:** Testuje że parametr email jest prawidłowo przekazywany do Supabase
 
 ## Podsumowanie
 
 Najważniejsze moduły do pokrycia unit testami to:
+
 - `validateAndEstablishSession` - najbardziej złożona metoda z wieloma ścieżkami wykonania i priorytetami tokenów
 - `updatePassword` - krytyczna dla bezpieczeństwa operacja wymagająca testowania kompletnego flow z signOut
 - `requestPasswordReset` - kluczowa metoda inicjalizacji resetowania hasła z logiką środowiskową

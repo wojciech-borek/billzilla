@@ -1,7 +1,13 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "../../db/database.types";
-import { createExpense, ExpenseValidationError, ExpenseAccessError, ExpenseTransactionError, ExpenseDataError } from "../../lib/services/expenseService";
+import {
+  createExpense,
+  ExpenseValidationError,
+  ExpenseAccessError,
+  ExpenseTransactionError,
+  ExpenseDataError,
+} from "../../lib/services/expenseService";
 import type { CreateExpenseCommand, ExpenseDTO } from "../../types";
 import {
   createMockSupabaseClient,
@@ -345,7 +351,9 @@ describe("ExpenseService", () => {
         expect.fail("Expected ExpenseDataError to be thrown");
       } catch (error) {
         expect(error).toBeInstanceOf(ExpenseDataError);
-        expect((error as ExpenseDataError).message).toBe("Failed to retrieve created expense: Failed to retrieve created expense");
+        expect((error as ExpenseDataError).message).toBe(
+          "Failed to retrieve created expense: Failed to retrieve created expense"
+        );
       }
     });
 

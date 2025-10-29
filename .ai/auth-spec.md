@@ -7,6 +7,7 @@
 **Opis:** Użytkownicy mogą tworzyć konta i logować się używając adresu e-mail i hasła.
 
 **Akceptacja:**
+
 - Strona `/signup` zawiera formularz rejestracji z polami: nazwa użytkownika, e-mail, hasło, potwierdzenie hasła
 - Strona `/login` zawiera formularz logowania z polami: e-mail, hasło
 - Hasło musi mieć minimum 8 znaków, zawierać cyfry i litery
@@ -19,6 +20,7 @@
 **Opis:** Użytkownicy mogą logować się używając konta Google.
 
 **Akceptacja:**
+
 - Przycisk "Kontynuuj z Google" dostępny na stronach `/login` i `/signup`
 - Proces OAuth przekierowuje na Google do uwierzytelnienia
 - Po pomyślnym logowaniu użytkownik zostaje automatycznie zarejestrowany (jeśli konto nie istnieje)
@@ -29,6 +31,7 @@
 **Opis:** Użytkownicy mogą resetować zapomniane hasło.
 
 **Akceptacja:**
+
 - Link "Zapomniałeś hasła?" na stronie logowania
 - Formularz resetowania hasła akceptuje adres e-mail
 - Wysyłany jest bezpieczny link resetujący hasło
@@ -40,6 +43,7 @@
 **Opis:** System chroni wrażliwe części aplikacji przed dostępem niezalogowanych użytkowników.
 
 **Akceptacja:**
+
 - Strony publiczne: `/login`, `/signup`, `/reset-password`, `/about`
 - Wszystkie pozostałe strony wymagają aktywnej sesji
 - Próba dostępu bez logowania przekierowuje na `/login`
@@ -204,6 +208,7 @@ Wszystkie komponenty autentykacji muszą być zgodne z brandingiem Billzilla:
 
 ---
 
-*Szczegóły implementacyjne znajdują się w dokumentach:*
+_Szczegóły implementacyjne znajdują się w dokumentach:_
+
 - `.ai/endpoint-plan/auth-implementation-plan.md` - Szczegóły techniczne
 - `.ai/ui-plan/auth-ui-implementation-plan.md` - Szczegóły UI

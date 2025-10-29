@@ -4,8 +4,10 @@ import type { CreateGroupSuccessResult } from "../../lib/schemas/groupSchemas";
 
 interface CreateGroupModalProps {
   open: boolean;
-  onOpenChange: (open: boolean) => void;
+  onOpenChange?: (open: boolean) => void;
   onSuccess?: (result: CreateGroupSuccessResult) => void;
+  cancelUrl?: string;
+  successUrl?: string;
 }
 
 /**
@@ -13,18 +15,32 @@ interface CreateGroupModalProps {
  * Wraps CreateGroupForm in a Dialog component
  * Can be used from dashboard, group detail view, or any other location
  */
-export default function CreateGroupModal({ open, onOpenChange, onSuccess }: CreateGroupModalProps) {
+export default function CreateGroupModal({
+  open,
+  onOpenChange,
+  onSuccess,
+  cancelUrl,
+  successUrl,
+}: CreateGroupModalProps) {
   const handleCancel = () => {
-    onOpenChange(false);
+    if (cancelUrl) {
+      window.location.href = cancelUrl;
+    } else {
+      onOpenChange?.(false);
+    }
   };
 
   const handleSuccess = (result: CreateGroupSuccessResult) => {
-    onOpenChange(false);
     onSuccess?.(result);
+    if (successUrl) {
+      window.location.href = successUrl;
+    } else {
+      onOpenChange?.(false);
+    }
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={onOpenChange || (() => {})}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" data-testid="create-group-modal">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold text-foreground" data-testid="create-group-modal-title">

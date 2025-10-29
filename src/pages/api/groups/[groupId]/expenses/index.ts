@@ -5,11 +5,7 @@
 
 import type { APIRoute } from "astro";
 import { createExpenseSchema } from "../../../../../lib/schemas/expenseSchemas";
-import {
-  createExpense,
-  ExpenseValidationError,
-  ExpenseAccessError,
-} from "../../../../../lib/services/expenseService";
+import { createExpense, ExpenseValidationError, ExpenseAccessError } from "../../../../../lib/services/expenseService";
 import type { ErrorResponseDTO } from "../../../../../types";
 
 export const prerender = false;

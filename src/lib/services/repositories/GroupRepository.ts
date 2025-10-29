@@ -13,12 +13,7 @@ export class GroupRepository {
   /**
    * Fetch groups where user is a member with their role
    */
-  async fetchUserGroupsWithRoles(
-    userId: string,
-    status: GroupStatus,
-    limit: number,
-    offset: number
-  ): Promise<any[]> {
+  async fetchUserGroupsWithRoles(userId: string, status: GroupStatus, limit: number, offset: number): Promise<any[]> {
     const { data: userGroups, error: groupsError } = await this.supabase
       .from("groups")
       .select(
@@ -165,7 +160,10 @@ export class GroupRepository {
     });
 
     if (groupError || !newGroupData || newGroupData.length === 0) {
-      throw new GroupDataError("create group atomically", `Failed to create group: ${groupError?.message || "Unknown error"}`);
+      throw new GroupDataError(
+        "create group atomically",
+        `Failed to create group: ${groupError?.message || "Unknown error"}`
+      );
     }
 
     return newGroupData[0];

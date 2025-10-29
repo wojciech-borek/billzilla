@@ -3,6 +3,7 @@
 ## Moduł: uploadAudioForTranscription
 
 ### UT-UPLOAD-001
+
 **Nazwa testu**: `should_return_transcription_task_when_valid_audio_uploaded_successfully`  
 **Moduł / funkcja**: `uploadAudioForTranscription`  
 **Cel testu**: Weryfikuje poprawne utworzenie zadania transkrypcji przy prawidłowych danych wejściowych  
@@ -15,6 +16,7 @@
 **Notatki / uwagi**: Test integruje walidację wejścia i komunikację HTTP
 
 ### UT-UPLOAD-002
+
 **Nazwa testu**: `should_throw_error_when_audio_blob_missing`  
 **Moduł / funkcja**: `uploadAudioForTranscription`  
 **Cel testu**: Weryfikuje obsługę brakującego blob audio  
@@ -27,6 +29,7 @@
 **Notatki / uwagi**: Test czystej walidacji wejścia bez zależności zewnętrznych
 
 ### UT-UPLOAD-003
+
 **Nazwa testu**: `should_throw_error_when_group_id_missing`  
 **Moduł / funkcja**: `uploadAudioForTranscription`  
 **Cel testu**: Weryfikuje obsługę brakującego identyfikatora grupy  
@@ -39,6 +42,7 @@
 **Notatki / uwagi**: Test walidacji obowiązkowych parametrów
 
 ### UT-UPLOAD-004
+
 **Nazwa testu**: `should_throw_error_when_audio_file_too_large`  
 **Moduł / funkcja**: `uploadAudioForTranscription`  
 **Cel testu**: Weryfikuje walidację maksymalnego rozmiaru pliku (25MB)  
@@ -51,6 +55,7 @@
 **Notatki / uwagi**: Krytyczna walidacja biznesowa dla limitów API
 
 ### UT-UPLOAD-005
+
 **Nazwa testu**: `should_throw_error_when_invalid_mime_type`  
 **Moduł / funkcja**: `uploadAudioForTranscription`  
 **Cel testu**: Weryfikuje walidację typu MIME audio  
@@ -63,6 +68,7 @@
 **Notatki / uwagi**: Walidacja formatów obsługiwanych przez API transkrypcji
 
 ### UT-UPLOAD-006
+
 **Nazwa testu**: `should_throw_error_when_server_returns_400_bad_request`  
 **Moduł / funkcja**: `uploadAudioForTranscription`  
 **Cel testu**: Weryfikuje obsługę błędu 400 z serwera  
@@ -75,6 +81,7 @@
 **Notatki / uwagi**: Test parsowania błędów HTTP
 
 ### UT-UPLOAD-007
+
 **Nazwa testu**: `should_throw_error_when_server_returns_401_unauthorized`  
 **Moduł / funkcja**: `uploadAudioForTranscription`  
 **Cel testu**: Weryfikuje obsługę błędu 401 z serwera  
@@ -87,6 +94,7 @@
 **Notatki / uwagi**: Test błędów autoryzacji
 
 ### UT-UPLOAD-008
+
 **Nazwa testu**: `should_throw_error_when_server_returns_403_forbidden`  
 **Moduł / funkcja**: `uploadAudioForTranscription`  
 **Cel testu**: Weryfikuje obsługę błędu 403 z serwera  
@@ -99,6 +107,7 @@
 **Notatki / uwagi**: Test błędów dostępu
 
 ### UT-UPLOAD-009
+
 **Nazwa testu**: `should_throw_error_when_server_returns_413_payload_too_large`  
 **Moduł / funkcja**: `uploadAudioForTranscription`  
 **Cel testu**: Weryfikuje obsługę błędu 413 z serwera  
@@ -111,6 +120,7 @@
 **Notatki / uwagi**: Test duplikacji walidacji po stronie serwera
 
 ### UT-UPLOAD-010
+
 **Nazwa testu**: `should_throw_error_when_server_returns_503_service_unavailable`  
 **Moduł / funkcja**: `uploadAudioForTranscription`  
 **Cel testu**: Weryfikuje obsługę błędu 503 z serwera  
@@ -123,6 +133,7 @@
 **Notatki / uwagi**: Test dostępności usługi zewnętrznej
 
 ### UT-UPLOAD-011
+
 **Nazwa testu**: `should_throw_error_when_server_returns_500_internal_error`  
 **Moduł / funkcja**: `uploadAudioForTranscription`  
 **Cel testu**: Weryfikuje obsługę błędów 5xx z serwera  
@@ -135,6 +146,7 @@
 **Notatki / uwagi**: Test ogólnych błędów serwera
 
 ### UT-UPLOAD-012
+
 **Nazwa testu**: `should_use_error_message_from_api_response_when_available`  
 **Moduł / funkcja**: `uploadAudioForTranscription`  
 **Cel testu**: Weryfikuje parsowanie szczegółowych błędów z odpowiedzi API  
@@ -147,6 +159,7 @@
 **Notatki / uwagi**: Test parsowania błędów API
 
 ### UT-UPLOAD-013
+
 **Nazwa testu**: `should_throw_generic_error_when_fetch_fails_unexpectedly`  
 **Moduł / funkcja**: `uploadAudioForTranscription`  
 **Cel testu**: Weryfikuje obsługę nieoczekiwanych błędów fetch  
@@ -161,6 +174,7 @@
 ## Moduł: getTranscriptionTaskStatus
 
 ### UT-STATUS-001
+
 **Nazwa testu**: `should_return_task_status_when_task_exists`  
 **Moduł / funkcja**: `getTranscriptionTaskStatus`  
 **Cel testu**: Weryfikuje poprawne pobranie statusu zadania  
@@ -173,6 +187,7 @@
 **Notatki / uwagi**: Podstawowa funkcjonalność pobierania statusu
 
 ### UT-STATUS-002
+
 **Nazwa testu**: `should_throw_error_when_task_id_missing`  
 **Moduł / funkcja**: `getTranscriptionTaskStatus`  
 **Cel testu**: Weryfikuje walidację brakującego identyfikatora zadania  
@@ -185,6 +200,7 @@
 **Notatki / uwagi**: Walidacja obowiązkowych parametrów
 
 ### UT-STATUS-003
+
 **Nazwa testu**: `should_throw_error_when_task_not_found`  
 **Moduł / funkcja**: `getTranscriptionTaskStatus`  
 **Cel testu**: Weryfikuje obsługę nieistniejącego zadania  
@@ -197,6 +213,7 @@
 **Notatki / uwagi**: Obsługa błędów API
 
 ### UT-STATUS-004
+
 **Nazwa testu**: `should_throw_error_when_unauthorized_access`  
 **Moduł / funkcja**: `getTranscriptionTaskStatus`  
 **Cel testu**: Weryfikuje obsługę błędu 401  
@@ -209,6 +226,7 @@
 **Notatki / uwagi**: Test autoryzacji
 
 ### UT-STATUS-005
+
 **Nazwa testu**: `should_throw_error_when_server_error_occurs`  
 **Moduł / funkcja**: `getTranscriptionTaskStatus`  
 **Cel testu**: Weryfikuje obsługę błędów serwera  
@@ -221,6 +239,7 @@
 **Notatki / uwagi**: Test błędów infrastruktury
 
 ### UT-STATUS-006
+
 **Nazwa testu**: `should_use_custom_error_message_from_api_when_available`  
 **Moduł / funkcja**: `getTranscriptionTaskStatus`  
 **Cel testu**: Weryfikuje parsowanie błędów API  
@@ -233,6 +252,7 @@
 **Notatki / uwagi**: Parsowanie odpowiedzi błędów
 
 ### UT-STATUS-007
+
 **Nazwa testu**: `should_throw_generic_error_when_unexpected_failure_occurs`  
 **Moduł / funkcja**: `getTranscriptionTaskStatus`  
 **Cel testu**: Weryfikuje obsługę nieoczekiwanych błędów  
@@ -247,6 +267,7 @@
 ## Moduł: createTranscriptionError
 
 ### UT-ERROR-001
+
 **Nazwa testu**: `should_return_error_with_code_and_message_when_valid_api_error_provided`  
 **Moduł / funkcja**: `createTranscriptionError`  
 **Cel testu**: Weryfikuje tworzenie błędu z prawidłowym ApiError  
@@ -259,6 +280,7 @@
 **Notatki / uwagi**: Podstawowa funkcjonalność transformacji błędów
 
 ### UT-ERROR-002
+
 **Nazwa testu**: `should_return_error_with_default_code_when_object_has_only_message`  
 **Moduł / funkcja**: `createTranscriptionError`  
 **Cel testu**: Weryfikuje obsługę obiektów z samym polem message  
@@ -271,6 +293,7 @@
 **Notatki / uwagi**: Obsługa częściowych obiektów błędów
 
 ### UT-ERROR-003
+
 **Nazwa testu**: `should_return_default_error_when_unknown_error_type_provided`  
 **Moduł / funkcja**: `createTranscriptionError`  
 **Cel testu**: Weryfikuje obsługę nieznanych typów błędów  
@@ -283,6 +306,7 @@
 **Notatki / uwagi**: Odporność na nieprawidłowe dane wejściowe
 
 ### UT-ERROR-004
+
 **Nazwa testu**: `should_use_message_from_object_without_proper_structure`  
 **Moduł / funkcja**: `createTranscriptionError`  
 **Cel testu**: Weryfikuje ekstrakcję wiadomości z nieprawidłowych obiektów  

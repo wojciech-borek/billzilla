@@ -11,14 +11,6 @@ if (!user) {
 
 <Layout title="Utwórz grupę | Billzilla">
   <div class="min-h-screen bg-background">
-    <CreateGroupModal
-      open={true}
-      onOpenChange={() => (window.location.href = "/")}
-      onSuccess={() => {
-        // For dedicated page, redirect immediately without closing modal
-        window.location.href = "/?success=group-created";
-      }}
-      client:load
-    />
+    <CreateGroupModal open={true} cancelUrl="/" successUrl="/?success=group-created" client:load />
   </div>
 </Layout>

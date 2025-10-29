@@ -381,7 +381,12 @@ export const mockCurrencyExists = (client: SupabaseClient, currencyCode: string,
   });
 };
 
-export const mockCurrencyConfiguredForGroup = (client: SupabaseClient, groupId: string, currencyCode: string, configured = true) => {
+export const mockCurrencyConfiguredForGroup = (
+  client: SupabaseClient,
+  groupId: string,
+  currencyCode: string,
+  configured = true
+) => {
   const mockClient = client as any;
   mockClient.from.mockReturnValueOnce(mockClient);
   mockClient.select.mockReturnValueOnce(mockClient);
@@ -438,7 +443,11 @@ export const mockGroupRepositoryQuery = (client: SupabaseClient, table: string, 
   return queryBuilder;
 };
 
-export const mockExpenseRepositoryQuery = (client: SupabaseClient, table: string, result: { data: any; error: any }) => {
+export const mockExpenseRepositoryQuery = (
+  client: SupabaseClient,
+  table: string,
+  result: { data: any; error: any }
+) => {
   const mockClient = client as any;
   const queryBuilder = {
     select: vi.fn().mockReturnThis(),
@@ -567,7 +576,7 @@ export const setupExpenseMocks = (
 ) => {
   // Local counters for this mock setup instance
   let expenseSingleCallCount = 0;
-  let groupMembersCallCount = 0;
+  const groupMembersCallCount = 0;
 
   mockClient.from.mockImplementation((table: string) => {
     switch (table) {

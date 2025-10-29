@@ -4,7 +4,7 @@ import {
   setupRepositoryTest,
   mockGroupRepositoryQuery,
   mockRpcQuery,
-  mockMembershipVerification
+  mockMembershipVerification,
 } from "../testHelpers";
 
 describe("GroupRepository", () => {

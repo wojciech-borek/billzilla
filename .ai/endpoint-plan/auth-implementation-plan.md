@@ -5,6 +5,7 @@
 System autentykacji Billzilla opiera się na Supabase Auth z dodatkowymi mechanizmami bezpieczeństwa i walidacji. Implementuje pełny cykl życia użytkownika od rejestracji przez zarządzanie sesją po resetowanie hasła.
 
 Kluczowe komponenty:
+
 - **Middleware Astro** - ochrona tras i zarządzanie sesją
 - **Supabase Auth** - backend autentykacji z RLS
 - **OAuth Google** - alternatywna metoda logowania
@@ -21,7 +22,15 @@ import { defineMiddleware } from "astro:middleware";
 import { createServerClient } from "@supabase/ssr";
 import type { Database } from "../db/database.types";
 
-const PUBLIC_ROUTES = ["/login", "/signup", "/reset-password", "/about", "/auth/callback", "/auth/confirm", "/auth/recovery"];
+const PUBLIC_ROUTES = [
+  "/login",
+  "/signup",
+  "/reset-password",
+  "/about",
+  "/auth/callback",
+  "/auth/confirm",
+  "/auth/recovery",
+];
 
 function isValidRedirectUrl(url: string): boolean {
   if (!url) return false;
@@ -37,9 +46,15 @@ export const onRequest = defineMiddleware(async (context, next) => {
     import.meta.env.PUBLIC_SUPABASE_ANON_KEY,
     {
       cookies: {
-        get(key) { return context.cookies.get(key)?.value; },
-        set(key, value, options) { context.cookies.set(key, value, options); },
-        remove(key, options) { context.cookies.delete(key, options); },
+        get(key) {
+          return context.cookies.get(key)?.value;
+        },
+        set(key, value, options) {
+          context.cookies.set(key, value, options);
+        },
+        remove(key, options) {
+          context.cookies.delete(key, options);
+        },
       },
     }
   );
@@ -170,7 +185,9 @@ export const GET: APIRoute = async ({ url, redirect, locals }) => {
     }
 
     if (data.session) {
-      return redirect(`/reset-password?access_token=${data.session.access_token}&refresh_token=${data.session.refresh_token}&type=recovery`);
+      return redirect(
+        `/reset-password?access_token=${data.session.access_token}&refresh_token=${data.session.refresh_token}&type=recovery`
+      );
     }
   }
 
@@ -182,12 +199,12 @@ export const GET: APIRoute = async ({ url, redirect, locals }) => {
   // Handle recovery with tokens
   const recoveryToken = tokenHash || token;
   if (recoveryToken && type === "recovery") {
-    const paramName = tokenHash ? 'token_hash' : 'token';
+    const paramName = tokenHash ? "token_hash" : "token";
     return redirect(`/reset-password?${paramName}=${recoveryToken}&type=recovery`);
   }
 
   // No valid parameters
-  return redirect('/reset-password?error=invalid_recovery_link');
+  return redirect("/reset-password?error=invalid_recovery_link");
 };
 
 export const prerender = false;

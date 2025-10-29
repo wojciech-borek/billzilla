@@ -6,7 +6,12 @@ import { z } from "zod";
 
 // Import refactored components
 import { ExpenseRepository } from "./repositories/ExpenseRepository";
-import { ExpenseValidationError, ExpenseAccessError, ExpenseTransactionError, ExpenseDataError } from "./errors/expenseErrors";
+import {
+  ExpenseValidationError,
+  ExpenseAccessError,
+  ExpenseTransactionError,
+  ExpenseDataError,
+} from "./errors/expenseErrors";
 
 // Re-export error classes for backward compatibility
 export { ExpenseValidationError, ExpenseAccessError, ExpenseTransactionError, ExpenseDataError };
@@ -58,7 +63,6 @@ const basicExpenseValidationSchema = z.object({
 });
 
 type BasicExpenseValidationType = z.infer<typeof basicExpenseValidationSchema>;
-
 
 /**
  * Command class for creating expenses with basic format validation
@@ -278,18 +282,18 @@ export class ExpenseUnitOfWork {
           full_name: createdByProfile.full_name ?? "",
           avatar_url: createdByProfile.avatar_url ?? null,
         },
-      splits: completeExpense.expense_splits.map((split: any) => {
-        const splitProfile = split.profiles as unknown as {
-          id: string;
-          full_name: string | null;
-          avatar_url: string | null;
-        };
-        return {
-          profile_id: split.profile_id,
-          full_name: splitProfile.full_name,
-          amount: split.amount,
-        };
-      }),
+        splits: completeExpense.expense_splits.map((split: any) => {
+          const splitProfile = split.profiles as unknown as {
+            id: string;
+            full_name: string | null;
+            avatar_url: string | null;
+          };
+          return {
+            profile_id: split.profile_id,
+            full_name: splitProfile.full_name,
+            amount: split.amount,
+          };
+        }),
       };
 
       return expenseDTO;

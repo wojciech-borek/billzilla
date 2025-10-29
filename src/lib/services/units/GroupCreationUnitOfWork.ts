@@ -59,7 +59,7 @@ export class GroupCreationUnitOfWork {
     const spec = new GroupCreationValidSpecification(this.supabase);
     const isValid = await spec.isSatisfiedBy({
       name: this.command.name,
-      base_currency_code: this.command.base_currency_code
+      base_currency_code: this.command.base_currency_code,
     });
 
     if (!isValid) {

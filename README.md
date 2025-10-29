@@ -87,23 +87,23 @@ To set up and run the project on your local machine, follow these steps:
 
 The following scripts are available in `package.json`:
 
-| Script             | Description                            |
-| ------------------ | -------------------------------------- |
-| `npm run dev`      | Starts the development server.         |
-| `npm run build`    | Builds the application for production. |
-| `npm run preview`  | Previews the production build locally. |
-| `npm run astro`    | Runs the Astro CLI.                    |
-| `npm run lint`     | Lints the codebase for errors.         |
-| `npm run lint:fix` | Fixes linting errors automatically.    |
-| `npm run format`   | Formats the code using Prettier.       |
-| `npm run test`     | Runs unit tests in watch mode.         |
-| `npm run test:run` | Runs unit tests in single run mode.    |
-| `npm run test:ui`  | Opens Vitest UI for interactive testing.|
-| `npm run test:coverage` | Generates test coverage report.     |
-| `npm run test:e2e` | Runs all E2E tests in headless mode.    |
-| `npm run test:e2e:ui` | Opens Playwright UI for test debugging.|
-| `npm run test:e2e:headed` | Runs E2E tests with visible browser.|
-| `npm run test:e2e:debug` | Runs E2E tests in debug mode.       |
+| Script                    | Description                              |
+| ------------------------- | ---------------------------------------- |
+| `npm run dev`             | Starts the development server.           |
+| `npm run build`           | Builds the application for production.   |
+| `npm run preview`         | Previews the production build locally.   |
+| `npm run astro`           | Runs the Astro CLI.                      |
+| `npm run lint`            | Lints the codebase for errors.           |
+| `npm run lint:fix`        | Fixes linting errors automatically.      |
+| `npm run format`          | Formats the code using Prettier.         |
+| `npm run test`            | Runs unit tests in watch mode.           |
+| `npm run test:run`        | Runs unit tests in single run mode.      |
+| `npm run test:ui`         | Opens Vitest UI for interactive testing. |
+| `npm run test:coverage`   | Generates test coverage report.          |
+| `npm run test:e2e`        | Runs all E2E tests in headless mode.     |
+| `npm run test:e2e:ui`     | Opens Playwright UI for test debugging.  |
+| `npm run test:e2e:headed` | Runs E2E tests with visible browser.     |
+| `npm run test:e2e:debug`  | Runs E2E tests in debug mode.            |
 
 ## Project Scope
 

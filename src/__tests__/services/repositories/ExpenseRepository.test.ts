@@ -50,9 +50,9 @@ describe("ExpenseRepository", () => {
       });
 
       // Act & Assert
-      await expect(
-        expenseRepository.fetchGroupMembershipAndCurrencies(groupId, userId)
-      ).rejects.toThrow("Group not found or user is not an active member");
+      await expect(expenseRepository.fetchGroupMembershipAndCurrencies(groupId, userId)).rejects.toThrow(
+        "Group not found or user is not an active member"
+      );
     });
   });
 
@@ -194,5 +194,4 @@ describe("ExpenseRepository", () => {
       expect(result[1].id).toBe("expense-2");
     });
   });
-
 });
