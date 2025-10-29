@@ -25,8 +25,7 @@ export function useAuthForm<T extends Record<string, unknown>>(schema: ZodSchema
     setFormData((prev) => ({ ...prev, [field]: value }));
     if (errors[field as string]) {
       setErrors((prev) => {
-        const newErrors = { ...prev };
-        delete newErrors[field as string];
+        const newErrors = Object.fromEntries(Object.entries(prev).filter(([key]) => key !== field));
         return newErrors;
       });
     }

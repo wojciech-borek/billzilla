@@ -39,7 +39,7 @@ export function useExpenseModalLogic(currentUserId: string) {
         setIsFromVoice(true);
 
         toast.success("Wydatek rozpoznany! Sprawdź dane i zatwierdź.");
-      } catch (error) {
+      } catch {
         toast.error("Błąd podczas przetwarzania rozpoznanego wydatku");
       }
     },

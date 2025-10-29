@@ -62,7 +62,7 @@ export function useCreateGroupFormLogic({ onSuccess }: UseCreateGroupFormLogicPr
       };
 
       onSuccess(result);
-    } catch (err) {
+    } catch {
       // Field errors are already handled by the mutation hook
       // Set field errors from API if available
       if (fieldErrors) {

@@ -33,7 +33,7 @@ export function useExpenseSplit(
 
       // Convert to ExpenseSplitCommand array (only include non-zero amounts)
       const newSplits: ExpenseSplitCommand[] = Object.entries(newAmounts)
-        .filter(([_, amountStr]) => amountStr.trim() !== "" && !isNaN(parseFloat(amountStr)))
+        .filter(([, amountStr]) => amountStr.trim() !== "" && !isNaN(parseFloat(amountStr)))
         .map(([profileId, amountStr]) => ({
           profile_id: profileId,
           amount: parseFloat(amountStr) || 0,

@@ -231,7 +231,7 @@ export function useExpenseForm(
         throw error;
       }
     },
-    [form]
+    [form, state]
   );
 
   // Populate form with data from voice transcription
@@ -260,7 +260,6 @@ export function useExpenseForm(
         if (payer_id) {
           const payerExists = groupMembers.some((member) => member.profile_id === payer_id);
           if (!payerExists) {
-            console.warn("⚠️ Payer not found in group, using first member");
             // Don't throw error, use first member as fallback
           }
         }
@@ -269,7 +268,7 @@ export function useExpenseForm(
         const validSplits = data.splits.filter((split) => {
           const memberExists = groupMembers.some((member) => member.profile_id === split.profile_id);
           if (!memberExists) {
-            console.warn(`⚠️ Participant ${split.profile_id} not found in group, skipping`);
+            // Skip invalid participants
           }
           return memberExists;
         });
@@ -281,7 +280,6 @@ export function useExpenseForm(
         // Validate currency is available in the group
         const currencyExists = groupCurrencies.some((currency) => currency.code === currency_code);
         if (!currencyExists) {
-          console.warn(`⚠️ Currency ${currency_code} not available, using default`);
           // Don't throw error, will use default currency
         }
 
@@ -307,7 +305,6 @@ export function useExpenseForm(
         }));
       } catch (error) {
         const message = error instanceof Error ? error.message : "Błąd podczas wypełniania formularza z transkrypcji";
-        console.error("❌ Error populating form:", message);
         setState((prev) => ({
           ...prev,
           submitError: message,
