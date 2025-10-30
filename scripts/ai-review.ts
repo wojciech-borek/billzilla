@@ -17,6 +17,14 @@ interface _ReviewResult {
 }
 
 async function getChangedFiles(): Promise<string[]> {
+  // Najpierw sprawdź czy mamy zmienną środowiskową z listą plików z GitHub API
+  if (process.env.CHANGED_FILES) {
+    const changedFiles = process.env.CHANGED_FILES.split('\n').filter(file => file.trim().length > 0);
+    console.log(`📁 Otrzymano ${changedFiles.length} zmienionych plików z GitHub API:`);
+    changedFiles.forEach((file) => console.log(`  - ${file}`));
+    return changedFiles;
+  }
+
   const { execSync } = await import("child_process");
 
   try {
@@ -24,7 +32,25 @@ async function getChangedFiles(): Promise<string[]> {
 
     if (process.env.GITHUB_BASE_REF) {
       // Dla PR w CI - porównaj z bazowym branch'em
-      diffCommand = `git diff --name-only origin/${process.env.GITHUB_BASE_REF}`;
+      const baseRef = process.env.GITHUB_BASE_REF;
+      try {
+        // Najpierw sprawdź czy gałąź istnieje
+        execSync(`git show-ref --verify --quiet refs/remotes/origin/${baseRef}`, { stdio: "ignore" });
+        diffCommand = `git diff --name-only origin/${baseRef}`;
+      } catch {
+        // Fallback jeśli gałąź nie istnieje - porównaj z SHA bazy
+        if (process.env.GITHUB_EVENT_PATH) {
+          const fs = await import("fs");
+          const eventData = JSON.parse(fs.readFileSync(process.env.GITHUB_EVENT_PATH, "utf8"));
+          if (eventData.pull_request?.base?.sha) {
+            diffCommand = `git diff --name-only ${eventData.pull_request.base.sha}`;
+          } else {
+            diffCommand = "git diff --name-only HEAD~1";
+          }
+        } else {
+          diffCommand = "git diff --name-only HEAD~1";
+        }
+      }
     } else if (process.env.GITHUB_EVENT_PATH) {
       // Alternatywnie, można sparsować event JSON
       const fs = await import("fs");
@@ -53,7 +79,7 @@ async function getChangedFiles(): Promise<string[]> {
       .split("\n")
       .filter((file) => file.length > 0);
 
-    console.log(`📁 Znaleziono ${changedFiles.length} zmienionych plików:`);
+    console.log(`📁 Znaleziono ${changedFiles.length} zmienionych plików przez git diff:`);
     changedFiles.forEach((file) => console.log(`  - ${file}`));
 
     return changedFiles;

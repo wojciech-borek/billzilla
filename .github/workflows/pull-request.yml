@@ -20,6 +20,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch all history for proper git diff
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -40,6 +42,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch all history for proper git diff
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -68,6 +72,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch all history for proper git diff
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -78,10 +84,29 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Get changed files for AI review
+        uses: actions/github-script@v7
+        id: changed-files
+        with:
+          script: |
+            const { data: files } = await github.rest.pulls.listFiles({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number,
+            });
+
+            const changedFiles = files.map(file => file.filename);
+            console.log(`📁 Znaleziono ${changedFiles.length} zmienionych plików:`);
+            changedFiles.forEach(file => console.log(`  - ${file}`));
+
+            // Zapisz listę plików do zmiennej środowiskowej dla następnego kroku
+            return changedFiles.join('\n');
+
       - name: Run AI compliance review
         run: npm run ai-review
         env:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          CHANGED_FILES: ${{ steps.changed-files.outputs.result }}
 
       - name: Upload AI review report
         uses: actions/upload-artifact@v4
@@ -175,6 +200,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch all history for proper git diff
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -222,6 +249,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch all history for proper git diff
 
       - name: Download unit test coverage
         uses: actions/download-artifact@v4
