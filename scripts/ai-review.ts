@@ -110,7 +110,11 @@ async function loadProjectStandards(): Promise<string> {
   return standards;
 }
 
-async function performStandardsReview(changedFiles: string[], standards: string, apiKey: string): Promise<AiReviewReport> {
+async function performStandardsReview(
+  changedFiles: string[],
+  standards: string,
+  apiKey: string
+): Promise<AiReviewReport> {
   const fs = await import("fs");
   const path = await import("path");
 
@@ -178,7 +182,7 @@ Jeśli nie znajdziesz poważnych problemów, ustaw overallScore na 80-100. Jeśl
     const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${apiKey}`,
+        Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
@@ -186,12 +190,12 @@ Jeśli nie znajdziesz poważnych problemów, ustaw overallScore na 80-100. Jeśl
         messages: [
           {
             role: "user",
-            content: prompt
-          }
+            content: prompt,
+          },
         ],
         max_tokens: 4000,
-        temperature: 0.1
-      })
+        temperature: 0.1,
+      }),
     });
 
     if (!response.ok) {
@@ -215,7 +219,7 @@ Jeśli nie znajdziesz poważnych problemów, ustaw overallScore na 80-100. Jeśl
       } else {
         report = JSON.parse(aiResponse);
       }
-    } catch (parseError) {
+    } catch (_parseError) {
       // Jeśli parsowanie się nie powiedzie, stwórz podstawowy raport
       console.warn("⚠️  Nie można sparsować odpowiedzi AI, tworzę podstawowy raport");
       report = {
@@ -226,35 +230,36 @@ Jeśli nie znajdziesz poważnych problemów, ustaw overallScore na 80-100. Jeśl
           totalChecks: 1,
           passed: 0,
           failed: 1,
-          warnings: 0
+          warnings: 0,
         },
-        results: [{
-          category: "AI Analysis",
-          criterion: "Response parsing",
-          status: "FAIL",
-          message: "Nie można sparsować odpowiedzi AI",
-          details: `Odpowiedź AI: ${aiResponse.substring(0, 500)}...`,
-          recommendation: "Sprawdź połączenie z OpenRouter API"
-        }]
+        results: [
+          {
+            category: "AI Analysis",
+            criterion: "Response parsing",
+            status: "FAIL",
+            message: "Nie można sparsować odpowiedzi AI",
+            details: `Odpowiedź AI: ${aiResponse.substring(0, 500)}...`,
+            recommendation: "Sprawdź połączenie z OpenRouter API",
+          },
+        ],
       };
     }
 
     // Uzupełnij summary jeśli nie zostało ustawione
     if (!report.summary) {
-      const passed = report.results.filter(r => r.status === "PASS").length;
-      const failed = report.results.filter(r => r.status === "FAIL").length;
-      const warnings = report.results.filter(r => r.status === "WARN").length;
+      const passed = report.results.filter((r) => r.status === "PASS").length;
+      const failed = report.results.filter((r) => r.status === "FAIL").length;
+      const warnings = report.results.filter((r) => r.status === "WARN").length;
 
       report.summary = {
         totalChecks: report.results.length,
         passed,
         failed,
-        warnings
+        warnings,
       };
     }
 
     return report;
-
   } catch (error) {
     console.error("❌ Błąd podczas analizy AI:", error);
     // Zwróć podstawowy raport w przypadku błędu
@@ -266,16 +271,18 @@ Jeśli nie znajdziesz poważnych problemów, ustaw overallScore na 80-100. Jeśl
         totalChecks: 1,
         passed: 0,
         failed: 1,
-        warnings: 0
+        warnings: 0,
       },
-      results: [{
-        category: "AI Analysis",
-        criterion: "API Connection",
-        status: "FAIL",
-        message: "Błąd połączenia z AI",
-        details: error instanceof Error ? error.message : "Nieznany błąd",
-        recommendation: "Sprawdź połączenie internetowe i klucz API OpenRouter"
-      }]
+      results: [
+        {
+          category: "AI Analysis",
+          criterion: "API Connection",
+          status: "FAIL",
+          message: "Błąd połączenia z AI",
+          details: error instanceof Error ? error.message : "Nieznany błąd",
+          recommendation: "Sprawdź połączenie internetowe i klucz API OpenRouter",
+        },
+      ],
     };
   }
 }
@@ -310,11 +317,11 @@ async function loadProjectContext(): Promise<string> {
 }
 
 async function main() {
-  const openRouterApiKey = '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';
+  const openRouterApiKey = process.env.OPENROUTER_API_KEY;
   const isCI = process.env.CI === "true";
 
-    console.log("🤖 Rozpoczynam przegląd zgodności AI...");
-    console.log("Środowisko:", isCI ? "CI" : "Lokalny rozwój");
+  console.log("🤖 Rozpoczynam przegląd zgodności AI...");
+  console.log("Środowisko:", isCI ? "CI" : "Lokalny rozwój");
 
   if (!openRouterApiKey) {
     console.error("❌ Wymagana jest zmienna środowiskowa OPENROUTER_API_KEY");
@@ -366,7 +373,7 @@ async function main() {
           timestamp: new Date().toISOString(),
           overallScore: 100,
           summary: { totalChecks: 0, passed: 0, failed: 0, warnings: 0 },
-          results: []
+          results: [],
         };
       } else {
         // Przeprowadź analizę zgodności kodu ze standardami używając AI
@@ -406,10 +413,12 @@ async function main() {
 
     console.log("\n🎉 Projekt jest zgodny z wymaganiami przeglądu AI!");
   } catch (error) {
-    console.error("❌ Przegląd AI nie powiódł się:", error.message);
+    console.error("❌ Przegląd AI nie powiódł się:", error instanceof Error ? error.message : String(error));
 
     if (!isCI) {
-      console.log("\n💡 Wskazówka: Dla pełnej funkcjonalności przeglądu AI, uruchom to w środowisku CI lub najpierw zbuduj projekt.");
+      console.log(
+        "\n💡 Wskazówka: Dla pełnej funkcjonalności przeglądu AI, uruchom to w środowisku CI lub najpierw zbuduj projekt."
+      );
     }
 
     process.exit(1);
