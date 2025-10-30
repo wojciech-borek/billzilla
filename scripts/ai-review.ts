@@ -19,7 +19,7 @@ interface _ReviewResult {
 async function getChangedFiles(): Promise<string[]> {
   // Najpierw sprawdź czy mamy zmienną środowiskową z listą plików z GitHub API
   if (process.env.CHANGED_FILES) {
-    const changedFiles = process.env.CHANGED_FILES.split('\n').filter(file => file.trim().length > 0);
+    const changedFiles = process.env.CHANGED_FILES.split("\n").filter((file) => file.trim().length > 0);
     console.log(`📁 Otrzymano ${changedFiles.length} zmienionych plików z GitHub API:`);
     changedFiles.forEach((file) => console.log(`  - ${file}`));
     return changedFiles;
