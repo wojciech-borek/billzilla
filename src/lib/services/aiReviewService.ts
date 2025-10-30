@@ -3,7 +3,8 @@ import { z } from "zod";
 import { readFileSync, readdirSync, statSync, existsSync } from "fs";
 import { join, extname, relative } from "path";
 import { OpenRouterService } from "./openRouterService";
-import { ReviewCriteria, ReviewResult, AiReviewReport, AiReviewReportSchema } from "../schemas/aiReview";
+import type { ReviewCriteria, ReviewResult, AiReviewReport } from "../schemas/aiReview";
+import { AiReviewReportSchema } from "../schemas/aiReview";
 
 // Schema for AI-powered code analysis results
 const CodeAnalysisResultSchema = z.object({

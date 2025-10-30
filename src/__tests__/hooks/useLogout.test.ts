@@ -41,8 +41,13 @@ describe("useLogout", () => {
       {
         id: "UT-USELOGOUT-002",
         name: "should_return_error_and_reset_state_when_signOut_fails",
-        signOutResult: { error: { message: "Sign out failed" } },
-        expectedResult: { success: false, error: { message: "Sign out failed" } },
+        signOutResult: {
+          error: { message: "Sign out failed", code: "SIGN_OUT_ERROR", status: 400, name: "AuthError" },
+        },
+        expectedResult: {
+          success: false,
+          error: { message: "Sign out failed", code: "SIGN_OUT_ERROR", status: 400, name: "AuthError" },
+        },
       },
       {
         id: "UT-USELOGOUT-003",

@@ -7,7 +7,7 @@ import { join } from "path";
 import type { AiReviewReport } from "../src/lib/schemas/aiReview";
 
 // Simple type definitions for AI Review
-interface ReviewResult {
+interface _ReviewResult {
   category: string;
   criterion: string;
   status: "PASS" | "FAIL" | "WARN";
@@ -15,7 +15,6 @@ interface ReviewResult {
   details?: string;
   recommendation?: string;
 }
-
 
 async function getChangedFiles(): Promise<string[]> {
   const { execSync } = await import("child_process");
@@ -215,6 +214,44 @@ Jeśli nie znajdziesz poważnych problemów, ustaw overallScore na 80-100. Jeśl
         projectName: "billzilla",
         timestamp: new Date().toISOString(),
         overallScore: 75,
+        criteria: {
+          techStack: {
+            astroVersion: "unknown",
+            typescriptVersion: "unknown",
+            reactVersion: "unknown",
+            tailwindVersion: "unknown",
+            shadcnUi: false,
+            supabase: false,
+            vitest: false,
+            playwright: false,
+          },
+          projectStructure: {
+            hasLayouts: false,
+            hasPages: false,
+            hasComponents: false,
+            hasLib: false,
+            hasDb: false,
+            hasMiddleware: false,
+            properDirectoryStructure: false,
+          },
+          codeQuality: {
+            errorHandling: false,
+            earlyReturns: false,
+            guardClauses: false,
+            typeSafety: false,
+            properImports: false,
+          },
+          testing: {
+            unitTestCoverage: 0,
+            e2eTests: false,
+            testOrganization: false,
+          },
+          aiImplementation: {
+            openRouterService: false,
+            openAiWhisperService: false,
+            voiceExpenseFlow: false,
+          },
+        },
         summary: {
           totalChecks: 1,
           passed: 0,
@@ -256,6 +293,44 @@ Jeśli nie znajdziesz poważnych problemów, ustaw overallScore na 80-100. Jeśl
       projectName: "billzilla",
       timestamp: new Date().toISOString(),
       overallScore: 50,
+      criteria: {
+        techStack: {
+          astroVersion: "unknown",
+          typescriptVersion: "unknown",
+          reactVersion: "unknown",
+          tailwindVersion: "unknown",
+          shadcnUi: false,
+          supabase: false,
+          vitest: false,
+          playwright: false,
+        },
+        projectStructure: {
+          hasLayouts: false,
+          hasPages: false,
+          hasComponents: false,
+          hasLib: false,
+          hasDb: false,
+          hasMiddleware: false,
+          properDirectoryStructure: false,
+        },
+        codeQuality: {
+          errorHandling: false,
+          earlyReturns: false,
+          guardClauses: false,
+          typeSafety: false,
+          properImports: false,
+        },
+        testing: {
+          unitTestCoverage: 0,
+          e2eTests: false,
+          testOrganization: false,
+        },
+        aiImplementation: {
+          openRouterService: false,
+          openAiWhisperService: false,
+          voiceExpenseFlow: false,
+        },
+      },
       summary: {
         totalChecks: 1,
         passed: 0,

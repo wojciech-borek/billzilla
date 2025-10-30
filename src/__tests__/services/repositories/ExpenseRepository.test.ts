@@ -68,8 +68,8 @@ describe("ExpenseRepository", () => {
       });
 
       // Mock the chained eq calls for status filter
-      queryBuilder.eq.mockReturnValueOnce(queryBuilder);
-      queryBuilder.eq.mockResolvedValueOnce({
+      queryBuilder.eq?.mockReturnValueOnce(queryBuilder);
+      queryBuilder.eq?.mockResolvedValueOnce({
         data: mockMembers,
         error: null,
       });
@@ -120,9 +120,10 @@ describe("ExpenseRepository", () => {
       ];
 
       const queryBuilder = mockExpenseRepositoryQuery(mockSupabaseClient, "expense_splits", {
+        data: null,
         error: null,
       });
-      queryBuilder.insert.mockResolvedValue({ error: null });
+      queryBuilder.insert?.mockResolvedValue({ data: null, error: null });
 
       // Act & Assert
       await expect(expenseRepository.createExpenseSplits(splits)).resolves.toBeUndefined();
@@ -155,9 +156,9 @@ describe("ExpenseRepository", () => {
       // Arrange
       const expenseId = "expense-123";
 
-      const queryBuilder = mockExpenseRepositoryQuery(mockSupabaseClient, "expenses", {});
-      queryBuilder.delete.mockReturnThis();
-      queryBuilder.eq.mockResolvedValue({});
+      const queryBuilder = mockExpenseRepositoryQuery(mockSupabaseClient, "expenses", { data: null, error: null });
+      queryBuilder.delete?.mockReturnThis();
+      queryBuilder.eq?.mockResolvedValue({ data: null, error: null });
 
       // Act & Assert
       await expect(expenseRepository.deleteExpense(expenseId)).resolves.toBeUndefined();
