@@ -4,6 +4,7 @@
 /* eslint-disable no-console */
 import { writeFileSync } from "fs";
 import { join } from "path";
+import type { AiReviewReport } from "../src/lib/schemas/aiReview";
 
 // Simple type definitions for AI Review
 interface ReviewResult {
@@ -15,18 +16,6 @@ interface ReviewResult {
   recommendation?: string;
 }
 
-interface AiReviewReport {
-  projectName: string;
-  timestamp: string;
-  overallScore: number;
-  summary: {
-    totalChecks: number;
-    passed: number;
-    failed: number;
-    warnings: number;
-  };
-  results: ReviewResult[];
-}
 
 async function getChangedFiles(): Promise<string[]> {
   const { execSync } = await import("child_process");
