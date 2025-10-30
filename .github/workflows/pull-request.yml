@@ -98,29 +98,29 @@ jobs:
           script: |
             const fs = require('fs');
 
-            let reportContent = '## 🤖 AI Compliance Review\n\n';
+            let reportContent = '## 🤖 Przegląd Zgodności AI\n\n';
 
             if (fs.existsSync('ai-review-report.json')) {
               const report = JSON.parse(fs.readFileSync('ai-review-report.json', 'utf8'));
 
-              reportContent += `**Overall Score: ${report.overallScore}%**\n\n`;
-              reportContent += `### Summary\n`;
-              reportContent += `- ✅ Passed: ${report.summary.passed}\n`;
-              reportContent += `- ⚠️ Warnings: ${report.summary.warnings}\n`;
-              reportContent += `- ❌ Failed: ${report.summary.failed}\n\n`;
+              reportContent += `**Ogólny Wynik: ${report.overallScore}%**\n\n`;
+              reportContent += `### Podsumowanie\n`;
+              reportContent += `- ✅ Przeszedł: ${report.summary.passed}\n`;
+              reportContent += `- ⚠️ Ostrzeżenia: ${report.summary.warnings}\n`;
+              reportContent += `- ❌ Nie przeszedł: ${report.summary.failed}\n\n`;
 
               if (report.results.filter(r => r.status === 'FAIL').length > 0) {
-                reportContent += '### Failed Checks\n';
+                reportContent += '### Nieudane Sprawdzenia\n';
                 report.results.filter(r => r.status === 'FAIL').forEach(result => {
                   reportContent += `#### ${result.category}: ${result.criterion}\n`;
                   reportContent += `${result.message}\n\n`;
                   if (result.details) reportContent += `*${result.details}*\n\n`;
-                  if (result.recommendation) reportContent += `💡 **Recommendation:** ${result.recommendation}\n\n`;
+                  if (result.recommendation) reportContent += `💡 **Rekomendacja:** ${result.recommendation}\n\n`;
                 });
               }
 
               if (report.results.filter(r => r.status === 'WARN').length > 0) {
-                reportContent += '### Warnings\n';
+                reportContent += '### Ostrzeżenia\n';
                 report.results.filter(r => r.status === 'WARN').forEach(result => {
                   reportContent += `- ${result.category}: ${result.criterion} - ${result.message}\n`;
                   if (result.recommendation) reportContent += `  💡 ${result.recommendation}\n`;
@@ -129,13 +129,13 @@ jobs:
               }
 
               if (report.overallScore >= 80) {
-                reportContent += '🎉 **Project is compliant with AI review requirements!**\n';
+                reportContent += '🎉 **Projekt jest zgodny z wymaganiami przeglądu AI!**\n';
               } else {
-                reportContent += '🚨 **Please address the compliance issues above.**\n';
+                reportContent += '🚨 **Proszę rozwiązać powyższe problemy z zgodnością.**\n';
               }
 
             } else {
-              reportContent += '❌ AI Review failed to generate report.\n';
+              reportContent += '❌ Przegląd AI nie mógł wygenerować raportu.\n';
             }
 
             const { data: comments } = await github.rest.issues.listComments({
