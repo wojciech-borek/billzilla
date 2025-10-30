@@ -1,5 +1,4 @@
-import { vi } from "vitest";
-import { z, type ZodSchema } from "zod";
+import { z } from "zod";
 import { renderHook, act } from "@testing-library/react";
 import type { RenderHookResult } from "@testing-library/react";
 
@@ -22,52 +21,67 @@ export const commonSchemas = {
   fullForm: z.object({
     email: z.string().email(),
     password: z.string().min(6),
-    name: z.string().min(1)
+    name: z.string().min(1),
   }),
   nestedForm: z.object({
     user: z.object({
       name: z.string().min(1, "Name is required"),
-      email: z.string().email("Invalid email")
-    })
+      email: z.string().email("Invalid email"),
+    }),
   }),
   optionalFields: z.object({
     name: z.string().min(1, "Name is required"),
     email: z.string().optional(),
-    phone: z.string().min(10, "Phone must be at least 10 characters").optional()
-  })
+    phone: z.string().min(10, "Phone must be at least 10 characters").optional(),
+  }),
 } as const;
 
 // =============================================================================
 // DATA BUILDERS
 // =============================================================================
 
-export const createValidData = (type: keyof typeof commonSchemas) => ({
-  emailOnly: { email: TEST_EMAIL },
-  emailPassword: { email: TEST_EMAIL, password: TEST_PASSWORD },
-  fullForm: { email: TEST_EMAIL, password: TEST_PASSWORD, name: "John Doe" },
-  nestedForm: { user: { name: "John", email: TEST_EMAIL } },
-  optionalFields: { name: "John", email: TEST_EMAIL, phone: "1234567890" }
-}[type]);
+export const createValidData = (type: keyof typeof commonSchemas) =>
+  ({
+    emailOnly: { email: TEST_EMAIL },
+    emailPassword: { email: TEST_EMAIL, password: TEST_PASSWORD },
+    fullForm: { email: TEST_EMAIL, password: TEST_PASSWORD, name: "John Doe" },
+    nestedForm: { user: { name: "John", email: TEST_EMAIL } },
+    optionalFields: { name: "John", email: TEST_EMAIL, phone: "1234567890" },
+  })[type];
 
-export const createInvalidData = (type: keyof typeof commonSchemas) => ({
-  emailOnly: { email: INVALID_EMAIL },
-  emailPassword: { email: INVALID_EMAIL, password: SHORT_PASSWORD },
-  fullForm: { email: INVALID_EMAIL, password: SHORT_PASSWORD, name: "" },
-  nestedForm: { user: { name: "", email: INVALID_EMAIL } },
-  optionalFields: { name: "", email: "", phone: "123" }
-}[type]);
+export const createInvalidData = (type: keyof typeof commonSchemas) =>
+  ({
+    emailOnly: { email: INVALID_EMAIL },
+    emailPassword: { email: INVALID_EMAIL, password: SHORT_PASSWORD },
+    fullForm: { email: INVALID_EMAIL, password: SHORT_PASSWORD, name: "" },
+    nestedForm: { user: { name: "", email: INVALID_EMAIL } },
+    optionalFields: { name: "", email: "", phone: "123" },
+  })[type];
 
 // =============================================================================
 // HOOK SETUP UTILITIES
 // =============================================================================
 
+// Type definitions for form hooks
+interface FormHookResult<TData extends Record<string, unknown>> {
+  formData: Partial<TData>;
+  errors: Record<string, string>;
+  isLoading: boolean;
+  apiError: string | null;
+  handleChange: (field: string, value: unknown) => void;
+  validate: () => boolean;
+  setIsLoading: (loading: boolean) => void;
+  setApiError: (error: string | null) => void;
+  reset: () => void;
+}
+
 /**
  * Sets up a form hook with optional initial data
  */
 export const setupFormHook = <TData extends Record<string, unknown>>(
-  useHook: () => any,
+  useHook: () => FormHookResult<TData>,
   initialData?: TData
-): RenderHookResult<any, any> => {
+): RenderHookResult<FormHookResult<TData>, unknown> => {
   const hook = renderHook(() => useHook());
 
   if (initialData && Object.keys(initialData).length > 0) {
@@ -84,18 +98,23 @@ export const setupFormHook = <TData extends Record<string, unknown>>(
 /**
  * Validates a form hook and returns the result
  */
-export const validateHook = (hook: RenderHookResult<any, any>): boolean => {
+export const validateHook = <TData extends Record<string, unknown>>(
+  hook: RenderHookResult<FormHookResult<TData>, unknown>
+): boolean => {
   let result: boolean;
   act(() => {
     result = hook.result.current.validate();
   });
-  return result!;
+  return result;
 };
 
 /**
  * Sets loading state on a form hook
  */
-export const setHookLoading = (hook: RenderHookResult<any, any>, loading: boolean): void => {
+export const setHookLoading = <TData extends Record<string, unknown>>(
+  hook: RenderHookResult<FormHookResult<TData>, unknown>,
+  loading: boolean
+): void => {
   act(() => {
     hook.result.current.setIsLoading(loading);
   });
@@ -104,7 +123,10 @@ export const setHookLoading = (hook: RenderHookResult<any, any>, loading: boolea
 /**
  * Sets API error on a form hook
  */
-export const setHookApiError = (hook: RenderHookResult<any, any>, error: string | null): void => {
+export const setHookApiError = <TData extends Record<string, unknown>>(
+  hook: RenderHookResult<FormHookResult<TData>, unknown>,
+  error: string | null
+): void => {
   act(() => {
     hook.result.current.setApiError(error);
   });
@@ -113,7 +135,9 @@ export const setHookApiError = (hook: RenderHookResult<any, any>, error: string 
 /**
  * Resets a form hook
  */
-export const resetHook = (hook: RenderHookResult<any, any>): void => {
+export const resetHook = <TData extends Record<string, unknown>>(
+  hook: RenderHookResult<FormHookResult<TData>, unknown>
+): void => {
   act(() => {
     hook.result.current.reset();
   });
@@ -126,19 +150,21 @@ export const resetHook = (hook: RenderHookResult<any, any>): void => {
 /**
  * Creates a schema with multiple validation rules for testing
  */
-export const createSchemaWithMultipleRules = () => z.object({
-  email: z.string().email().min(10, "Email must be at least 10 characters")
-});
+export const createSchemaWithMultipleRules = () =>
+  z.object({
+    email: z.string().email().min(10, "Email must be at least 10 characters"),
+  });
 
 /**
  * Common cleanup utility for hook tests
  */
-export const cleanupHook = (hook: RenderHookResult<any, any>): void => {
+export const cleanupHook = <TData extends Record<string, unknown>>(
+  hook: RenderHookResult<FormHookResult<TData>, unknown>
+): void => {
   hook.unmount();
 };
 
 /**
  * Waits for the next tick in tests (useful for async operations)
  */
-export const waitForNextTick = (): Promise<void> =>
-  new Promise(resolve => setImmediate(resolve));
+export const waitForNextTick = (): Promise<void> => new Promise((resolve) => setImmediate(resolve));
