@@ -81,6 +81,25 @@ export interface ExtractDataParams<T extends z.ZodTypeAny> {
   maxTokens?: number;
 }
 
+export interface CodeAnalysisParams<T extends z.ZodTypeAny> {
+  code: string;
+  context: string;
+  schema: T;
+  model: string;
+  temperature?: number;
+  maxTokens?: number;
+}
+
+export interface CodeAnalysisWithContextParams<T extends z.ZodTypeAny> {
+  code: string;
+  context: string;
+  projectContext: string;
+  schema: T;
+  model: string;
+  temperature?: number;
+  maxTokens?: number;
+}
+
 // ============================================================================
 // OpenRouter Service Implementation
 // ============================================================================
@@ -139,6 +158,76 @@ export class OpenRouterService {
     }
   }
 
+  /**
+   * Performs code analysis using OpenRouter LLM
+   *
+   * @param params - Parameters including code, context, schema, and model settings
+   * @returns Promise resolving to validated analysis results matching the provided schema
+   * @throws {OpenRouterApiError} When API returns an error status
+   * @throws {NetworkError} When network connectivity fails
+   * @throws {InvalidJsonResponseError} When response is not valid JSON
+   * @throws {ValidationError} When response doesn't match the schema
+   */
+  public async performCodeAnalysis<T extends z.ZodTypeAny>(params: CodeAnalysisParams<T>): Promise<z.infer<T>> {
+    try {
+      const payload = this.createCodeAnalysisPayload(params);
+      const apiResponse = await this.makeApiRequest(payload);
+      const validatedData = this.parseAndValidateResponse(apiResponse, params.schema);
+      return validatedData;
+    } catch (error) {
+      // Re-throw custom errors as-is
+      if (
+        error instanceof OpenRouterApiError ||
+        error instanceof NetworkError ||
+        error instanceof InvalidJsonResponseError ||
+        error instanceof ValidationError
+      ) {
+        throw error;
+      }
+
+      // Wrap unexpected errors
+      throw new Error(
+        `Unexpected error in OpenRouterService during code analysis: ${error instanceof Error ? error.message : String(error)}`
+      );
+    }
+  }
+
+  /**
+   * Performs comprehensive code analysis with project context using OpenRouter LLM
+   *
+   * @param params - Parameters including code, context, project context, schema, and model settings
+   * @returns Promise resolving to validated analysis results matching the provided schema
+   * @throws {OpenRouterApiError} When API returns an error status
+   * @throws {NetworkError} When network connectivity fails
+   * @throws {InvalidJsonResponseError} When response is not valid JSON
+   * @throws {ValidationError} When response doesn't match the schema
+   */
+  public async performCodeAnalysisWithContext<T extends z.ZodTypeAny>(
+    params: CodeAnalysisWithContextParams<T>
+  ): Promise<z.infer<T>> {
+    try {
+      const payload = this.createCodeAnalysisWithContextPayload(params);
+      const apiResponse = await this.makeApiRequest(payload);
+      const validatedData = this.parseAndValidateResponse(apiResponse, params.schema);
+      return validatedData;
+    } catch (error) {
+      // Re-throw custom errors as-is
+      if (
+        error instanceof OpenRouterApiError ||
+        error instanceof NetworkError ||
+        error instanceof InvalidJsonResponseError ||
+        error instanceof ValidationError
+      ) {
+        throw error;
+      }
+
+      // Wrap unexpected errors
+      throw new Error(
+        `Unexpected error in OpenRouterService during comprehensive code analysis: ${error instanceof Error ? error.message : String(error)}`
+      );
+    }
+  }
+
   // ==========================================================================
   // Private Helper Methods
   // ==========================================================================
@@ -182,6 +271,89 @@ Please extract the expense details from the transcribed text using the provided 
   }
 
   /**
+   * Builds the system prompt that instructs the LLM about code analysis role
+   */
+  private buildCodeAnalysisSystemPrompt(): string {
+    return `You are an expert senior software engineer and code quality specialist. Your task is to analyze source code and evaluate it against project standards and best practices.
+
+Your analysis should focus on:
+- Code quality patterns and anti-patterns
+- Error handling and edge case management
+- Clean code principles (early returns, guard clauses, proper naming)
+- TypeScript/JavaScript best practices
+- Project-specific conventions and standards
+- Potential bugs, security issues, or performance problems
+
+ANALYSIS CRITERIA:
+- PASS: Code meets all standards and best practices
+- WARN: Code is acceptable but has minor issues that should be addressed
+- FAIL: Code has significant issues that require immediate attention
+
+Be thorough but practical. Focus on actionable insights that improve code quality and maintainability.
+
+You must respond ONLY using the provided function/tool format. Do not include any additional text or explanations.`;
+  }
+
+  /**
+   * Builds the system prompt with project context for comprehensive code analysis
+   */
+  private buildCodeAnalysisSystemPromptWithContext(projectContext: string): string {
+    return `You are an expert senior software engineer and code quality specialist specializing in the Billzilla project. Your task is to analyze source code changes in Pull Requests and evaluate them against project standards, architecture, and best practices.
+
+## PROJECT CONTEXT
+${projectContext}
+
+## ANALYSIS FOCUS
+Your analysis should focus on:
+- **Code Quality**: Clean code principles, error handling, early returns, guard clauses
+- **Architecture Compliance**: Adherence to Astro Islands, React patterns, Supabase integration
+- **TypeScript Best Practices**: Proper typing, interface usage, generic constraints
+- **Project Conventions**: Naming standards, file organization, import patterns
+- **Security & Performance**: Potential vulnerabilities, performance bottlenecks
+- **Testing Standards**: Alignment with Vitest and Playwright testing guidelines
+
+## BILLZILLA-SPECIFIC STANDARDS
+- **Astro 5.x + React 19.x**: Proper component separation and hydration strategies
+- **Supabase Integration**: Correct RLS policies, real-time subscriptions, proper error handling
+- **AI Services**: OpenRouter for text processing, Whisper for speech-to-text
+- **UI/UX**: Shadcn/ui components, Tailwind CSS utility-first approach
+- **Testing**: Unit tests with Vitest + RTL, E2E with Playwright
+- **Type Safety**: Strict TypeScript configuration, no 'any' types
+
+## ANALYSIS CRITERIA
+- **PASS**: Code meets all project standards and best practices
+- **WARN**: Code is acceptable but has minor issues that should be addressed
+- **FAIL**: Code has significant issues requiring immediate attention
+
+## PULL REQUEST CONTEXT
+This is a code review for a Pull Request. Focus on:
+- Changes introduced in this PR
+- Impact on existing functionality
+- Consistency with project architecture
+- Potential breaking changes
+- Code maintainability and readability
+
+Be thorough but practical. Provide actionable feedback that helps improve code quality while respecting the project's established patterns and conventions.
+
+You must respond ONLY using the provided function/tool format. Do not include any additional text or explanations.`;
+  }
+
+  /**
+   * Builds the user prompt for code analysis
+   */
+  private buildCodeAnalysisUserPrompt(code: string, context: string): string {
+    return `Code to analyze:
+
+\`\`\`
+${code}
+\`\`\`
+
+Context: ${context}
+
+Please analyze this code for quality, patterns, and compliance with project standards. Provide detailed feedback on any issues found.`;
+  }
+
+  /**
    * Creates the complete API payload for OpenRouter
    */
   private createApiPayload<T extends z.ZodTypeAny>(params: ExtractDataParams<T>): object {
@@ -221,6 +393,94 @@ Please extract the expense details from the transcribed text using the provided 
       },
       temperature: temperature ?? 0.1,
       max_tokens: maxTokens ?? 1024,
+    };
+  }
+
+  /**
+   * Creates the complete API payload for code analysis
+   */
+  private createCodeAnalysisPayload<T extends z.ZodTypeAny>(params: CodeAnalysisParams<T>): object {
+    const { code, context, schema, model, temperature, maxTokens } = params;
+
+    const systemPrompt = this.buildCodeAnalysisSystemPrompt();
+    const userPrompt = this.buildCodeAnalysisUserPrompt(code, context);
+
+    // Convert Zod schema to JSON Schema
+    const jsonSchemaResult = zodToJsonSchema(schema, "analysis_results_schema");
+
+    // Extract the actual schema definition
+    const schemaDefinition =
+      "definitions" in jsonSchemaResult && jsonSchemaResult.definitions?.analysis_results_schema
+        ? jsonSchemaResult.definitions.analysis_results_schema
+        : jsonSchemaResult;
+
+    return {
+      model,
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt },
+      ],
+      tools: [
+        {
+          type: "function",
+          function: {
+            name: "analyze_code_quality",
+            description: "Analyzes code quality, patterns, and compliance with project standards.",
+            parameters: schemaDefinition,
+          },
+        },
+      ],
+      tool_choice: {
+        type: "function",
+        function: { name: "analyze_code_quality" },
+      },
+      temperature: temperature ?? 0.1,
+      max_tokens: maxTokens ?? 2048,
+    };
+  }
+
+  /**
+   * Creates the complete API payload for comprehensive code analysis with context
+   */
+  private createCodeAnalysisWithContextPayload<T extends z.ZodTypeAny>(
+    params: CodeAnalysisWithContextParams<T>
+  ): object {
+    const { code, context, projectContext, schema, model, temperature, maxTokens } = params;
+
+    const systemPrompt = this.buildCodeAnalysisSystemPromptWithContext(projectContext);
+    const userPrompt = this.buildCodeAnalysisUserPrompt(code, context);
+
+    // Convert Zod schema to JSON Schema
+    const jsonSchemaResult = zodToJsonSchema(schema, "analysis_results_schema");
+
+    // Extract the actual schema definition
+    const schemaDefinition =
+      "definitions" in jsonSchemaResult && jsonSchemaResult.definitions?.analysis_results_schema
+        ? jsonSchemaResult.definitions.analysis_results_schema
+        : jsonSchemaResult;
+
+    return {
+      model,
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt },
+      ],
+      tools: [
+        {
+          type: "function",
+          function: {
+            name: "analyze_code_quality",
+            description: "Analyzes code quality, patterns, and compliance with Billzilla project standards.",
+            parameters: schemaDefinition,
+          },
+        },
+      ],
+      tool_choice: {
+        type: "function",
+        function: { name: "analyze_code_quality" },
+      },
+      temperature: temperature ?? 0.1,
+      max_tokens: maxTokens ?? 4096, // Większy limit dla analizy z kontekstem
     };
   }
 
