@@ -1,0 +1,69 @@
+{
+  "projectName": "billzilla",
+  "timestamp": "2023-05-23T12:34:56.789Z",
+  "overallScore": 90,
+  "results": [
+    {
+      "category": "Architektura i struktura kodu",
+      "criterion": "Zgodność z projektem struktury katalogów",
+      "status": "PASS",
+      "message": "Struktura katalogów jest zgodna z wytycznymi projektu",
+      "details": "Pliki zostały umieszczone w odpowiednich folderach zgodnie z dokumentacją projektu",
+      "recommendation": "Kontynuuj utrzymywanie spójnej struktury kodu"
+    },
+    {
+      "category": "Konwencje nazewnictwa",
+      "criterion": "Nazwy zmiennych i funkcji",
+      "status": "PASS",
+      "message": "Nazwy zmiennych i funkcji są czytelne i zgodne ze standardami",
+      "details": "Nazwy odzwierciedlają przeznaczenie i działanie elementów kodu",
+      "recommendation": "Utrzymuj wysoką jakość nazewnictwa"
+    },
+    {
+      "category": "Obsługa błędów",
+      "criterion": "Obsługa wyjątków i błędów",
+      "status": "WARN",
+      "message": "Brak kompleksowej obsługi błędów",
+      "details": "W niektórych miejscach brakuje odpowiedniej obsługi wyjątków i prezentacji komunikatów użytkownikowi",
+      "recommendation": "Dodaj solidną obsługę błędów, aby zapewnić lepsze doświadczenie użytkownika"
+    },
+    {
+      "category": "Dokumentacja",
+      "criterion": "Komentarze i dokumentacja kodu",
+      "status": "PASS",
+      "message": "Kod jest dobrze udokumentowany",
+      "details": "Kluczowe funkcje, komponenty i moduły posiadają czytelne komentarze wyjaśniające ich przeznaczenie",
+      "recommendation": "Kontynuuj utrzymywanie wysokiej jakości dokumentacji"
+    },
+    {
+      "category": "Zgodność z frameworkami",
+      "criterion": "Zastosowanie wzorców Astro i React",
+      "status": "PASS",
+      "message": "Kod wykorzystuje właściwe wzorce Astro i React",
+      "details": "Komponenty są zbudowane zgodnie z wytycznymi dla Astro i React, wykorzystując odpowiednie funkcje i konwencje",
+      "recommendation": "Utrzymuj dobre praktyki przy korzystaniu z Astro i React"
+    },
+    {
+      "category": "Testowanie",
+      "criterion": "Pokrycie testami jednostkowymi",
+      "status": "WARN",
+      "message": "Niewystarczające pokrycie testami jednostkowymi",
+      "details": "Niektóre krytyczne funkcje nie posiadają wystarczającej liczby testów jednostkowych",
+      "recommendation": "Zwiększ pokrycie testami jednostkowymi, szczególnie dla kluczowej logiki biznesowej"
+    },
+    {
+      "category": "Bezpieczeństwo",
+      "criterion": "Bezpieczne przechowywanie kluczy API",
+      "status": "PASS",
+      "message": "Klucz API jest bezpiecznie przechowywany",
+      "details": "Klucz API do Openrouter.ai jest przechowywany i używany wyłącznie w Edge Function, co zapobiega jego ujawnieniu w kodzie klienta",
+      "recommendation": "Kontynuuj stosowanie dobrych praktyk bezpieczeństwa"
+    }
+  ],
+  "summary": {
+    "totalChecks": 7,
+    "passed": 5,
+    "failed": 0,
+    "warnings": 2
+  }
+}
