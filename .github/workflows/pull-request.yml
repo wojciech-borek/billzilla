@@ -100,7 +100,7 @@ jobs:
             changedFiles.forEach(file => console.log(`  - ${file}`));
 
             // Zapisz listę plików do zmiennej środowiskowej dla następnego kroku
-            return changedFiles.join('\n');
+            return JSON.stringify(changedFiles);
 
       - name: Run AI compliance review
         run: npm run ai-review

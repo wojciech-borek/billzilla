@@ -65,7 +65,7 @@ export class AiReviewService {
     this.projectRoot = projectRoot;
   }
 
-  async performComprehensiveReview(): Promise<AiReviewReport> {
+  async performComprehensiveReview(projectRules: string): Promise<AiReviewReport> {
     const timestamp = new Date().toISOString();
 
     // Analyze project structure and files
@@ -77,9 +77,23 @@ export class AiReviewService {
 
     results.push(...(await this.checkTechStack(packageJson)));
     results.push(...(await this.checkProjectStructure(projectFiles)));
-    results.push(...(await this.checkCodeQuality(projectFiles)));
     results.push(...(await this.checkTestingSetup(packageJson, projectFiles)));
     results.push(...(await this.checkAiImplementation(projectFiles)));
+
+    // Perform AI-powered code analysis for all code files
+    const codeFiles = projectFiles.filter((f) => [".ts", ".tsx", ".astro", ".js", ".jsx"].includes(f.extension));
+
+    console.log(`🤖 Performing comprehensive AI analysis of ${codeFiles.length} code files...`);
+
+    for (const file of codeFiles.slice(0, 10)) {
+      // Limit to first 10 files for performance
+      try {
+        const fileResults = await this.analyzeSingleFile(file, "", projectRules);
+        results.push(...fileResults);
+      } catch (error) {
+        console.warn(`⚠️  Could not analyze file ${file.path}:`, error);
+      }
+    }
 
     // Calculate overall score
     const passed = results.filter((r) => r.status === "PASS").length;

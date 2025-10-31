@@ -19,10 +19,19 @@ interface _ReviewResult {
 async function getChangedFiles(): Promise<string[]> {
   // Najpierw sprawdź czy mamy zmienną środowiskową z listą plików z GitHub API
   if (process.env.CHANGED_FILES) {
-    const changedFiles = process.env.CHANGED_FILES.split("\n").filter((file) => file.trim().length > 0);
-    console.log(`📁 Otrzymano ${changedFiles.length} zmienionych plików z GitHub API:`);
-    changedFiles.forEach((file) => console.log(`  - ${file}`));
-    return changedFiles;
+    try {
+      const changedFiles = JSON.parse(process.env.CHANGED_FILES);
+      console.log(`📁 Otrzymano ${changedFiles.length} zmienionych plików z GitHub API:`);
+      changedFiles.forEach((file: string) => console.log(`  - ${file}`));
+      return changedFiles;
+    } catch (error) {
+      console.warn("⚠️  Nie można sparsować CHANGED_FILES jako JSON, próbuję podzielić przez \\n:", error);
+      // Fallback dla starszych wersji workflow
+      const changedFiles = process.env.CHANGED_FILES.split("\\n").filter((file) => file.trim().length > 0);
+      console.log(`📁 Otrzymano ${changedFiles.length} zmienionych plików z GitHub API (fallback):`);
+      changedFiles.forEach((file) => console.log(`  - ${file}`));
+      return changedFiles;
+    }
   }
 
   const { execSync } = await import("child_process");
@@ -460,7 +469,7 @@ async function main() {
       } else {
         // Fallback do kompleksowej analizy jeśli nie można określić zmienionych plików
         console.log("⚠️  Nie można określić zmienionych plików, wykonuję pełną analizę...");
-        report = await reviewService.performComprehensiveReview();
+        report = await reviewService.performComprehensiveReview(projectRules);
       }
     } else {
       // W lokalnym rozwoju, sprawdź zgodność zmienionego kodu ze standardami
