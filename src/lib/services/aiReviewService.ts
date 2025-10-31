@@ -24,6 +24,31 @@ const CodeAnalysisResultSchema = z.object({
     .describe("List of specific issues found in the code"),
 });
 
+// Schema for structured AI analysis response
+const _StructuredAnalysisResultSchema = z.object({
+  summary: z.string(),
+  severity: z.object({
+    critical: z.number(),
+    high: z.number(),
+    medium: z.number(),
+    low: z.number(),
+    info: z.number(),
+  }),
+  issues: z.array(
+    z.object({
+      category: z.string(),
+      severity: z.enum(["CRITICAL", "HIGH", "MEDIUM", "LOW", "INFO"]),
+      message: z.string(),
+      line: z.number().optional(),
+      fix: z.string(),
+      ruleSuggestion: z.string().optional(),
+    })
+  ),
+  ruleSuggestions: z.array(z.string()).optional(),
+});
+
+type StructuredAnalysisIssue = z.infer<typeof _StructuredAnalysisResultSchema>["issues"][0];
+
 interface FileInfo {
   path: string;
   content: string;
@@ -80,7 +105,11 @@ export class AiReviewService {
     });
   }
 
-  async performPullRequestReview(changedFiles: string[], projectContext: string): Promise<AiReviewReport> {
+  async performPullRequestReview(
+    changedFiles: string[],
+    projectContext: string,
+    projectRules: string
+  ): Promise<AiReviewReport> {
     const timestamp = new Date().toISOString();
 
     // Filter only relevant files (TypeScript, TypeScript React, Astro, etc.)
@@ -110,7 +139,7 @@ export class AiReviewService {
             extension: extname(filePath),
           };
 
-          const fileResults = await this.analyzeSingleFile(fileInfo, projectContext);
+          const fileResults = await this.analyzeSingleFile(fileInfo, projectContext, projectRules);
           results.push(...fileResults);
         } catch (error) {
           console.warn(`⚠️  Could not analyze file ${filePath}:`, error);
@@ -769,72 +798,123 @@ export class AiReviewService {
     };
   }
 
-  private async analyzeSingleFile(file: FileInfo, projectContext: string): Promise<ReviewResult[]> {
+  private async analyzeSingleFile(
+    file: FileInfo,
+    projectContext: string,
+    projectRules: string
+  ): Promise<ReviewResult[]> {
     const results: ReviewResult[] = [];
 
     try {
       console.log(`🤖 Analyzing ${file.path}...`);
 
-      const context = `This is a ${file.extension} file changed in a Billzilla Pull Request. Analyze the code for quality issues, bugs, security problems, and compliance with project standards. Focus on the actual changes made in this PR.`;
+      const prompt = `
+Jesteś ekspertem w analizie kodu i recenzji programistycznej dla projektu Billzilla. Twoim zadaniem jest sprawdzić zgodność zmienionego kodu ze standardami projektu oraz dodać własną ocenę jakości kodu.
 
-      const analysisResult = await this.openRouterService.performCodeAnalysisWithContext({
-        code: file.content,
-        context,
-        projectContext,
-        schema: CodeAnalysisResultSchema,
+## STANDARDY PROJEKTU (.ai i .cursor/rules):
+${projectRules}
+
+## KONTEKST PROJEKTU:
+${projectContext}
+
+## ZMIENIONY KOD (${file.path}):
+${file.content}
+
+### INSTRUKCJE OCENY:
+
+1. **Najpierw oceń zgodność ze standardami** z plików .ai i .cursor/rules
+2. **Dodaj własną ocenę** jeśli standardy nie pokrywają tematu:
+   - Dobre praktyki programowania
+   - Błędy i problemy techniczne
+   - Zagadnienia bezpieczeństwa
+   - Sugestie refaktoryzacji
+
+### STRUKTURA ODPOWIEDZI:
+
+Podaj **krótki podsumowanie**, następnie **listę problemów z poziomami severity** (CRITICAL, HIGH, MEDIUM, LOW, INFO), oraz **konkretne propozycje poprawek**.
+
+Jeśli brakuje reguły, która byłaby przydatna - zaproponuj jej dodanie do odpowiedniego pliku .cursor/rules.
+
+Zwróć wynik w formacie JSON:
+{
+  "summary": "Krótkie podsumowanie zmian w pliku",
+  "severity": {
+    "critical": 0,
+    "high": 0,
+    "medium": 0,
+    "low": 0,
+    "info": 0
+  },
+  "issues": [
+    {
+      "category": "Zgodność ze standardami | Dobre praktyki | Błędy | Bezpieczeństwo | Refaktoryzacja",
+      "severity": "CRITICAL | HIGH | MEDIUM | LOW | INFO",
+      "message": "Dokładny opis problemu",
+      "line": 123,
+      "fix": "Konkretna propozycja naprawy",
+      "ruleSuggestion": "Jeśli brakuje reguły - zaproponuj dodanie do .cursor/rules/[plik].mdc"
+    }
+  ],
+  "ruleSuggestions": ["Lista propozycji nowych reguł do dodania"]
+}
+`.trim();
+
+      const analysisResult = await this.openRouterService.performStructuredAnalysis({
+        prompt,
         model: "anthropic/claude-3.5-sonnet",
         temperature: 0.1,
         maxTokens: 4096,
       });
 
-      // File-level result based on issues found
-      if (analysisResult.issues.some((issue) => issue.type === "error")) {
-        results.push({
-          category: "Code Quality",
-          criterion: `File: ${file.path}`,
-          status: "FAIL",
-          message: `Critical issues found: ${analysisResult.issues.filter((i) => i.type === "error").length}`,
-          details: analysisResult.issues
-            .filter((i) => i.type === "error")
-            .map((i) => `${i.line ? `Line ${i.line}: ` : ""}${i.message}`)
-            .join("; "),
-          recommendation: "Fix critical issues before merging",
-        });
-      } else if (analysisResult.issues.some((issue) => issue.type === "warning")) {
-        results.push({
-          category: "Code Quality",
-          criterion: `File: ${file.path}`,
-          status: "WARN",
-          message: `Code quality warnings: ${analysisResult.issues.filter((i) => i.type === "warning").length}`,
-          details: analysisResult.issues
-            .filter((i) => i.type === "warning")
-            .map((i) => `${i.line ? `Line ${i.line}: ` : ""}${i.message}`)
-            .join("; "),
-          recommendation: "Consider addressing warnings",
-        });
-      } else {
-        results.push({
-          category: "Code Quality",
-          criterion: `File: ${file.path}`,
-          status: "PASS",
-          message: "Code quality looks good",
-          details:
-            analysisResult.issues.length > 0
-              ? `Notes: ${analysisResult.issues.map((i) => i.message).join("; ")}`
-              : "No issues found",
-        });
-      }
+      // Parse the structured response
+      const response = JSON.parse(analysisResult);
 
-      // Add specific issue results
-      analysisResult.issues.forEach((issue) => {
+      // Add summary result
+      results.push({
+        category: "Code Review Summary",
+        criterion: `File: ${file.path}`,
+        status:
+          response.severity.critical > 0
+            ? "FAIL"
+            : response.severity.high > 0
+              ? "FAIL"
+              : response.severity.medium > 0
+                ? "WARN"
+                : "PASS",
+        message: response.summary,
+        details: `Severity: ${response.severity.critical} critical, ${response.severity.high} high, ${response.severity.medium} medium, ${response.severity.low} low, ${response.severity.info} info`,
+      });
+
+      // Add individual issue results
+      response.issues.forEach((issue: StructuredAnalysisIssue) => {
         results.push({
-          category: issue.type === "error" ? "Critical Issues" : issue.type === "warning" ? "Warnings" : "Info",
-          criterion: `${file.path}${issue.line ? `:${issue.line}` : ""}`,
-          status: issue.type === "error" ? "FAIL" : issue.type === "warning" ? "WARN" : "PASS",
+          category: issue.category,
+          criterion: `${file.path}${issue.line ? `:${issue.line}` : ""} (${issue.severity})`,
+          status:
+            issue.severity === "CRITICAL" || issue.severity === "HIGH"
+              ? "FAIL"
+              : issue.severity === "MEDIUM"
+                ? "WARN"
+                : "PASS",
           message: issue.message,
-          details: issue.suggestion ? `Suggestion: ${issue.suggestion}` : undefined,
+          details: issue.fix,
+          recommendation: issue.ruleSuggestion,
         });
       });
+
+      // Add rule suggestions as separate results
+      if (response.ruleSuggestions && response.ruleSuggestions.length > 0) {
+        response.ruleSuggestions.forEach((suggestion: string) => {
+          results.push({
+            category: "Rule Suggestions",
+            criterion: "New Rule Proposal",
+            status: "WARN",
+            message: "Consider adding new coding rule",
+            details: suggestion,
+            recommendation: "Add this rule to appropriate .cursor/rules file",
+          });
+        });
+      }
     } catch (error) {
       console.warn(`⚠️  AI analysis failed for ${file.path}:`, error);
       results.push({

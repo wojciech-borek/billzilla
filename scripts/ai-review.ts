@@ -89,11 +89,12 @@ async function getChangedFiles(): Promise<string[]> {
   }
 }
 
-async function loadProjectStandards(): Promise<string> {
+async function loadProjectRules(): Promise<string> {
   const fs = await import("fs");
   const path = await import("path");
 
-  const standardsFiles = [
+  const ruleFiles = [
+    // .cursor/rules files - coding standards
     ".cursor/rules/frontend.mdc",
     ".cursor/rules/backend.mdc",
     ".cursor/rules/shared.mdc",
@@ -101,32 +102,44 @@ async function loadProjectStandards(): Promise<string> {
     ".cursor/rules/astro.mdc",
     ".cursor/rules/vitest-unit-testing.mdc",
     ".cursor/rules/playwright-e2e-testing.mdc",
+    ".cursor/rules/api-supabase-astro-init.mdc",
+    ".cursor/rules/bllzilla-ui-guidelines.md",
+    ".cursor/rules/db-supabase-migrations.mdc",
+    ".cursor/rules/github-action.mdc",
+    ".cursor/rules/ui-shadcn-helper.mdc",
+    // .ai files - project documentation
     ".ai/tech-stack.md",
     ".ai/prd.md",
+    ".ai/api-plan.md",
+    ".ai/auth-spec.md",
+    ".ai/db-plan.md",
+    ".ai/test-plan.md",
+    ".ai/ui-plan.md",
+    ".ai/ui-plan.md",
     "README.md",
     "CONTRIBUTING.md",
   ];
 
-  let standards = "";
+  let rules = "";
 
-  for (const filePath of standardsFiles) {
+  for (const filePath of ruleFiles) {
     try {
       const fullPath = path.join(process.cwd(), filePath);
       if (fs.existsSync(fullPath)) {
         const content = fs.readFileSync(fullPath, "utf8");
-        standards += `\n\n=== STANDARDY: ${filePath} ===\n${content}`;
+        rules += `\n\n=== ${filePath.toUpperCase()} ===\n${content}`;
       }
     } catch (error) {
-      console.warn(`⚠️  Nie można wczytać pliku standardów ${filePath}:`, error);
+      console.warn(`⚠️  Nie można wczytać pliku zasad ${filePath}:`, error);
     }
   }
 
-  return standards;
+  return rules;
 }
 
 async function performStandardsReview(
   changedFiles: string[],
-  standards: string,
+  projectRules: string,
   apiKey: string
 ): Promise<AiReviewReport> {
   const fs = await import("fs");
@@ -146,32 +159,32 @@ async function performStandardsReview(
     }
   }
 
-  // Przygotuj prompt dla AI
+  // Przygotuj prompt dla AI - nowy format zgodny z wymaganiami
   const prompt = `
-Jesteś ekspertem w analizie kodu i recenzji programistycznej. Twoim zadaniem jest sprawdzić zgodność zmienionego kodu ze standardami projektu.
+Jesteś ekspertem w analizie kodu i recenzji programistycznej dla projektu Billzilla. Twoim zadaniem jest sprawdzić zgodność zmienionego kodu ze standardami projektu oraz dodać własną ocenę jakości kodu.
 
-STANDARDY PROJEKTU:
-${standards}
+## STANDARDY PROJEKTU (.ai i .cursor/rules):
+${projectRules}
 
-ZMIENIONY KOD:
+## ZMIENIONY KOD:
 ${codeContent}
 
-Przeanalizuj każdy zmieniony plik i sprawdź jego zgodność ze standardami projektu. Zwróć uwagę na:
+### INSTRUKCJE OCENY:
 
-1. **Architektura i struktura kodu** - czy kod jest zorganizowany zgodnie z zasadami projektu?
-2. **Konwencje nazewnictwa** - czy nazwy zmiennych, funkcji, klas są zgodne ze standardami?
-3. **Obsługa błędów** - czy błędy są prawidłowo obsługiwane?
-4. **Dokumentacja** - czy kod jest odpowiednio udokumentowany?
-5. **Zgodność z frameworkami** - czy kod używa właściwych wzorców dla React/Astro/TypeScript?
-6. **Testowanie** - czy kod zawiera odpowiednie testy?
-7. **Bezpieczeństwo** - czy kod jest bezpieczny?
+1. **Najpierw oceń zgodność ze standardami** z plików .ai i .cursor/rules
+2. **Dodaj własną ocenę** jeśli standardy nie pokrywają tematu:
+   - Dobre praktyki programowania
+   - Błędy i problemy techniczne
+   - Zagadnienia bezpieczeństwa
+   - Sugestie refaktoryzacji
 
-Dla każdej znalezionej niezgodności lub problemu podaj:
-- Kategorię problemu
-- Dokładny opis problemu
-- Rekomendację jak to naprawić
+### STRUKTURA ODPOWIEDZI:
 
-Zwróć wynik w formacie JSON z następującymi polami:
+Podaj **krótki podsumowanie**, następnie **listę problemów z poziomami severity** (CRITICAL, HIGH, MEDIUM, LOW, INFO), oraz **konkretne propozycje poprawek**.
+
+Jeśli brakuje reguły, która byłaby przydatna - zaproponuj jej dodanie do odpowiedniego pliku .cursor/rules.
+
+Zwróć wynik w formacie JSON:
 {
   "projectName": "billzilla",
   "timestamp": "${new Date().toISOString()}",
@@ -425,11 +438,13 @@ async function main() {
       // W środowisku CI, użyj pełnej implementacji
       console.log("Używam pełnej implementacji przeglądu AI...");
 
-      // Pobierz zmienione pliki i kontekst projektu
+      // Pobierz zmienione pliki, kontekst projektu i zasady
       const changedFiles = await getChangedFiles();
       const projectContext = await loadProjectContext();
+      const projectRules = await loadProjectRules();
 
       console.log(`📄 Załadowano ${projectContext.length} znaków kontekstu projektu`);
+      console.log(`📚 Załadowano ${projectRules.length} znaków zasad projektu`);
 
       // Dynamic import to load TypeScript modules
       const { AiReviewService } = await import("../src/lib/services/aiReviewService.ts");
@@ -441,7 +456,7 @@ async function main() {
       if (changedFiles.length > 0) {
         // Analizuj tylko zmienione pliki z PR
         console.log("🔍 Analizuję tylko zmienione pliki z PR...");
-        report = await reviewService.performPullRequestReview(changedFiles, projectContext);
+        report = await reviewService.performPullRequestReview(changedFiles, projectContext, projectRules);
       } else {
         // Fallback do kompleksowej analizy jeśli nie można określić zmienionych plików
         console.log("⚠️  Nie można określić zmienionych plików, wykonuję pełną analizę...");
@@ -452,9 +467,9 @@ async function main() {
       console.log("🔍 Sprawdzam zgodność zmienionego kodu ze standardami dokumentacji...");
 
       const changedFiles = await getChangedFiles();
-      const standards = await loadProjectStandards();
+      const projectRules = await loadProjectRules();
 
-      console.log(`📚 Załadowano ${standards.length} znaków standardów dokumentacji`);
+      console.log(`📚 Załadowano ${projectRules.length} znaków zasad projektu`);
 
       if (changedFiles.length === 0) {
         console.log("⚠️  Brak zmienionych plików do sprawdzenia.");
@@ -468,7 +483,7 @@ async function main() {
       } else {
         // Przeprowadź analizę zgodności kodu ze standardami używając AI
         console.log("🧠 AI sprawdza zgodność kodu ze standardami...");
-        report = await performStandardsReview(changedFiles, standards, openRouterApiKey);
+        report = await performStandardsReview(changedFiles, projectRules, openRouterApiKey);
       }
     }
 
