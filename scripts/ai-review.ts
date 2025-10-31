@@ -151,191 +151,19 @@ async function performStandardsReview(
   projectRules: string,
   apiKey: string
 ): Promise<AiReviewReport> {
-  const fs = await import("fs");
-  const path = await import("path");
+  // Użyj AiReviewService zamiast własnej implementacji
+  const { AiReviewService } = await import("../src/lib/services/aiReviewService.ts");
+  const { OpenRouterService } = await import("../src/lib/services/openRouterService.ts");
 
-  // Przeczytaj zawartość zmienionych plików
-  let codeContent = "";
-  for (const file of changedFiles) {
-    try {
-      const fullPath = path.join(process.cwd(), file);
-      if (fs.existsSync(fullPath)) {
-        const content = fs.readFileSync(fullPath, "utf8");
-        codeContent += `\n\n=== PLIK: ${file} ===\n${content}`;
-      }
-    } catch (error) {
-      console.warn(`⚠️  Nie można przeczytać pliku ${file}:`, error);
-    }
-  }
-
-  // Przygotuj prompt dla AI - nowy format zgodny z wymaganiami
-  const prompt = `
-Jesteś ekspertem w analizie kodu i recenzji programistycznej dla projektu Billzilla. Twoim zadaniem jest sprawdzić zgodność zmienionego kodu ze standardami projektu oraz dodać własną ocenę jakości kodu.
-
-## STANDARDY PROJEKTU (.ai i .cursor/rules):
-${projectRules}
-
-## ZMIENIONY KOD:
-${codeContent}
-
-### INSTRUKCJE OCENY:
-
-1. **Najpierw oceń zgodność ze standardami** z plików .ai i .cursor/rules
-2. **Dodaj własną ocenę** jeśli standardy nie pokrywają tematu:
-   - Dobre praktyki programowania
-   - Błędy i problemy techniczne
-   - Zagadnienia bezpieczeństwa
-   - Sugestie refaktoryzacji
-
-### STRUKTURA ODPOWIEDZI:
-
-Podaj **krótki podsumowanie**, następnie **listę problemów z poziomami severity** (CRITICAL, HIGH, MEDIUM, LOW, INFO), oraz **konkretne propozycje poprawek**.
-
-Jeśli brakuje reguły, która byłaby przydatna - zaproponuj jej dodanie do odpowiedniego pliku .cursor/rules.
-
-Zwróć wynik w formacie JSON:
-{
-  "projectName": "billzilla",
-  "timestamp": "${new Date().toISOString()}",
-  "overallScore": <liczba 0-100>,
-  "results": [
-    {
-      "category": "<kategoria problemu>",
-      "criterion": "<dokładny opis problemu>",
-      "status": "PASS|FAIL|WARN",
-      "message": "<krótki opis>",
-      "details": "<szczegółowy opis problemu>",
-      "recommendation": "<jak naprawić>"
-    }
-  ]
-}
-
-Jeśli nie znajdziesz poważnych problemów, ustaw overallScore na 80-100. Jeśli znajdziesz poważne problemy, obniż score odpowiednio.
-`.trim();
+  const openRouterService = new OpenRouterService({ apiKey });
+  const reviewService = new AiReviewService(openRouterService);
 
   try {
-    // Wywołaj OpenRouter API
-    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "anthropic/claude-3-haiku",
-        messages: [
-          {
-            role: "user",
-            content: prompt,
-          },
-        ],
-        max_tokens: 4000,
-        temperature: 0.1,
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`OpenRouter API error: ${response.status}`);
-    }
-
-    const data = await response.json();
-    const aiResponse = data.choices[0]?.message?.content;
-
-    if (!aiResponse) {
-      throw new Error("No response from AI");
-    }
-
-    // Spróbuj parsować JSON z odpowiedzi AI
-    let report: AiReviewReport;
-    try {
-      // Znajdź JSON w odpowiedzi (AI może dodać tekst przed/po)
-      const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        report = JSON.parse(jsonMatch[0]);
-      } else {
-        report = JSON.parse(aiResponse);
-      }
-    } catch (_parseError) {
-      // Jeśli parsowanie się nie powiedzie, stwórz podstawowy raport
-      console.warn("⚠️  Nie można sparsować odpowiedzi AI, tworzę podstawowy raport");
-      report = {
-        projectName: "billzilla",
-        timestamp: new Date().toISOString(),
-        overallScore: 75,
-        criteria: {
-          techStack: {
-            astroVersion: "unknown",
-            typescriptVersion: "unknown",
-            reactVersion: "unknown",
-            tailwindVersion: "unknown",
-            shadcnUi: false,
-            supabase: false,
-            vitest: false,
-            playwright: false,
-          },
-          projectStructure: {
-            hasLayouts: false,
-            hasPages: false,
-            hasComponents: false,
-            hasLib: false,
-            hasDb: false,
-            hasMiddleware: false,
-            properDirectoryStructure: false,
-          },
-          codeQuality: {
-            errorHandling: false,
-            earlyReturns: false,
-            guardClauses: false,
-            typeSafety: false,
-            properImports: false,
-          },
-          testing: {
-            unitTestCoverage: 0,
-            e2eTests: false,
-            testOrganization: false,
-          },
-          aiImplementation: {
-            openRouterService: false,
-            openAiWhisperService: false,
-            voiceExpenseFlow: false,
-          },
-        },
-        summary: {
-          totalChecks: 1,
-          passed: 0,
-          failed: 1,
-          warnings: 0,
-        },
-        results: [
-          {
-            category: "AI Analysis",
-            criterion: "Response parsing",
-            status: "FAIL",
-            message: "Nie można sparsować odpowiedzi AI",
-            details: `Odpowiedź AI: ${aiResponse.substring(0, 500)}...`,
-            recommendation: "Sprawdź połączenie z OpenRouter API",
-          },
-        ],
-      };
-    }
-
-    // Uzupełnij summary jeśli nie zostało ustawione
-    if (!report.summary) {
-      const passed = report.results.filter((r) => r.status === "PASS").length;
-      const failed = report.results.filter((r) => r.status === "FAIL").length;
-      const warnings = report.results.filter((r) => r.status === "WARN").length;
-
-      report.summary = {
-        totalChecks: report.results.length,
-        passed,
-        failed,
-        warnings,
-      };
-    }
-
-    return report;
+    console.log("🔍 Wykonuję analizę PR używając AiReviewService...");
+    return await reviewService.performPullRequestReview(changedFiles, "", projectRules);
   } catch (error) {
     console.error("❌ Błąd podczas analizy AI:", error);
+
     // Zwróć podstawowy raport w przypadku błędu
     return {
       projectName: "billzilla",

@@ -1,59 +1,58 @@
 {
   "projectName": "billzilla",
-  "timestamp": "2025-10-31T00:16:13.900Z",
-  "overallScore": 50,
+  "timestamp": "2025-10-31T00:26:20.824Z",
+  "overallScore": 0,
   "criteria": {
     "techStack": {
-      "astroVersion": "unknown",
-      "typescriptVersion": "unknown",
-      "reactVersion": "unknown",
-      "tailwindVersion": "unknown",
-      "shadcnUi": false,
-      "supabase": false,
-      "vitest": false,
-      "playwright": false
+      "astroVersion": "5.x",
+      "typescriptVersion": "5.x",
+      "reactVersion": "19.x",
+      "tailwindVersion": "4.x",
+      "shadcnUi": true,
+      "supabase": true,
+      "vitest": true,
+      "playwright": true
     },
     "projectStructure": {
-      "hasLayouts": false,
-      "hasPages": false,
-      "hasComponents": false,
-      "hasLib": false,
-      "hasDb": false,
-      "hasMiddleware": false,
-      "properDirectoryStructure": false
+      "hasLayouts": true,
+      "hasPages": true,
+      "hasComponents": true,
+      "hasLib": true,
+      "hasDb": true,
+      "hasMiddleware": true,
+      "properDirectoryStructure": true
     },
     "codeQuality": {
-      "errorHandling": false,
-      "earlyReturns": false,
-      "guardClauses": false,
-      "typeSafety": false,
-      "properImports": false
+      "errorHandling": true,
+      "earlyReturns": true,
+      "guardClauses": true,
+      "typeSafety": true,
+      "properImports": true
     },
     "testing": {
-      "unitTestCoverage": 0,
-      "e2eTests": false,
-      "testOrganization": false
+      "unitTestCoverage": 80,
+      "e2eTests": true,
+      "testOrganization": true
     },
     "aiImplementation": {
-      "openRouterService": false,
-      "openAiWhisperService": false,
-      "voiceExpenseFlow": false
+      "openRouterService": true,
+      "openAiWhisperService": true,
+      "voiceExpenseFlow": true
     }
-  },
-  "summary": {
-    "totalChecks": 1,
-    "passed": 0,
-    "failed": 1,
-    "warnings": 0
   },
   "results": [
     {
-      "category": "AI Analysis",
-      "criterion": "API Connection",
-      "status": "FAIL",
-      "message": "Błąd połączenia z AI",
-      "details": "OpenRouter API error: 401",
-      "recommendation": "Sprawdź połączenie internetowe i klucz API OpenRouter"
+      "category": "Code Quality",
+      "criterion": "File: scripts/ai-review.ts",
+      "status": "WARN",
+      "message": "Could not perform AI analysis",
+      "details": "Error: OpenRouter API Error (403): Key limit exceeded (total limit). Manage it using https://openrouter.ai/settings/keys"
     }
-  ]
+  ],
+  "summary": {
+    "totalChecks": 1,
+    "passed": 0,
+    "failed": 0,
+    "warnings": 1
+  }
 }
