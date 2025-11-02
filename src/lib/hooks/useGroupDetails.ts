@@ -5,11 +5,11 @@ interface UseGroupDetailsOptions {
   enabled?: boolean;
 }
 
-export function useGroupDetails(groupId: string, userId: string, options: UseGroupDetailsOptions = {}) {
+export function useGroupDetails(groupId: string, options: UseGroupDetailsOptions = {}) {
   const { enabled = true } = options;
 
   return useQuery({
-    queryKey: ["group-details", groupId, userId],
+    queryKey: ["group-details", groupId],
     queryFn: async (): Promise<GroupDetailDTO> => {
       const response = await fetch(`/api/groups/${groupId}`, {
         method: "GET",
@@ -25,7 +25,7 @@ export function useGroupDetails(groupId: string, userId: string, options: UseGro
 
       return response.json();
     },
-    enabled: enabled && !!groupId && !!userId,
+    enabled: enabled && !!groupId,
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
   });

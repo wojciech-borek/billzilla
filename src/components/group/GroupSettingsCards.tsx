@@ -5,12 +5,11 @@ import { useGroupDetails } from "@/lib/hooks/useGroupDetails";
 
 export interface GroupSettingsCardsProps {
   groupId: string;
-  userId: string;
   userRole: GroupRole;
 }
 
-export const GroupSettingsCards: React.FC<GroupSettingsCardsProps> = ({ groupId, userId, userRole }) => {
-  const { data: groupDetails, isLoading, error } = useGroupDetails(groupId, userId);
+export const GroupSettingsCards: React.FC<GroupSettingsCardsProps> = ({ groupId, userRole }) => {
+  const { data: groupDetails, isLoading, error } = useGroupDetails(groupId);
 
   const members = groupDetails?.members || [];
   const pendingInvitations = groupDetails?.pending_invitations || [];
