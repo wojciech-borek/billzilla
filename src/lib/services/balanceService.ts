@@ -209,6 +209,7 @@ export async function calculateUserBalances(
         balancesByGroup.set(settlement.group_id, currentBalance - settlement.amount);
       }
     }
+
     return balancesByGroup;
   } catch (error) {
     // Re-throw custom errors as-is
