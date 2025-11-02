@@ -1,16 +1,36 @@
 ---
-// Redirect to dashboard as default
+import GroupLayout from "@/layouts/GroupLayout.astro";
+import { DashboardTab } from "@/components/group/DashboardTab";
+import type { AuthUserWithProfile } from "@/types";
+
+// Server-side authentication check
+const user = Astro.locals.user as AuthUserWithProfile;
+if (!user) {
+  return Astro.redirect("/login");
+}
+
+const { groupId } = Astro.params;
+if (!groupId) {
+  return Astro.redirect("/");
+}
+
+// Fetch group details for SSR
+const response = await fetch(`${Astro.url.origin}/api/groups/${groupId}`, {
+  headers: {
+    Cookie: Astro.request.headers.get("cookie") || "",
+  },
+});
+
+if (!response.ok) {
+  if (response.status === 404 || response.status === 403) {
+    return Astro.redirect("/");
+  }
+  throw new Error("Failed to fetch group details");
+}
+
+const groupDetails = await response.json();
 ---
 
-<html lang="pl">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Przekierowanie...</title>
-    <script>
-      // Redirect to dashboard const path = window.location.pathname; const groupId = path.split("/")[2]; // Extract groupId
-from /groups/:groupId       window.location.href = `/groups/${groupId}/dashboard`;
-    </script>
-  </head>
-  <body> </body>
-</html>
+<GroupLayout groupId={groupId} user={user} groupDetails={groupDetails}>
+  <DashboardTab client:load groupId={groupId} userId={user.id} userRole={groupDetails.my_role} />
+</GroupLayout>
