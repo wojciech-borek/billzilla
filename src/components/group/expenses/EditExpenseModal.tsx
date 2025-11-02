@@ -1,7 +1,8 @@
 import React, { useMemo } from "react";
 
 import { ExpenseModal } from "./ExpenseModal";
-import type { GroupMemberSummaryDTO, GroupCurrencyDTO, ExpenseDTO, CreateExpenseCommand } from "@/types";
+import { transformExpenseToFormData } from "./utils/expenseTransformers";
+import type { GroupMemberSummaryDTO, GroupCurrencyDTO, ExpenseDTO } from "@/types";
 
 interface EditExpenseModalProps {
   groupId: string;
@@ -29,20 +30,7 @@ export function EditExpenseModal({
   error = null,
 }: EditExpenseModalProps) {
   // Memoize expense data transformation for performance
-  const initialExpenseData = useMemo<CreateExpenseCommand>(
-    () => ({
-      description: expense.description,
-      amount: expense.amount,
-      currency_code: expense.currency_code,
-      expense_date: new Date(expense.expense_date).toISOString().slice(0, 16),
-      payer_id: expense.payer_id,
-      splits: expense.splits.map((split) => ({
-        profile_id: split.profile_id,
-        amount: split.amount,
-      })),
-    }),
-    [expense.description, expense.amount, expense.currency_code, expense.expense_date, expense.payer_id, expense.splits]
-  );
+  const initialExpenseData = useMemo(() => transformExpenseToFormData(expense), [expense]);
 
   return (
     <ExpenseModal

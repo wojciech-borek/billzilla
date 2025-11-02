@@ -14,6 +14,17 @@ import type {
   CreateExpenseCommand,
 } from "@/types";
 
+// Constants for modal configuration
+const MODAL_CONFIG = {
+  maxWidth: "max-w-3xl",
+  styles: "p-0 rounded-lg",
+} as const;
+
+const SUCCESS_MESSAGES = {
+  create: "Wydatek został utworzony pomyślnie!",
+  edit: "Wydatek został zaktualizowany pomyślnie!",
+} as const;
+
 interface ExpenseModalProps {
   mode: "create" | "edit";
   groupId: string;
@@ -73,9 +84,7 @@ export function ExpenseModal({
   // Handle expense creation/update
   const handleExpenseAction = useMemo(
     () => (expense: ExpenseDTO) => {
-      const successMessage =
-        mode === "create" ? "Wydatek został utworzony pomyślnie!" : "Wydatek został zaktualizowany pomyślnie!";
-
+      const successMessage = SUCCESS_MESSAGES[mode];
       toast.success(successMessage);
 
       if (mode === "create") {
@@ -102,7 +111,7 @@ export function ExpenseModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-3xl p-0 rounded-lg" showCloseButton={false}>
+      <DialogContent className={`${MODAL_CONFIG.maxWidth} ${MODAL_CONFIG.styles}`} showCloseButton={false}>
         <ExpenseModalHeader onClose={handleClose} />
         <ExpenseModalContent
           groupId={groupId}
