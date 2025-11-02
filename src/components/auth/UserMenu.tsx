@@ -1,4 +1,4 @@
-import { memo } from "react";
+import React, { memo } from "react";
 import { LogOut } from "lucide-react";
 import {
   DropdownMenu,
@@ -9,7 +9,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { useLogout } from "@/lib/hooks";
+import { useLogout } from "@/lib/hooks/useLogout";
 import type { AuthUserWithProfile } from "@/types";
 
 interface UserMenuProps {

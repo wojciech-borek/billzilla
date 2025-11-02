@@ -3,14 +3,15 @@
 Twoim zadaniem jest uruchomienie ESLinta i naprawienie błędów w konkretnym folderze projektu.
 
 ### Zakres
+
 - Poprawiaj **tylko pliki we wskazanym przeze mnie folderze**.
 - Nie modyfikuj plików poza tym folderem bez pytania.
 
 ###Co masz zrobić krok po kroku:
 
 1. Przeanalizuj konfigurację ESLinta w repo (`.eslintrc*` lub `eslintConfig` w `package.json`).
-2. Uruchom ESLint na folderze:  
-   - Komenda (przykład, dostosuj do managera pakietów):  
+2. Uruchom ESLint na folderze:
+   - Komenda (przykład, dostosuj do managera pakietów):
      ```
      npx eslint "<TU_WSTAW_FOLDER>/**/*.{js,jsx,ts,tsx}" --fix
      ```
@@ -25,12 +26,13 @@ Twoim zadaniem jest uruchomienie ESLinta i naprawienie błędów w konkretnym fo
    - Sugestie co można zrobić lepiej w przyszłości (opcjonalnie)
 
 ### Wymagania dodatkowe:
+
 - Nie wyłączaj reguł ESLinta bez powodu.
 - Jeśli zmiana może wpłynąć na logikę działania — poinformuj mnie o tym.
 - Jeśli ESLint nie jest poprawnie skonfigurowany, powiedz jak go skonfigurować.
 
 ### Format odpowiedzi
+
 Zwróć mi wynik w formie czytelnego raportu Markdown.
 
 ---
-

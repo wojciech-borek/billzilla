@@ -120,6 +120,7 @@ describe("ExpenseRepository", () => {
       ];
 
       const queryBuilder = mockExpenseRepositoryQuery(mockSupabaseClient, "expense_splits", {
+        data: null,
         error: null,
       });
       queryBuilder.insert.mockResolvedValue({ error: null });
@@ -155,7 +156,10 @@ describe("ExpenseRepository", () => {
       // Arrange
       const expenseId = "expense-123";
 
-      const queryBuilder = mockExpenseRepositoryQuery(mockSupabaseClient, "expenses", {});
+      const queryBuilder = mockExpenseRepositoryQuery(mockSupabaseClient, "expenses", {
+        data: null,
+        error: null,
+      });
       queryBuilder.delete.mockReturnThis();
       queryBuilder.eq.mockResolvedValue({});
 

@@ -28,6 +28,8 @@ export const onRequest = async (context: APIContext, next: () => Promise<Respons
     error: authError,
   } = await supabase.auth.getUser();
 
+  console.log("Auth check:", { authUser: authUser?.id, authError });
+
   if (authUser && !authError) {
     try {
       const { data: profile, error } = await supabase
@@ -37,8 +39,10 @@ export const onRequest = async (context: APIContext, next: () => Promise<Respons
         .single();
 
       if (error) {
+        console.log("Profile fetch error:", error);
         context.locals.user = null;
       } else {
+        console.log("Profile loaded:", profile?.id);
         context.locals.user = profile;
       }
     } catch {

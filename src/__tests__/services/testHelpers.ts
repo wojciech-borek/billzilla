@@ -699,12 +699,21 @@ export const mockGroupRepositoryQuery = (client: SupabaseClient, table: string, 
 };
 
 export const mockExpenseRepositoryQuery = (client: SupabaseClient, table: string, result: MockQueryResult) => {
-  const queryBuilder: Partial<MockSupabaseQueryBuilder> = {
+  const queryBuilder: MockSupabaseQueryBuilder = {
     select: vi.fn().mockReturnThis(),
     eq: vi.fn().mockReturnThis(),
-    single: vi.fn().mockResolvedValue(result),
-    insert: vi.fn().mockReturnThis(),
-    delete: vi.fn().mockReturnThis(),
+    neq: vi.fn().mockReturnThis(),
+    gt: vi.fn().mockReturnThis(),
+    gte: vi.fn().mockReturnThis(),
+    lt: vi.fn().mockReturnThis(),
+    lte: vi.fn().mockReturnThis(),
+    like: vi.fn().mockReturnThis(),
+    ilike: vi.fn().mockReturnThis(),
+    is: vi.fn().mockReturnThis(),
+    in: vi.fn().mockReturnThis(),
+    contains: vi.fn().mockReturnThis(),
+    containedBy: vi.fn().mockReturnThis(),
+    range: vi.fn().mockResolvedValue(result),
     order: vi.fn().mockImplementation((...args: unknown[]) => {
       // Handle different order signatures: order(column) or order(column, options)
       if (args.length === 1) {
@@ -716,10 +725,27 @@ export const mockExpenseRepositoryQuery = (client: SupabaseClient, table: string
         };
       }
     }),
-    range: vi.fn().mockResolvedValue(result),
+    limit: vi.fn().mockReturnThis(),
+    single: vi.fn().mockResolvedValue(result),
+    maybeSingle: vi.fn().mockResolvedValue(result),
+    insert: vi.fn().mockReturnThis(),
+    upsert: vi.fn().mockReturnThis(),
+    update: vi.fn().mockReturnThis(),
+    delete: vi.fn().mockReturnThis(),
+    rpc: vi.fn().mockResolvedValue(result),
+    count: vi.fn().mockReturnThis(),
+    head: vi.fn().mockReturnThis(),
+    csv: vi.fn().mockReturnThis(),
+    explain: vi.fn().mockReturnThis(),
+    rollback: vi.fn().mockReturnThis(),
+    abortSignal: vi.fn().mockReturnThis(),
+    or: vi.fn().mockReturnThis(),
+    then: vi.fn().mockResolvedValue(result),
+    catch: vi.fn().mockRejectedValue(new Error("Mock error")),
+    finally: vi.fn().mockResolvedValue(result),
   };
 
-  client.from.mockReturnValueOnce(queryBuilder as MockSupabaseQueryBuilder);
+  client.from.mockReturnValueOnce(queryBuilder);
   return queryBuilder;
 };
 

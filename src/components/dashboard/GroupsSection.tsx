@@ -35,9 +35,27 @@ export default function GroupsSection({ query, onAddExpense }: GroupsSectionProp
   if (query.loading && query.data.length === 0) {
     return (
       <section aria-labelledby="groups-heading">
-        <h2 id="groups-heading" className="mb-6 text-2xl font-bold tracking-tight text-foreground">
-          Twoje grupy
-        </h2>
+        <div className="flex items-center gap-3 mb-6">
+          <div className="flex items-center justify-center w-8 h-8 rounded-xl bg-primary/10">
+            <svg
+              className="w-5 h-5 text-primary"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+              />
+            </svg>
+          </div>
+          <h2 id="groups-heading" className="text-2xl font-bold tracking-tight text-foreground">
+            Twoje grupy
+          </h2>
+        </div>
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {[...Array(3)].map((_, i) => (
             <div key={i} className="h-64 animate-pulse rounded-2xl bg-muted/50" aria-hidden="true" />
@@ -51,9 +69,27 @@ export default function GroupsSection({ query, onAddExpense }: GroupsSectionProp
   if (query.error) {
     return (
       <section aria-labelledby="groups-heading">
-        <h2 id="groups-heading" className="mb-6 text-2xl font-bold tracking-tight text-foreground">
-          Twoje grupy
-        </h2>
+        <div className="flex items-center gap-3 mb-6">
+          <div className="flex items-center justify-center w-8 h-8 rounded-xl bg-primary/10">
+            <svg
+              className="w-5 h-5 text-primary"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+              />
+            </svg>
+          </div>
+          <h2 id="groups-heading" className="text-2xl font-bold tracking-tight text-foreground">
+            Twoje grupy
+          </h2>
+        </div>
         <div className="rounded-2xl border border-destructive/20 bg-destructive/10 p-6">
           <div className="flex items-start gap-3">
             <svg
@@ -90,9 +126,27 @@ export default function GroupsSection({ query, onAddExpense }: GroupsSectionProp
   if (query.data.length === 0) {
     return (
       <section aria-labelledby="groups-heading">
-        <h2 id="groups-heading" className="mb-6 text-2xl font-bold tracking-tight text-foreground">
-          Twoje grupy
-        </h2>
+        <div className="flex items-center gap-3 mb-6">
+          <div className="flex items-center justify-center w-8 h-8 rounded-xl bg-primary/10">
+            <svg
+              className="w-5 h-5 text-primary"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+              />
+            </svg>
+          </div>
+          <h2 id="groups-heading" className="text-2xl font-bold tracking-tight text-foreground">
+            Twoje grupy
+          </h2>
+        </div>
         <SectionEmptyState
           title="Brak grup"
           description="Nie należysz jeszcze do żadnej grupy. Utwórz nową grupę lub poczekaj na zaproszenie."
@@ -104,9 +158,27 @@ export default function GroupsSection({ query, onAddExpense }: GroupsSectionProp
   // Success state with data
   return (
     <section aria-labelledby="groups-heading">
-      <h2 id="groups-heading" className="mb-6 text-2xl font-bold tracking-tight text-foreground">
-        Twoje grupy
-      </h2>
+      <div className="flex items-center gap-3 mb-6">
+        <div className="flex items-center justify-center w-8 h-8 rounded-xl bg-primary/10">
+          <svg
+            className="w-5 h-5 text-primary"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+            />
+          </svg>
+        </div>
+        <h2 id="groups-heading" className="text-2xl font-bold tracking-tight text-foreground">
+          Twoje grupy
+        </h2>
+      </div>
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {query.data.map((group) => (
           <GroupCard key={group.id} group={group} onOpen={handleOpenGroup} onAddExpense={onAddExpense} />

@@ -97,64 +97,45 @@ Kluczowe założenia:
 
 ### Widok 3: Grupa (Group)
 
-- **Ścieżka:** `/groups/:id/*` (wymaga uwierzytelnienia)
-- **Główny cel:** Szczegółowy widok pojedynczej grupy, zorganizowany w zakładkach.
-- **Kluczowe informacje:** Nazwa grupy, nawigacja po zakładkach.
+- **Ścieżka:** `/groups/:id/dashboard` (wymaga uwierzytelnienia)
+- **Główny cel:** Szczegółowy widok pojedynczej grupy ze wszystkimi informacjami w jednym miejscu.
+- **Kluczowe informacje:** Nazwa grupy, wydatki, salda i ustawienia grupy.
 - **Kluczowe komponenty:**
-  - `Header`: Nagłówek z przyciskiem "Wróć" do pulpitu.
-  - `TabContainer`: Nawigacja między zakładkami: "Wydatki", "Salda", "Uczestnicy i Ustawienia".
+  - `Header`: Nagłówek z przyciskiem "Wróć" do pulpitu i opcjami edycji grupy.
+  - `DashboardTab`: Główny komponent zawierający wszystkie sekcje (wydatki, salda, ustawienia).
 - **UX, dostępność, bezpieczeństwo:**
-  - **UX:** Logiczny podział informacji na zakładki ułatwia nawigację w obrębie grupy.
-  - **Dostępność:** Nawigacja po zakładkach jest w pełni dostępna z klawiatury i zgodna ze standardami ARIA.
+  - **UX:** Wszystkie informacje grupy są dostępne w jednym widoku bez konieczności przełączania między zakładkami.
+  - **Dostępność:** Wszystkie komponenty są dostępne z klawiatury z odpowiednimi etykietami ARIA.
   - **Bezpieczeństwo:** Dostęp do widoku jest chroniony – użytkownik musi być uczestnikiem grupy.
 
-#### Widok 3a: Zakładka Wydatki (Expenses Tab)
+#### Sekcje dashboard grupy
 
-- **Ścieżka:** `/groups/:id/expenses` (domyślna zakładka)
-- **Główny cel:** Przeglądanie historii wydatków w grupie i dodawanie nowych.
-- **Kluczowe informacje:** Lista wydatków z opisem, kwotą, datą, płatnikiem oraz awatarami uczestników i ich udziałem w koszcie.
-- **Kluczowe komponenty:**
-  - `ExpenseList`: Lista wszystkich wydatków (z infinite scroll).
-  - `ExpenseListItem`: Pojedynczy element listy z kluczowymi danymi wydatku.
-  - `FloatingActionButton (FAB)`: Otwiera modal dodawania nowego wydatku.
-  - `EmptyState`: Komunikat o braku wydatków.
-- **UX, dostępność, bezpieczeństwo:**
-  - **UX:** Nowe wydatki dodane przez innych uczestników pojawiają się natychmiast z animacją. Kliknięcie we własny wydatek umożliwia edycję.
-  - **Dostępność:** Nowe elementy na liście są ogłaszane przez czytniki ekranu.
-  - **Bezpieczeństwo:** Przyciski edycji/usunięcia są widoczne tylko przy wydatkach stworzonych przez zalogowanego użytkownika.
+Dashboard grupy zawiera wszystkie informacje w jednym widoku podzielonym na logiczne sekcje:
 
-#### Widok 3b: Zakładka Salda (Balances Tab)
+**Sekcja podsumowania (Summary Cards):**
+- Karty z kluczowymi metrykami: suma wydatków, liczba członków, do rozliczenia, własne saldo.
+- Komponenty: `SummaryCard` (4 karty w grid).
 
-- **Ścieżka:** `/groups/:id/balances`
-- **Główny cel:** Przedstawienie podsumowania finansowego grupy – kto komu jest winien pieniądze.
-- **Kluczowe informacje:**
-  - Saldo każdego uczestnika (ile jest "na plusie" lub "na minusie").
-  - Sugerowane rozliczenia, minimalizujące liczbę transakcji.
-- **Kluczowe komponenty:**
-  - `MemberBalanceSummary`: Lista uczestników z ich całkowitym saldem w walucie bazowej.
-  - `SuggestedSettlementList`: Interaktywna lista sugerowanych spłat (np. "Anna oddaje Janowi 50 PLN").
-  - `SettleUpButton`: Przycisk otwierający modal ręcznego rozliczenia.
-- **UX, dostępność, bezpieczeństwo:**
-  - **UX:** Czytelna wizualizacja długów. Interaktywne sugestie pozwalają szybko zainicjować spłatę.
-  - **Dostępność:** Salda są jasno komunikowane (np. "Twoje saldo: plus 120,50 PLN").
-  - **Bezpieczeństwo:** Dane są tylko do odczytu, akcje inicjują bezpieczne operacje zapisu.
+**Sekcja wydatki (Expenses Section):**
+- Lista wszystkich wydatków z opisem, kwotą, datą, płatnikiem oraz awatarami uczestników.
+- Możliwość dodawania nowych wydatków przez FAB.
+- Komponenty: `ExpenseList`, `ExpenseListItem`, `FloatingActionButton`.
 
-#### Widok 3c: Zakładka Uczestnicy i Ustawienia (Participants & Settings Tab)
+**Sekcja salda (Balances Section):**
+- Podsumowanie sald wszystkich członków grupy.
+- Lista sugerowanych rozliczeń z przyciskami szybkiego rozliczenia.
+- Komponenty: `MemberBalanceSummary`, `SuggestedSettlementList`, `SettleUpButton`.
 
-- **Ścieżka:** `/groups/:id/settings`
-- **Główny cel:** Zarządzanie uczestnikami i ustawieniami grupy.
-- **Kluczowe informacje:** Lista uczestników, nazwa grupy, waluty i kursy wymiany.
-- **Kluczowe komponenty:**
-  - `MemberList`: Lista uczestników z awatarem, imieniem i rolą (ikona gwiazdki dla twórcy) oraz statusem ("Nieaktywny").
-  - `InviteMemberForm`: Formularz do zapraszania nowych osób przez e-mail.
-  - `EditGroupNameForm`: Formularz edycji nazwy grupy (tylko dla twórcy).
-  - `CurrencyManagement`: Sekcja do zarządzania walutami i kursami wymiany.
-  - `LeaveGroupButton`: Przycisk do opuszczenia grupy.
-  - `ArchiveGroupButton`: Przycisk do archiwizacji grupy (tylko dla twórcy).
-- **UX, dostępność, bezpieczeństwo:**
-  - **UX:** Akcje niebezpieczne (opuszczenie, archiwizacja) wymagają dialogu potwierdzającego.
-  - **Dostępność:** Wszystkie formularze i przyciski są odpowiednio oetykietowane.
-  - **Bezpieczeństwo:** Komponenty i akcje są renderowane warunkowo w zależności od roli użytkownika (twórca vs uczestnik), zgodnie z logiką API.
+**Sekcja ustawień grupy (Group Settings Section):**
+- Zarządzanie członkami: lista uczestników, formularz zaproszeń.
+- Zarządzanie walutami: lista walut z kursami, dodawanie nowych walut.
+- Akcje grupy: opuszczenie grupy, archiwizacja (tylko dla twórcy).
+- Komponenty: `GroupSettingsCards` zawierający wszystkie podsekcje ustawień.
+
+**UX, dostępność, bezpieczeństwo:**
+- **UX:** Wszystkie informacje są dostępne w jednym miejscu bez przełączania kontekstu. Sekcje są logicznie oddzielone wizualnie.
+- **Dostępność:** Wszystkie komponenty są dostępne z klawiatury. Nowe dane są ogłaszane przez `aria-live`.
+- **Bezpieczeństwo:** Uprawnienia są egzekwowane na poziomie komponentów (tylko twórca może edytować nazwę grupy, tylko autor wydatku może go edytować).
 
 ### Komponenty modalne (nie są osobnymi widokami)
 
@@ -204,11 +185,11 @@ Kluczowe założenia:
 2.  **Pusty pulpit:** Zostaje przekierowany na `/` (strona główna), gdzie widzi `EmptyState` i klika "Stwórz grupę".
 3.  **Tworzenie grupy:** W modalu `Utwórz grupę` podaje nazwę, wybiera walutę i zaprasza znajomego przez e-mail.
 4.  **Pierwsza grupa:** Po zapisaniu modal znika, a na `/` pojawia się nowa karta grupy.
-5.  **Wejście do grupy:** Użytkownik klika kartę grupy i przechodzi do `/groups/:id/expenses`.
+5.  **Wejście do grupy:** Użytkownik klika kartę grupy i przechodzi do `/groups/:id/dashboard`.
 6.  **Dodawanie wydatku:** Klika FAB, co otwiera modal `Dodaj wydatek`.
 7.  **Dodawanie głosem:** Klika ikonę mikrofonu, mówi "Ja zapłaciłem 100 złotych za zakupy dla mnie i Ani", system przetwarza polecenie i automatycznie wypełnia formularz.
 8.  **Weryfikacja i zapis:** Użytkownik sprawdza dane, potwierdza i zapisuje wydatek. Modal się zamyka, a nowy wydatek pojawia się na liście.
-9.  **Sprawdzenie sald:** Użytkownik przechodzi do zakładki `Salda` (`/groups/:id/balances`), gdzie widzi, że Ania jest mu winna 50 PLN.
+9.  **Sprawdzenie sald:** Użytkownik sprawdza sekcję sald w tym samym widoku, gdzie widzi, że Ania jest mu winna 50 PLN.
 10. **Rozliczenie:** Użytkownik klika na sugestię spłaty, co otwiera pre-wypełniony modal `Rozlicz się`, zatwierdza go, a salda w grupie zostają wyrównane.
 
 ### 3.4. Przepływ dla użytkownika resetującego hasło
@@ -231,7 +212,7 @@ Kluczowe założenia:
 - **Strony publiczne (bez uwierzytelnienia):** `/login`, `/signup`, `/reset-password`, `/about` - dostępne dla wszystkich użytkowników.
 - **Strony chronione (wymagają uwierzytelnienia):** Wszystkie pozostałe strony wymagają zalogowania. Próba dostępu bez uwierzytelnienia przekierowuje na `/login`.
 - **Nawigacja główna:** Jest płaska i maksymalnie uproszczona. Zalogowany użytkownik porusza się głównie między stroną główną (`/`) a widokiem szczegółów grupy (`/groups/:id`). `Header` zapewnia spójny punkt dostępu do menu użytkownika i nawigacji wstecz. Nie ma osobnej strony do zarządzania zaproszeniami.
-- **Nawigacja wewnątrz grupy:** Opiera się na zakładkach, co pozwala na szybkie przełączanie kontekstu między wydatkami, saldami i ustawieniami bez opuszczania widoku grupy.
+- **Nawigacja wewnątrz grupy:** Wszystkie informacje grupy są dostępne w jednym widoku dashboard bez konieczności przełączania kontekstu.
 - **Wyzwalanie akcji:** Kluczowe akcje (tworzenie, edycja, akceptacja zaproszeń) są inicjowane przez przyciski (na kartach, FAB) i otwierają modale (dla tworzenia/edycji), co zapobiega utracie kontekstu i przeładowywaniu strony.
 
 ## 5. Kluczowe komponenty

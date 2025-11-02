@@ -89,7 +89,6 @@ export class ExpenseRepository {
       .eq("group_members.profile_id", userId)
       .eq("group_members.status", "active")
       .single();
-
     if (groupError || !groupData) {
       throw new Error("Group not found or user is not an active member");
     }

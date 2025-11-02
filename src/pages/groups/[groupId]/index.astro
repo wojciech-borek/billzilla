@@ -1,0 +1,16 @@
+---
+// Redirect to dashboard as default
+---
+
+<html lang="pl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Przekierowanie...</title>
+    <script>
+      // Redirect to dashboard const path = window.location.pathname; const groupId = path.split("/")[2]; // Extract groupId
+from /groups/:groupId       window.location.href = `/groups/${groupId}/dashboard`;
+    </script>
+  </head>
+  <body> </body>
+</html>
