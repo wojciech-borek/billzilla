@@ -7,6 +7,8 @@ import { useDeleteExpense } from "@/lib/hooks/useDeleteExpense";
 import { Plus, TrendingUp, Users, CreditCard, ArrowRight, Edit2, Trash2, HandCoins, Scale } from "lucide-react";
 import type { ExpenseListItemDTO, GroupRole } from "@/types";
 import { GroupSettingsCards } from "./GroupSettingsCards";
+import { useExpenseModal } from "@/components/dashboard/hooks/useExpenseModal";
+import { AddExpenseModal } from "./expenses/AddExpenseModal";
 
 export interface DashboardTabProps {
   groupId: string;
@@ -23,6 +25,7 @@ const DashboardTabContent: React.FC<DashboardTabProps> = ({ groupId, userId, use
     hasMore,
     fetchNextPage,
     isFetchingNextPage,
+    refetch: refetchExpenses,
   } = useInfiniteExpenses(
     groupId,
     { enabled: !!groupId } // Fetch all expenses with infinite scrolling
@@ -33,6 +36,7 @@ const DashboardTabContent: React.FC<DashboardTabProps> = ({ groupId, userId, use
     isLoading: balancesLoading,
     isError: balancesError,
     error: balancesErrorObj,
+    refetch: refetchBalances,
   } = useGroupBalances(groupId);
 
   const memberBalances = balances?.member_balances || [];
@@ -61,6 +65,11 @@ const DashboardTabContent: React.FC<DashboardTabProps> = ({ groupId, userId, use
 
   // Delete expense mutation
   const deleteExpenseMutation = useDeleteExpense();
+
+  // Expense modal hook with success callback that refetches expenses and balances
+  const expenseModal = useExpenseModal(async () => {
+    await Promise.all([refetchExpenses(), refetchBalances()]);
+  });
 
   // Intersection Observer for infinite scroll
   const observerRef = useRef<IntersectionObserver | null>(null);
@@ -125,6 +134,11 @@ const DashboardTabContent: React.FC<DashboardTabProps> = ({ groupId, userId, use
   const handleEdit = useCallback((_expense: ExpenseListItemDTO) => {
     // TODO: Navigate to edit expense page when implemented
   }, []);
+
+  // Handle add expense
+  const handleAddExpense = useCallback(async () => {
+    await expenseModal.openModal(groupId);
+  }, [expenseModal, groupId]);
 
   // Handle loading state
   if (isLoading) {
@@ -250,7 +264,7 @@ const DashboardTabContent: React.FC<DashboardTabProps> = ({ groupId, userId, use
               <h2 className="text-lg font-semibold text-foreground">Wydatki</h2>
             </div>
             <button
-              onClick={() => (window.location.href = `/groups/${groupId}/expenses/new`)}
+              onClick={handleAddExpense}
               className="inline-flex items-center justify-center rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 h-10 w-10 transition-colors"
               aria-label="Dodaj wydatek"
             >
@@ -265,7 +279,7 @@ const DashboardTabContent: React.FC<DashboardTabProps> = ({ groupId, userId, use
               </div>
               <p className="text-muted-foreground mb-3">Brak wydatków</p>
               <button
-                onClick={() => (window.location.href = `/groups/${groupId}/expenses/new`)}
+                onClick={handleAddExpense}
                 className="inline-flex items-center justify-center rounded-md text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 h-8 px-3"
               >
                 Dodaj pierwszy wydatek
@@ -566,6 +580,20 @@ const DashboardTabContent: React.FC<DashboardTabProps> = ({ groupId, userId, use
         variant="destructive"
         isLoading={deleteExpenseMutation.isPending}
       />
+
+      {/* Add Expense Modal */}
+      {expenseModal.selectedExpenseGroupId && (
+        <AddExpenseModal
+          groupId={expenseModal.selectedExpenseGroupId}
+          groupMembers={expenseModal.groupMembers}
+          groupCurrencies={expenseModal.groupCurrencies}
+          currentUserId={userId}
+          isOpen={!!expenseModal.selectedExpenseGroupId}
+          onClose={expenseModal.closeModal}
+          onExpenseCreated={expenseModal.handleExpenseSuccess}
+          isLoading={expenseModal.isLoading}
+        />
+      )}
     </div>
   );
 };
