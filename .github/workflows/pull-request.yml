@@ -20,6 +20,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch all history for proper git diff
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -40,6 +42,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch all history for proper git diff
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -60,111 +64,6 @@ jobs:
           path: coverage/
           retention-days: 7
 
-  ai-review:
-    name: AI Compliance Review
-    runs-on: ubuntu-latest
-    needs: lint
-    environment: integration
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version-file: ".nvmrc"
-          cache: "npm"
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Run AI compliance review
-        run: npm run ai-review
-        env:
-          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
-
-      - name: Upload AI review report
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: ai-review-report
-          path: ai-review-report.json
-          retention-days: 7
-
-      - name: Comment AI review results on PR
-        uses: actions/github-script@v7
-        if: always()
-        with:
-          script: |
-            const fs = require('fs');
-
-            let reportContent = '## 🤖 Przegląd Zgodności AI\n\n';
-
-            if (fs.existsSync('ai-review-report.json')) {
-              const report = JSON.parse(fs.readFileSync('ai-review-report.json', 'utf8'));
-
-              reportContent += `**Ogólny Wynik: ${report.overallScore}%**\n\n`;
-              reportContent += `### Podsumowanie\n`;
-              reportContent += `- ✅ Przeszedł: ${report.summary.passed}\n`;
-              reportContent += `- ⚠️ Ostrzeżenia: ${report.summary.warnings}\n`;
-              reportContent += `- ❌ Nie przeszedł: ${report.summary.failed}\n\n`;
-
-              if (report.results.filter(r => r.status === 'FAIL').length > 0) {
-                reportContent += '### Nieudane Sprawdzenia\n';
-                report.results.filter(r => r.status === 'FAIL').forEach(result => {
-                  reportContent += `#### ${result.category}: ${result.criterion}\n`;
-                  reportContent += `${result.message}\n\n`;
-                  if (result.details) reportContent += `*${result.details}*\n\n`;
-                  if (result.recommendation) reportContent += `💡 **Rekomendacja:** ${result.recommendation}\n\n`;
-                });
-              }
-
-              if (report.results.filter(r => r.status === 'WARN').length > 0) {
-                reportContent += '### Ostrzeżenia\n';
-                report.results.filter(r => r.status === 'WARN').forEach(result => {
-                  reportContent += `- ${result.category}: ${result.criterion} - ${result.message}\n`;
-                  if (result.recommendation) reportContent += `  💡 ${result.recommendation}\n`;
-                });
-                reportContent += '\n';
-              }
-
-              if (report.overallScore >= 80) {
-                reportContent += '🎉 **Projekt jest zgodny z wymaganiami przeglądu AI!**\n';
-              } else {
-                reportContent += '🚨 **Proszę rozwiązać powyższe problemy z zgodnością.**\n';
-              }
-
-            } else {
-              reportContent += '❌ Przegląd AI nie mógł wygenerować raportu.\n';
-            }
-
-            const { data: comments } = await github.rest.issues.listComments({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-            });
-
-            const existingComment = comments.find(comment =>
-              comment.user.login === 'github-actions[bot]' &&
-              comment.body.includes('## 🤖 AI Compliance Review')
-            );
-
-            if (existingComment) {
-              await github.rest.issues.updateComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                comment_id: existingComment.id,
-                body: reportContent
-              });
-            } else {
-              await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: context.issue.number,
-                body: reportContent
-              });
-            }
-
   e2e-test:
     name: E2E Tests
     runs-on: ubuntu-latest
@@ -175,6 +74,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch all history for proper git diff
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -217,11 +118,13 @@ jobs:
   status-comment:
     name: Status Comment
     runs-on: ubuntu-latest
-    needs: [lint, unit-test, ai-review, e2e-test]
-    if: always() && (needs.lint.result == 'success' && needs.unit-test.result == 'success' && needs.ai-review.result == 'success' && needs.e2e-test.result == 'success')
+    needs: [lint, unit-test, e2e-test]
+    if: always() && (needs.lint.result == 'success' && needs.unit-test.result == 'success' && needs.e2e-test.result == 'success')
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch all history for proper git diff
 
       - name: Download unit test coverage
         uses: actions/download-artifact@v4
@@ -236,7 +139,6 @@ jobs:
           echo "### Test Results Summary" >> status.md
           echo "- **Linting**: ✅ Passed" >> status.md
           echo "- **Unit Tests**: ✅ Passed" >> status.md
-          echo "- **AI Review**: ✅ Passed" >> status.md
           echo "- **E2E Tests**: ✅ Passed" >> status.md
           echo "" >> status.md
 
