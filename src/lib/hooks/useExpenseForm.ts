@@ -210,7 +210,7 @@ export function useExpenseForm(
             response.status === 401
               ? "Brak autoryzacji. Zaloguj się ponownie."
               : response.status === 404
-                ? "Grupa nie została znaleziona lub nie jesteś jej członkiem."
+                ? "Grupa nie została znaleziona lub nie jesteś jej uczestnikiem."
                 : response.status === 500
                   ? "Wystąpił błąd serwera. Spróbuj ponownie później."
                   : "Nie udało się utworzyć wydatku";

@@ -210,7 +210,7 @@ const DashboardTabContent: React.FC<DashboardTabProps> = ({ groupId, userId, use
               <Users className="h-5 w-5 text-blue-500" />
             </div>
             <div>
-              <p className="text-sm font-medium text-muted-foreground">Członkowie</p>
+              <p className="text-sm font-medium text-muted-foreground">Uczestnicy</p>
               <p className="text-2xl font-bold text-foreground">{totalMembers}</p>
             </div>
           </div>

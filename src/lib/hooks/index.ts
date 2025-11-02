@@ -20,6 +20,7 @@ export { useDeleteExpense } from "./useDeleteExpense";
 // Group management hooks
 export { useCreateGroupMutation } from "./useCreateGroupMutation";
 export { useCreateGroupFormLogic } from "./useCreateGroupFormLogic";
+export { useGroupDetails } from "./useGroupDetails";
 
 // Utility hooks
 export { useCurrenciesList } from "./useCurrenciesList";
