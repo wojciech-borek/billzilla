@@ -43,7 +43,9 @@ const DashboardTabContent: React.FC<DashboardTabProps> = ({ groupId, userId, use
   const hasError = expensesError || balancesError;
 
   // Calculate summary metrics
-  const totalExpenses = expenses.reduce((sum, expense) => sum + expense.amount, 0);
+  const totalExpenses = Number(
+    expenses.reduce((sum, expense) => sum + (expense.amount_in_base_currency ?? expense.amount ?? 0), 0)
+  );
   const currentUserBalance = memberBalances.find((member) => member.profile_id === userId);
   const totalMembers = memberBalances.length;
   const outstandingBalances = memberBalances.filter((member) => Math.abs(member.balance) > 0.01).length;
@@ -109,9 +111,8 @@ const DashboardTabContent: React.FC<DashboardTabProps> = ({ groupId, userId, use
       });
 
       setDeleteDialogState({ isOpen: false, expense: null });
-    } catch (error) {
+    } catch (_error) {
       // Error is handled by the mutation
-      console.error("Failed to delete expense:", error);
     }
   }, [deleteDialogState.expense, deleteExpenseMutation, groupId]);
 

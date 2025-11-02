@@ -132,7 +132,6 @@ export const GET: APIRoute = async ({ locals, url }) => {
       }
     );
   } catch (error) {
-    console.error("Debug endpoint error:", error);
     return new Response(
       JSON.stringify({
         error: "Internal server error",

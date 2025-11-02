@@ -63,8 +63,14 @@ export const GET: APIRoute = async ({ request, locals, params }) => {
 
     // Step 3: Parse query parameters
     const url = new URL(request.url);
-    const limit = Math.min(parseInt(url.searchParams.get("limit") || "20"), 100);
-    const offset = Math.max(parseInt(url.searchParams.get("offset") || "0"), 0);
+    const limitDefault = 20;
+    const offsetDefault = 0;
+
+    const limitParam = parseInt(url.searchParams.get("limit") || String(limitDefault), 10);
+    const limit = Number.isNaN(limitParam) ? limitDefault : Math.min(Math.max(limitParam, 1), 100);
+
+    const offsetParam = parseInt(url.searchParams.get("offset") || String(offsetDefault), 10);
+    const offset = Number.isNaN(offsetParam) ? offsetDefault : Math.max(offsetParam, 0);
     const sort = url.searchParams.get("sort") || "created_at";
     const order = url.searchParams.get("order") || "desc";
 
