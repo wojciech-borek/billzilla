@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type {
@@ -6,25 +6,18 @@ import type {
   ExpenseDTO,
   GroupMemberSummaryDTO,
   GroupCurrencyDTO,
-  ErrorResponseDTO,
   ExpenseTranscriptionResult,
 } from "../../types";
 import { createExpenseFormSchema, type CreateExpenseFormValues } from "../schemas/expenseSchemas";
+import { useExpenseFormState } from "./useExpenseFormState";
+import { useExpenseValidation } from "./useExpenseValidation";
+import { useExpenseSubmission } from "./useExpenseSubmission";
+import { validateExpenseFields, validateTranscriptionData } from "../utils/expenseValidationUtils";
+import { ExpenseFormError } from "../utils/errorHandling";
 
-interface ExpenseFormState {
-  isSubmitting: boolean;
-  submitError: string | null;
-  fieldErrors: Record<string, string> | null;
-}
-
-type UseExpenseFormResult = ExpenseFormState & {
+type UseExpenseFormResult = ReturnType<typeof useExpenseFormState> & {
   form: ReturnType<typeof useForm<CreateExpenseFormValues>>;
-  splitValidation: {
-    totalAmount: number;
-    currentSum: number;
-    remaining: number;
-    isValid: boolean;
-  };
+  validation: ReturnType<typeof useExpenseValidation>;
   handleSubmit: (groupId: string) => Promise<ExpenseDTO>;
   populateFromTranscription: (data: ExpenseTranscriptionResult) => void;
   reset: () => void;
@@ -42,249 +35,147 @@ export function useExpenseForm(
   groupMembers: GroupMemberSummaryDTO[],
   groupCurrencies: GroupCurrencyDTO[],
   defaultPayerId?: string,
-  initialData?: CreateExpenseCommand
+  initialData?: CreateExpenseCommand,
+  mode?: "create" | "edit",
+  expenseId?: string
 ): UseExpenseFormResult {
-  const [state, setState] = useState<ExpenseFormState>({
-    isSubmitting: false,
-    submitError: null,
-    fieldErrors: null,
-  });
+  // Store mode and expenseId in state to prevent re-initialization issues
+  const [storedMode] = useState(mode);
+  const [storedExpenseId] = useState(expenseId);
+
+  // State management
+  const formState = useExpenseFormState();
 
   // Initialize form with React Hook Form - don't validate on mount
   const form = useForm<CreateExpenseFormValues>({
     resolver: zodResolver(createExpenseFormSchema),
     mode: "onChange", // Only validate when user interacts
     defaultValues: initialData || {
-      description: undefined,
-      amount: undefined,
+      description: "",
+      amount: 0,
       currency_code: groupCurrencies[0]?.code || "PLN",
       expense_date: new Date().toISOString().slice(0, 16), // Current date/time in datetime-local format
-      payer_id: defaultPayerId || undefined,
+      payer_id: defaultPayerId || "",
       splits: [],
     },
   });
 
-  // Watch form values for validation
-  const watchedAmount = form.watch("amount");
-  const watchedSplits = form.watch("splits");
-
-  // Split validation calculations - use form splits, not calculated splits
-  const splitValidation = useMemo(() => {
-    const totalAmount = watchedAmount || 0;
-    const watchedSplitsArray = watchedSplits || [];
-    const currentSum = watchedSplitsArray.reduce((sum, split) => sum + split.amount, 0);
-    const remaining = Math.round((totalAmount - currentSum) * 100) / 100;
-    const isValid = Math.abs(remaining) <= 0.01; // ±0.01 tolerance
-
-    // Add validation error if sum doesn't match
-    if (!isValid && watchedSplitsArray.length > 0) {
-      setState((prev) => ({
-        ...prev,
-        fieldErrors: {
-          ...prev.fieldErrors,
-          splits: `Suma podziałów (${currentSum.toFixed(2)}) nie równa się kwocie całkowitej (${totalAmount.toFixed(2)}). Różnica: ${remaining > 0 ? "+" : ""}${remaining.toFixed(2)}`,
-        },
-      }));
+  // Reset form when initialData changes (for edit mode)
+  useEffect(() => {
+    if (initialData) {
+      form.reset(initialData, { keepDefaultValues: false });
     } else {
-      setState((prev) => {
-        const newFieldErrors = { ...prev.fieldErrors };
-        delete newFieldErrors.splits;
-        return {
-          ...prev,
-          fieldErrors: newFieldErrors,
-        };
+      // Reset to defaults for create mode
+      form.reset({
+        description: "",
+        amount: 0,
+        currency_code: groupCurrencies[0]?.code || "PLN",
+        expense_date: new Date().toISOString().slice(0, 16),
+        payer_id: defaultPayerId || "",
+        splits: [],
       });
     }
+  }, [initialData, form, groupCurrencies, defaultPayerId]);
 
-    return {
-      totalAmount,
-      currentSum,
-      remaining,
-      isValid,
-    };
-  }, [watchedAmount, watchedSplits]);
+  // Watch form values for validation
+  const watchedValues = form.watch();
+
+  // Validation
+  const validation = useExpenseValidation(watchedValues);
+
+  // Submission
+  const submission = useExpenseSubmission({
+    storedMode: storedMode || "create",
+    storedExpenseId: storedExpenseId || "",
+    groupMembers,
+    groupCurrencies,
+    onSuccess: () => formState.setSuccess(),
+    onError: (error) => {
+      if (error.field) {
+        formState.setFieldErrors({ [error.field]: error.message });
+      } else {
+        formState.setSubmitError(error.message);
+      }
+    },
+  });
 
   const handleSubmit = useCallback(
     async (groupId: string): Promise<ExpenseDTO> => {
-      setState((prev) => ({ ...prev, isSubmitting: true, submitError: null, fieldErrors: null }));
+      formState.setSubmitting(true);
+      formState.setSubmitError(null);
+      formState.setFieldErrors(null);
 
       try {
-        // Validate all fields before submission
-        const isValid = await form.trigger();
-        if (!isValid) {
-          setState((prev) => ({
-            ...prev,
-            isSubmitting: false,
-            submitError: "Wypełnij wszystkie wymagane pola poprawnie",
-          }));
-          throw new Error("Form validation failed");
+        // React Hook Form validation
+        const isFormValid = await form.trigger();
+        if (!isFormValid) {
+          throw new ExpenseFormError("Wypełnij wszystkie wymagane pola poprawnie");
         }
 
-        // Get form data and prepare command
+        // Additional business logic validation
         const formData = form.getValues();
-
-        // Additional validation for required fields (since schema uses optional)
-        if (!formData.description?.trim()) {
-          setState((prev) => ({
-            ...prev,
-            isSubmitting: false,
-            fieldErrors: { description: "Opis wydatku jest wymagany" },
-          }));
-          throw new Error("Description is required");
+        const fieldErrors = validateExpenseFields(formData);
+        if (Object.keys(fieldErrors).length > 0) {
+          throw new ExpenseFormError("Walidacja nie powiodła się", Object.keys(fieldErrors)[0]);
         }
 
-        if (!formData.amount || formData.amount <= 0) {
-          setState((prev) => ({
-            ...prev,
-            isSubmitting: false,
-            fieldErrors: { amount: "Kwota musi być większa od zera" },
-          }));
-          throw new Error("Amount is required");
+        // Submit the expense
+        return await submission.submit(groupId, formData);
+      } catch (error) {
+        const expenseError =
+          error instanceof ExpenseFormError ? error : new ExpenseFormError("Wystąpił nieznany błąd podczas wysyłania");
+
+        if (expenseError.field) {
+          formState.setFieldErrors({ [expenseError.field]: expenseError.message });
+        } else {
+          formState.setSubmitError(expenseError.message);
         }
 
-        if (!formData.currency_code) {
-          setState((prev) => ({
-            ...prev,
-            isSubmitting: false,
-            fieldErrors: { currency_code: "Wybierz walutę" },
-          }));
-          throw new Error("Currency is required");
-        }
-
-        if (!formData.expense_date) {
-          setState((prev) => ({
-            ...prev,
-            isSubmitting: false,
-            fieldErrors: { expense_date: "Data wydatku jest wymagana" },
-          }));
-          throw new Error("Expense date is required");
-        }
-
-        if (!formData.payer_id) {
-          setState((prev) => ({
-            ...prev,
-            isSubmitting: false,
-            fieldErrors: { payer_id: "Wybierz płatnika" },
-          }));
-          throw new Error("Payer is required");
-        }
-
-        if (!formData.splits || formData.splits.length === 0) {
-          setState((prev) => ({
-            ...prev,
-            isSubmitting: false,
-            fieldErrors: { splits: "Przynajmniej jeden uczestnik musi mieć przypisaną kwotę" },
-          }));
-          throw new Error("At least one split is required");
-        }
-
-        const command: CreateExpenseCommand = {
-          description: formData.description.trim(),
-          amount: formData.amount,
-          currency_code: formData.currency_code,
-          expense_date: formData.expense_date,
-          payer_id: formData.payer_id,
-          splits: formData.splits.filter((split) => split.amount > 0), // Only include splits with amounts > 0
-        };
-
-        const response = await fetch(`/api/groups/${groupId}/expenses`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(command),
-        });
-
-        if (!response.ok) {
-          const errorData: ErrorResponseDTO = await response.json();
-
-          if (response.status === 400) {
-            setState((prev) => ({
-              ...prev,
-              isSubmitting: false,
-              fieldErrors: (errorData.error.details as Record<string, string>) || null,
-              submitError: errorData.error.details ? null : errorData.error.message || "Błąd walidacji danych",
-            }));
-            throw new Error(errorData.error.message || "Błąd walidacji danych");
-          }
-
-          const errorMessage =
-            response.status === 401
-              ? "Brak autoryzacji. Zaloguj się ponownie."
-              : response.status === 404
-                ? "Grupa nie została znaleziona lub nie jesteś jej uczestnikiem."
-                : response.status === 500
-                  ? "Wystąpił błąd serwera. Spróbuj ponownie później."
-                  : "Nie udało się utworzyć wydatku";
-
-          setState((prev) => ({ ...prev, isSubmitting: false, submitError: errorMessage }));
-          throw new Error(errorMessage);
-        }
-
-        const expenseDTO: ExpenseDTO = await response.json();
-        setState((prev) => ({ ...prev, isSubmitting: false, submitError: null, fieldErrors: null }));
-
-        return expenseDTO;
-      } catch (err) {
-        const error = err instanceof Error ? err : new Error("Nieznany błąd");
-        if (!state.submitError) {
-          setState((prev) => ({ ...prev, isSubmitting: false, submitError: error.message }));
-        }
-        throw error;
+        throw expenseError;
+      } finally {
+        formState.setSubmitting(false);
       }
     },
-    [form, state]
+    [form, formState, submission]
   );
 
   // Populate form with data from voice transcription
   const populateFromTranscription = useCallback(
     (data: ExpenseTranscriptionResult) => {
       try {
-        // Validate required fields (only truly required ones)
-        if (!data.description?.trim()) {
-          throw new Error("Brak opisu w danych z transkrypcji");
+        // Validate transcription data
+        const transcriptionErrors = validateTranscriptionData(data);
+        if (Object.keys(transcriptionErrors).length > 0) {
+          const firstError = Object.values(transcriptionErrors)[0];
+          throw new ExpenseFormError(firstError);
         }
 
-        if (!data.amount || data.amount <= 0) {
-          throw new Error("Nieprawidłowa kwota w danych z transkrypcji");
-        }
-
-        if (!data.splits || data.splits.length === 0) {
-          throw new Error("Brak podziału kosztów w danych z transkrypcji");
-        }
-
-        // Fill in defaults for optional fields
+        // Apply defaults for optional fields
         const currency_code = data.currency_code || groupCurrencies[0]?.code || "PLN";
         const expense_date = data.expense_date || new Date().toISOString().slice(0, 16);
         const payer_id = data.payer_id || defaultPayerId || groupMembers[0]?.profile_id;
 
-        // Validate payer is a member of the group (after applying defaults)
-        if (payer_id) {
-          const payerExists = groupMembers.some((member) => member.profile_id === payer_id);
-          if (!payerExists) {
-            // Don't throw error, use first member as fallback
-          }
+        // Validate required fields are present (should be guaranteed by validateTranscriptionData)
+        if (!data.splits || !data.description || !data.amount) {
+          throw new ExpenseFormError("Brak wymaganych danych z transkrypcji");
         }
 
-        // Validate all split participants are members of the group
-        const validSplits = data.splits.filter((split) => {
-          const memberExists = groupMembers.some((member) => member.profile_id === split.profile_id);
-          if (!memberExists) {
-            // Skip invalid participants
-          }
-          return memberExists;
-        });
+        // Filter valid splits (participants must be group members)
+        const validSplits = data.splits.filter((split) =>
+          groupMembers.some((member) => member.profile_id === split.profile_id)
+        );
 
         if (validSplits.length === 0) {
-          throw new Error("Żaden z uczestników nie należy do grupy");
+          throw new ExpenseFormError("Żaden z uczestników nie należy do grupy");
         }
 
-        // Validate currency is available in the group
+        // Validate currency exists in group
         const currencyExists = groupCurrencies.some((currency) => currency.code === currency_code);
         if (!currencyExists) {
-          // Don't throw error, will use default currency
+          // Use default currency silently
         }
 
-        // All validations passed - populate the form with defaults applied
-        // Use shouldValidate: true to trigger form validation after setting values
+        // Populate form
         form.setValue("description", data.description.trim(), { shouldValidate: true });
         form.setValue("amount", data.amount, { shouldValidate: true });
         form.setValue("currency_code", currency_code, { shouldValidate: true });
@@ -292,42 +183,31 @@ export function useExpenseForm(
         form.setValue("payer_id", payer_id, { shouldValidate: true });
         form.setValue("splits", validSplits, { shouldValidate: true });
 
-        // Manually trigger validation to update isValid state
-        setTimeout(() => {
-          form.trigger();
-        }, 0);
+        // Trigger validation after a short delay
+        setTimeout(() => form.trigger(), 0);
 
         // Clear any existing errors
-        setState((prev) => ({
-          ...prev,
-          submitError: null,
-          fieldErrors: null,
-        }));
+        formState.setSubmitError(null);
+        formState.setFieldErrors(null);
       } catch (error) {
-        const message = error instanceof Error ? error.message : "Błąd podczas wypełniania formularza z transkrypcji";
-        setState((prev) => ({
-          ...prev,
-          submitError: message,
-        }));
+        const message =
+          error instanceof ExpenseFormError ? error.message : "Błąd podczas wypełniania formularza z transkrypcji";
+        formState.setSubmitError(message);
         throw error;
       }
     },
-    [form, groupMembers, groupCurrencies, defaultPayerId]
+    [form, groupMembers, groupCurrencies, defaultPayerId, formState]
   );
 
   const reset = useCallback(() => {
     form.reset();
-    setState({
-      isSubmitting: false,
-      submitError: null,
-      fieldErrors: null,
-    });
-  }, [form]);
+    formState.reset();
+  }, [form, formState]);
 
   return {
-    ...state,
+    ...formState,
     form,
-    splitValidation,
+    validation,
     handleSubmit,
     populateFromTranscription,
     reset,

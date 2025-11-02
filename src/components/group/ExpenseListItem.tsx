@@ -6,6 +6,7 @@ export interface ExpenseListItemProps {
   isOwner: boolean;
   baseCurrencyCode: string;
   onClick: () => void;
+  onEdit?: () => void;
   onDelete?: () => void;
   isExpanded?: boolean;
   onToggleExpanded?: () => void;
@@ -16,6 +17,7 @@ export const ExpenseListItem: React.FC<ExpenseListItemProps> = ({
   isOwner,
   baseCurrencyCode,
   onClick,
+  onEdit,
   onDelete,
   isExpanded: _isExpanded = false,
   onToggleExpanded: _onToggleExpanded,
@@ -101,6 +103,25 @@ export const ExpenseListItem: React.FC<ExpenseListItemProps> = ({
           {/* Actions - only visible for owner */}
           {isOwner && (
             <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              {onEdit && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onEdit();
+                  }}
+                  className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 text-muted-foreground hover:text-foreground hover:bg-accent h-8 w-8"
+                  aria-label="Edytuj wydatek"
+                >
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                    />
+                  </svg>
+                </button>
+              )}
               <button
                 onClick={(e) => {
                   e.stopPropagation();

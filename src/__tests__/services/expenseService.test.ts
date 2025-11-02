@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import { createClient, type SupabaseClient } from "@/db/supabase.client";
 import {
   createExpense,
+  updateExpense,
   ExpenseValidationError,
   ExpenseAccessError,
   ExpenseTransactionError,
@@ -391,6 +392,12 @@ describe("ExpenseService", () => {
 
       // If validation passed or failed for other reasons, the empty splits validation worked
       expect(validationPassed || true).toBe(true);
+    });
+  });
+
+  describe("updateExpense", () => {
+    it("should_be_a_function", () => {
+      expect(typeof updateExpense).toBe("function");
     });
   });
 

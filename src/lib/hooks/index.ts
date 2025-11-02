@@ -14,7 +14,6 @@ export { useTranscriptionErrorHandler } from "./useTranscriptionErrorHandler";
 // Expense hooks
 export { useExpense } from "./useExpense";
 export { useExpenseForm } from "./useExpenseForm";
-export { useExpenseFormIntegration } from "./useExpenseFormIntegration";
 export { useDeleteExpense } from "./useDeleteExpense";
 
 // Group management hooks

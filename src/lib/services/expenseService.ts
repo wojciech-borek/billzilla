@@ -1,11 +1,5 @@
 import type { SupabaseClient } from "../../db/supabase.client";
-import type {
-  CreateExpenseCommand,
-  ExpenseDTO,
-  PaginatedResponse,
-  ExpenseListItemDTO,
-  ExpenseSplit,
-} from "../../types";
+import type { CreateExpenseCommand, ExpenseDTO, PaginatedResponse, ExpenseListItemDTO } from "../../types";
 import { z } from "zod";
 import { getGroupCurrencies } from "./groupService";
 
@@ -567,14 +561,12 @@ export async function getGroupExpenses(
         full_name: expense.profiles.full_name || "Użytkownik",
         avatar_url: expense.profiles.avatar_url,
       },
-      splits: (expense.expense_splits || []).map(
-        (split: ExpenseSplit & { profiles?: { id: string; full_name: string | null; avatar_url: string | null } }) => ({
-          profile_id: split.profile_id,
-          amount: split.amount,
-          full_name: split.profiles?.full_name || null,
-          avatar_url: split.profiles?.avatar_url || null,
-        })
-      ),
+      splits: (expense.expense_splits || []).map((split) => ({
+        profile_id: split.profile_id,
+        amount: split.amount,
+        full_name: split.profiles?.full_name || null,
+        avatar_url: split.profiles?.avatar_url || null,
+      })),
     };
   });
 
@@ -589,6 +581,230 @@ export async function getGroupExpenses(
 /**
  * Delete an expense
  */
+/**
+ * Unit of Work pattern for expense update transactions
+ * Manages the update of expense and related data atomically
+ */
+export class ExpenseUpdateUnitOfWork {
+  private readonly repository: ExpenseRepository;
+  private readonly expenseId: string;
+  private readonly groupId: string;
+  private readonly userId: string;
+  private readonly command: ValidatedExpenseCommand;
+
+  constructor(
+    supabase: SupabaseClient,
+    expenseId: string,
+    groupId: string,
+    userId: string,
+    command: ValidatedExpenseCommand
+  ) {
+    this.repository = new ExpenseRepository(supabase);
+    this.expenseId = expenseId;
+    this.groupId = groupId;
+    this.userId = userId;
+    this.command = command;
+  }
+
+  /**
+   * Executes the complete expense update transaction
+   */
+  async execute(): Promise<ExpenseDTO> {
+    // Validate user can update this expense
+    await this.validateExpenseOwnership();
+
+    // Validate group membership and get group data
+    const groupData = await this.validateGroupMembership();
+
+    // Validate participants and currency
+    await this.validateParticipants(groupData);
+
+    // Update expense
+    await this.updateExpense();
+
+    // Update expense splits (delete old and create new)
+    await this.updateExpenseSplits();
+
+    // Fetch complete updated expense with related data
+    return await this.fetchCompleteExpense();
+  }
+
+  private async validateExpenseOwnership() {
+    try {
+      const ownership = await this.repository.verifyExpenseOwnership(this.expenseId, this.userId);
+
+      if (ownership.group_id !== this.groupId) {
+        throw new ExpenseAccessError("Expense does not belong to this group");
+      }
+    } catch (error) {
+      if (error instanceof Error) {
+        if (error.message.includes("not found")) {
+          throw new ExpenseAccessError("Expense not found");
+        }
+        if (error.message.includes("creator")) {
+          throw new ExpenseAccessError("Only the creator can update this expense");
+        }
+      }
+      throw new ExpenseDataError("check expense ownership", error instanceof Error ? error.message : "Unknown error");
+    }
+  }
+
+  private async validateGroupMembership() {
+    try {
+      return await this.repository.fetchGroupMembershipAndCurrencies(this.groupId, this.userId);
+    } catch {
+      throw new ExpenseAccessError();
+    }
+  }
+
+  private async validateParticipants(groupData: GroupMembershipData) {
+    // Get all active group members using repository
+    const groupMembers = await this.repository.fetchActiveGroupMembers(this.groupId);
+    if (!groupMembers) {
+      throw new ExpenseValidationError("Could not verify group membership");
+    }
+    const activeMemberIds = new Set(groupMembers.map((m) => m.profile_id));
+
+    // Validate payer is an active member
+    if (!activeMemberIds.has(this.command.payer_id)) {
+      throw new ExpenseValidationError("Payer must be an active member of the group");
+    }
+
+    // Validate all split participants are active members
+    for (const split of this.command.splits) {
+      if (!activeMemberIds.has(split.profile_id)) {
+        throw new ExpenseValidationError(`Split participant ${split.profile_id} is not an active member of the group`);
+      }
+    }
+
+    // Validate currency is configured for the group
+    const currencyConfig = groupData.group_currencies?.find((gc) => gc.currency_code === this.command.currency_code);
+    if (!currencyConfig) {
+      throw new ExpenseValidationError(`Currency ${this.command.currency_code} is not configured for this group`);
+    }
+
+    // Validate business rules: sum of splits equals total amount (with ±0.01 tolerance)
+    const splitsSum = this.command.splits.reduce((sum, split) => sum + split.amount, 0);
+    const difference = Math.abs(splitsSum - this.command.amount);
+    if (difference > 0.01) {
+      throw new ExpenseValidationError("Sum of splits must equal the total amount (tolerance ±0.01)");
+    }
+
+    // Validate business rules: no duplicate profile_ids in splits
+    const profileIds = this.command.splits.map((split) => split.profile_id);
+    const uniqueProfileIds = new Set(profileIds);
+    if (profileIds.length !== uniqueProfileIds.size) {
+      throw new ExpenseValidationError("Duplicate profile_id found in splits. Each participant can only appear once");
+    }
+
+    return currencyConfig;
+  }
+
+  private async updateExpense() {
+    try {
+      await this.repository.updateExpense(this.expenseId, {
+        description: this.command.description,
+        amount: this.command.amount,
+        currency_code: this.command.currency_code,
+        expense_date: this.command.expense_date,
+        payer_id: this.command.payer_id,
+      });
+    } catch {
+      throw new ExpenseTransactionError("Failed to update expense");
+    }
+  }
+
+  private async updateExpenseSplits() {
+    try {
+      // Delete existing splits
+      await this.repository.deleteExpenseSplits(this.expenseId);
+
+      // Create new splits
+      const splitInserts = this.command.splits.map((split) => ({
+        expense_id: this.expenseId,
+        profile_id: split.profile_id,
+        amount: split.amount,
+      }));
+
+      await this.repository.createExpenseSplits(splitInserts);
+    } catch {
+      throw new ExpenseTransactionError("Failed to update expense splits");
+    }
+  }
+
+  private async fetchCompleteExpense(): Promise<ExpenseDTO> {
+    try {
+      const completeExpense = (await this.repository.fetchCompleteExpense(this.expenseId)) as CompleteExpenseData;
+
+      // Get group currencies for conversion
+      const groupData = await this.repository.fetchGroupMembershipAndCurrencies(this.groupId, this.userId);
+      const baseCurrency = groupData.group_currencies.find((c) => c.currency_code === groupData.base_currency_code);
+
+      if (!baseCurrency) {
+        throw new ExpenseDataError("fetch updated expense", "Group base currency not found");
+      }
+
+      // Find exchange rate for this expense's currency
+      const exchangeRate =
+        groupData.group_currencies.find((c) => c.currency_code === completeExpense.currency_code)?.exchange_rate || 1.0;
+
+      // Convert amount to base currency
+      const amountInBaseCurrency = Math.round(completeExpense.amount * exchangeRate * 100) / 100;
+
+      // Transform to DTO format
+      const createdByProfile = completeExpense.profiles as unknown as {
+        id: string;
+        full_name: string | null;
+        avatar_url: string | null;
+      };
+
+      const expenseDTO: ExpenseDTO = {
+        id: completeExpense.id,
+        group_id: completeExpense.group_id,
+        payer_id: completeExpense.payer_id,
+        description: completeExpense.description,
+        amount: completeExpense.amount,
+        currency_code: completeExpense.currency_code,
+        expense_date: completeExpense.expense_date,
+        created_at: completeExpense.created_at,
+        amount_in_base_currency: amountInBaseCurrency,
+        created_by: {
+          id: createdByProfile.id,
+          full_name: createdByProfile.full_name ?? "",
+          avatar_url: createdByProfile.avatar_url ?? null,
+        },
+        splits: completeExpense.expense_splits.map((split) => {
+          return {
+            profile_id: split.profile_id,
+            full_name: split.profiles.full_name,
+            amount: split.amount,
+          };
+        }),
+      };
+
+      return expenseDTO;
+    } catch (error) {
+      throw new ExpenseDataError("retrieve updated expense", error instanceof Error ? error.message : "Unknown error");
+    }
+  }
+}
+
+export async function updateExpense(
+  supabase: SupabaseClient,
+  expenseId: string,
+  groupId: string,
+  userId: string,
+  command: CreateExpenseCommand,
+  skipValidation = false
+): Promise<ExpenseDTO> {
+  // Create and validate command
+  const validatedCommand = new ValidatedExpenseCommand(command, skipValidation);
+
+  // Execute transaction using Unit of Work pattern
+  const unitOfWork = new ExpenseUpdateUnitOfWork(supabase, expenseId, groupId, userId, validatedCommand);
+  return await unitOfWork.execute();
+}
+
 export async function deleteExpense(supabase: SupabaseClient, expenseId: string, userId: string): Promise<void> {
   try {
     // First check if user can delete this expense (must be creator)

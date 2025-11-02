@@ -23,6 +23,9 @@ interface ExpenseModalContentProps {
   onTranscriptionComplete: (result: TranscriptionResultDTO) => void;
   onTranscriptionError: (error: { message: string }) => void;
   onClose: () => void;
+  mode?: "create" | "edit";
+  expenseId?: string;
+  initialExpenseData?: CreateExpenseCommand;
 }
 
 export function ExpenseModalContent({
@@ -39,6 +42,9 @@ export function ExpenseModalContent({
   onTranscriptionComplete,
   onTranscriptionError,
   onClose,
+  mode = "create",
+  expenseId,
+  initialExpenseData,
 }: ExpenseModalContentProps) {
   if (isLoading) {
     return (
@@ -74,12 +80,14 @@ export function ExpenseModalContent({
         groupCurrencies={groupCurrencies}
         currentUserId={currentUserId}
         onSubmit={onExpenseCreated}
-        initialData={transcriptionData || undefined}
+        initialData={transcriptionData || initialExpenseData || undefined}
         isFromVoice={isFromVoice}
         hasLowConfidence={hasLowConfidence}
         onTranscriptionComplete={onTranscriptionComplete}
         onTranscriptionError={onTranscriptionError}
         isLoading={isLoading || !!error}
+        mode={mode}
+        expenseId={expenseId}
       />
     </div>
   );

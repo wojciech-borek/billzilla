@@ -1,15 +1,19 @@
 import React, { useRef, useCallback, useState } from "react";
 import { ExpenseListItem } from "./ExpenseListItem";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
+import { EditExpenseModal } from "./expenses/EditExpenseModal";
 import { useDeleteExpense } from "@/lib/hooks/useDeleteExpense";
-import type { ExpenseListItemDTO } from "@/types";
+import type { ExpenseListItemDTO, GroupMemberSummaryDTO, GroupCurrencyDTO, ExpenseDTO } from "@/types";
 
 export interface ExpenseListProps {
   expenses: ExpenseListItemDTO[];
   currentUserId: string;
   baseCurrencyCode: string;
   groupId: string;
+  groupMembers: GroupMemberSummaryDTO[];
+  groupCurrencies: GroupCurrencyDTO[];
   onExpenseClick: (expense: ExpenseListItemDTO) => void;
+  onExpenseUpdated?: (expense: ExpenseDTO) => void;
   onLoadMore: () => void;
   hasMore: boolean;
   isLoading: boolean;
@@ -20,7 +24,10 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({
   currentUserId,
   baseCurrencyCode,
   groupId,
+  groupMembers,
+  groupCurrencies,
   onExpenseClick,
+  onExpenseUpdated,
   onLoadMore,
   hasMore,
   isLoading,
@@ -29,6 +36,15 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({
 
   // Delete confirmation dialog state
   const [deleteDialogState, setDeleteDialogState] = useState<{
+    isOpen: boolean;
+    expense: ExpenseListItemDTO | null;
+  }>({
+    isOpen: false,
+    expense: null,
+  });
+
+  // Edit modal state
+  const [editModalState, setEditModalState] = useState<{
     isOpen: boolean;
     expense: ExpenseListItemDTO | null;
   }>({
@@ -97,6 +113,28 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({
     setDeleteDialogState({ isOpen: false, expense: null });
   }, []);
 
+  // Handle edit action
+  const handleEdit = useCallback((expense: ExpenseListItemDTO) => {
+    setEditModalState({
+      isOpen: true,
+      expense,
+    });
+  }, []);
+
+  // Handle edit modal close
+  const handleCloseEdit = useCallback(() => {
+    setEditModalState({ isOpen: false, expense: null });
+  }, []);
+
+  // Handle successful expense update
+  const handleExpenseUpdated = useCallback(
+    (updatedExpense: ExpenseDTO) => {
+      onExpenseUpdated?.(updatedExpense);
+      setEditModalState({ isOpen: false, expense: null });
+    },
+    [onExpenseUpdated]
+  );
+
   if (expenses.length === 0 && !isLoading) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center">
@@ -125,6 +163,7 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({
             isOwner={expense.created_by.id === currentUserId}
             baseCurrencyCode={baseCurrencyCode}
             onClick={() => onExpenseClick(expense)}
+            onEdit={() => handleEdit(expense)}
             onDelete={() => handleDelete(expense)}
           />
         </div>
@@ -159,6 +198,20 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({
         variant="destructive"
         isLoading={deleteExpenseMutation.isPending}
       />
+
+      {/* Edit Expense Modal */}
+      {editModalState.expense && (
+        <EditExpenseModal
+          groupId={groupId}
+          groupMembers={groupMembers}
+          groupCurrencies={groupCurrencies}
+          currentUserId={currentUserId}
+          expense={editModalState.expense}
+          isOpen={editModalState.isOpen}
+          onClose={handleCloseEdit}
+          onExpenseUpdated={handleExpenseUpdated}
+        />
+      )}
     </div>
   );
 };

@@ -1,14 +1,16 @@
-import React, { useRef, useCallback, useState } from "react";
+import React, { useCallback, useState } from "react";
 import { useInfiniteExpenses } from "@/lib/hooks/useGroupExpenses";
 import { useGroupBalances } from "@/lib/hooks/useGroupBalances";
 import { QueryProvider } from "@/components/QueryProvider";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import { useDeleteExpense } from "@/lib/hooks/useDeleteExpense";
-import { Plus, TrendingUp, Users, CreditCard, ArrowRight, Edit2, Trash2, HandCoins, Scale } from "lucide-react";
-import type { ExpenseListItemDTO, GroupRole } from "@/types";
+import { ExpenseList } from "./ExpenseList";
+import { Plus, TrendingUp, Users, CreditCard, ArrowRight, HandCoins, Scale } from "lucide-react";
+import type { ExpenseListItemDTO, GroupRole, ExpenseDTO } from "@/types";
 import { GroupSettingsCards } from "./GroupSettingsCards";
 import { useExpenseModal } from "@/components/dashboard/hooks/useExpenseModal";
 import { AddExpenseModal } from "./expenses/AddExpenseModal";
+import { EditExpenseModal } from "./expenses/EditExpenseModal";
 
 export interface DashboardTabProps {
   groupId: string;
@@ -63,6 +65,15 @@ const DashboardTabContent: React.FC<DashboardTabProps> = ({ groupId, userId, use
     expense: null,
   });
 
+  // Edit modal state
+  const [editModalState, setEditModalState] = useState<{
+    isOpen: boolean;
+    expense: ExpenseListItemDTO | null;
+  }>({
+    isOpen: false,
+    expense: null,
+  });
+
   // Delete expense mutation
   const deleteExpenseMutation = useDeleteExpense();
 
@@ -70,44 +81,6 @@ const DashboardTabContent: React.FC<DashboardTabProps> = ({ groupId, userId, use
   const expenseModal = useExpenseModal(async () => {
     await Promise.all([refetchExpenses(), refetchBalances()]);
   });
-
-  // Intersection Observer for infinite scroll
-  const observerRef = useRef<IntersectionObserver | null>(null);
-
-  const lastExpenseRef = useCallback(
-    (node: HTMLDivElement) => {
-      if (isFetchingNextPage) return;
-
-      if (observerRef.current) {
-        observerRef.current.disconnect();
-      }
-
-      observerRef.current = new IntersectionObserver(
-        (entries) => {
-          if (entries[0].isIntersecting && hasMore) {
-            fetchNextPage();
-          }
-        },
-        {
-          threshold: 0.1,
-          rootMargin: "100px",
-        }
-      );
-
-      if (node) {
-        observerRef.current.observe(node);
-      }
-    },
-    [isFetchingNextPage, hasMore, fetchNextPage]
-  );
-
-  // Handle delete action
-  const handleDelete = useCallback((expense: ExpenseListItemDTO) => {
-    setDeleteDialogState({
-      isOpen: true,
-      expense,
-    });
-  }, []);
 
   // Handle confirmed delete
   const handleConfirmDelete = useCallback(async () => {
@@ -130,10 +103,19 @@ const DashboardTabContent: React.FC<DashboardTabProps> = ({ groupId, userId, use
     setDeleteDialogState({ isOpen: false, expense: null });
   }, []);
 
-  // Handle edit action (placeholder for now - navigate to edit page when implemented)
-  const handleEdit = useCallback((_expense: ExpenseListItemDTO) => {
-    // TODO: Navigate to edit expense page when implemented
+  // Handle edit modal close
+  const handleCloseEdit = useCallback(() => {
+    setEditModalState({ isOpen: false, expense: null });
   }, []);
+
+  // Handle successful expense update
+  const handleExpenseUpdated = useCallback(
+    async (_updatedExpense: ExpenseDTO) => {
+      await Promise.all([refetchExpenses(), refetchBalances()]);
+      setEditModalState({ isOpen: false, expense: null });
+    },
+    [refetchExpenses, refetchBalances]
+  );
 
   // Handle add expense
   const handleAddExpense = useCallback(async () => {
@@ -286,133 +268,21 @@ const DashboardTabContent: React.FC<DashboardTabProps> = ({ groupId, userId, use
               </button>
             </div>
           ) : (
-            <div className="space-y-4 max-h-96 overflow-y-auto">
-              {expenses.map((expense, index) => (
-                <div
-                  key={expense.id}
-                  ref={index === expenses.length - 1 ? lastExpenseRef : undefined}
-                  className="rounded-2xl border bg-card p-4 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer group"
-                  onClick={() => {
-                    /* TODO: Open expense details modal */
-                  }}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") {
-                      e.preventDefault();
-                      {
-                        /* TODO: Open expense details modal */
-                      }
-                    }
-                  }}
-                  aria-label={`Wydatek: ${expense.description}, kwota: ${expense.amount_in_base_currency?.toFixed(2) || expense.amount.toFixed(2)} ${baseCurrencyCode}`}
-                >
-                  <div className="flex items-start justify-between gap-4">
-                    {/* Left side - Content */}
-                    <div className="flex-1 min-w-0">
-                      {/* Description */}
-                      <h4 className="font-medium text-foreground mb-3">{expense.description}</h4>
-
-                      {/* Participants info */}
-                      <div className="flex flex-col gap-2">
-                        {/* Participants avatars with amounts */}
-                        <div className="flex items-center gap-2">
-                          {expense.splits.slice(0, 3).map((split, splitIndex) => (
-                            <div key={split.profile_id} className="flex flex-col items-center gap-1 relative">
-                              <div
-                                className={`h-7 w-7 rounded-full border-2 flex items-center justify-center text-xs font-medium ${
-                                  split.profile_id === expense.payer_id
-                                    ? "bg-green-100 border-green-300 text-green-700"
-                                    : "bg-primary/10 border-background text-primary"
-                                }`}
-                              >
-                                {split.full_name?.charAt(0).toUpperCase() || "U"}
-                              </div>
-                              <div className="text-xs text-muted-foreground font-medium">
-                                {split.amount.toFixed(2)} {expense.currency_code}
-                              </div>
-                              {splitIndex === 2 && expense.splits.length > 3 && (
-                                <div className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-muted border border-background flex items-center justify-center">
-                                  <span className="text-xs font-medium text-muted-foreground">
-                                    +{expense.splits.length - 3}
-                                  </span>
-                                </div>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Right side - Amount and actions */}
-                    <div className="flex flex-col items-end gap-2 shrink-0">
-                      {/* Amount */}
-                      <div className="text-right">
-                        <div className="text-lg font-semibold text-foreground">
-                          {expense.amount_in_base_currency?.toFixed(2) ?? expense.amount.toFixed(2)} {baseCurrencyCode}
-                        </div>
-                        {expense.currency_code !== baseCurrencyCode && (
-                          <div className="text-xs text-muted-foreground">
-                            {expense.amount.toFixed(2)} {expense.currency_code}
-                          </div>
-                        )}
-                        <div className="text-xs text-muted-foreground mt-1">
-                          {new Date(expense.expense_date).toLocaleDateString("pl-PL", {
-                            day: "numeric",
-                            month: "short",
-                            year: "numeric",
-                          })}{" "}
-                          • {expense.created_by.full_name || "Użytkownik"}
-                        </div>
-                      </div>
-
-                      {/* Actions - only visible for owner */}
-                      {expense.created_by.id === userId && (
-                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleEdit(expense);
-                            }}
-                            className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 text-muted-foreground hover:text-foreground hover:bg-accent h-8 w-8"
-                            aria-label="Edytuj wydatek"
-                          >
-                            <Edit2 className="h-4 w-4" />
-                          </button>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDelete(expense);
-                            }}
-                            className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 text-destructive hover:text-destructive hover:bg-destructive/10 h-8 w-8"
-                            aria-label="Usuń wydatek"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))}
-
-              {/* Loading indicator for infinite scroll */}
-              {isFetchingNextPage && (
-                <div className="flex justify-center py-6">
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-current"></div>
-                    <span>Ładowanie kolejnych wydatków...</span>
-                  </div>
-                </div>
-              )}
-
-              {/* End of list message */}
-              {!hasMore && expenses.length > 0 && (
-                <div className="text-center py-6">
-                  <p className="text-sm text-muted-foreground">To wszystkie wydatki w tej grupie</p>
-                </div>
-              )}
-            </div>
+            <ExpenseList
+              expenses={expenses}
+              currentUserId={userId}
+              baseCurrencyCode={baseCurrencyCode}
+              groupId={groupId}
+              groupMembers={expenseModal.groupMembers}
+              groupCurrencies={expenseModal.groupCurrencies}
+              onExpenseClick={(_expense) => {
+                /* TODO: Open expense details modal */
+              }}
+              onExpenseUpdated={handleExpenseUpdated}
+              onLoadMore={fetchNextPage}
+              hasMore={hasMore}
+              isLoading={isFetchingNextPage}
+            />
           )}
         </div>
 
@@ -580,6 +450,20 @@ const DashboardTabContent: React.FC<DashboardTabProps> = ({ groupId, userId, use
         variant="destructive"
         isLoading={deleteExpenseMutation.isPending}
       />
+
+      {/* Edit Expense Modal */}
+      {editModalState.expense && (
+        <EditExpenseModal
+          groupId={groupId}
+          groupMembers={expenseModal.groupMembers}
+          groupCurrencies={expenseModal.groupCurrencies}
+          currentUserId={userId}
+          expense={editModalState.expense}
+          isOpen={editModalState.isOpen}
+          onClose={handleCloseEdit}
+          onExpenseUpdated={handleExpenseUpdated}
+        />
+      )}
 
       {/* Add Expense Modal */}
       {expenseModal.selectedExpenseGroupId && (
