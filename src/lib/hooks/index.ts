@@ -14,12 +14,14 @@ export { useTranscriptionErrorHandler } from "./useTranscriptionErrorHandler";
 // Expense hooks
 export { useExpense } from "./useExpense";
 export { useExpenseForm } from "./useExpenseForm";
+export { useExpenseFormPopulation } from "./useExpenseFormPopulation";
 export { useDeleteExpense } from "./useDeleteExpense";
 
 // Group management hooks
 export { useCreateGroupMutation } from "./useCreateGroupMutation";
 export { useCreateGroupFormLogic } from "./useCreateGroupFormLogic";
 export { useGroupDetails } from "./useGroupDetails";
+export { useGroupsSectionState } from "./useGroupsSectionState";
 
 // Utility hooks
 export { useCurrenciesList } from "./useCurrenciesList";

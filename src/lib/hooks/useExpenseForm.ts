@@ -12,7 +12,8 @@ import { createExpenseFormSchema, type CreateExpenseFormValues } from "../schema
 import { useExpenseFormState } from "./useExpenseFormState";
 import { useExpenseValidation } from "./useExpenseValidation";
 import { useExpenseSubmission } from "./useExpenseSubmission";
-import { validateExpenseFields, validateTranscriptionData } from "../utils/expenseValidationUtils";
+import { useExpenseFormPopulation } from "./useExpenseFormPopulation";
+import { validateExpenseFields } from "../utils/expenseValidationUtils";
 import { ExpenseFormError } from "../utils/errorHandling";
 
 type UseExpenseFormResult = ReturnType<typeof useExpenseFormState> & {
@@ -99,6 +100,21 @@ export function useExpenseForm(
     },
   });
 
+  // Population from transcription
+  const population = useExpenseFormPopulation({
+    form,
+    groupMembers,
+    groupCurrencies,
+    defaultPayerId,
+    onSuccess: () => {
+      formState.setSubmitError(null);
+      formState.setFieldErrors(null);
+    },
+    onError: (error) => {
+      formState.setSubmitError(error.message);
+    },
+  });
+
   const handleSubmit = useCallback(
     async (groupId: string): Promise<ExpenseDTO> => {
       formState.setSubmitting(true);
@@ -139,66 +155,6 @@ export function useExpenseForm(
     [form, formState, submission]
   );
 
-  // Populate form with data from voice transcription
-  const populateFromTranscription = useCallback(
-    (data: ExpenseTranscriptionResult) => {
-      try {
-        // Validate transcription data
-        const transcriptionErrors = validateTranscriptionData(data);
-        if (Object.keys(transcriptionErrors).length > 0) {
-          const firstError = Object.values(transcriptionErrors)[0];
-          throw new ExpenseFormError(firstError);
-        }
-
-        // Apply defaults for optional fields
-        const currency_code = data.currency_code || groupCurrencies[0]?.code || "PLN";
-        const expense_date = data.expense_date || new Date().toISOString().slice(0, 16);
-        const payer_id = data.payer_id || defaultPayerId || groupMembers[0]?.profile_id;
-
-        // Validate required fields are present (should be guaranteed by validateTranscriptionData)
-        if (!data.splits || !data.description || !data.amount) {
-          throw new ExpenseFormError("Brak wymaganych danych z transkrypcji");
-        }
-
-        // Filter valid splits (participants must be group members)
-        const validSplits = data.splits.filter((split) =>
-          groupMembers.some((member) => member.profile_id === split.profile_id)
-        );
-
-        if (validSplits.length === 0) {
-          throw new ExpenseFormError("Żaden z uczestników nie należy do grupy");
-        }
-
-        // Validate currency exists in group
-        const currencyExists = groupCurrencies.some((currency) => currency.code === currency_code);
-        if (!currencyExists) {
-          // Use default currency silently
-        }
-
-        // Populate form
-        form.setValue("description", data.description.trim(), { shouldValidate: true });
-        form.setValue("amount", data.amount, { shouldValidate: true });
-        form.setValue("currency_code", currency_code, { shouldValidate: true });
-        form.setValue("expense_date", expense_date, { shouldValidate: true });
-        form.setValue("payer_id", payer_id, { shouldValidate: true });
-        form.setValue("splits", validSplits, { shouldValidate: true });
-
-        // Trigger validation after a short delay
-        setTimeout(() => form.trigger(), 0);
-
-        // Clear any existing errors
-        formState.setSubmitError(null);
-        formState.setFieldErrors(null);
-      } catch (error) {
-        const message =
-          error instanceof ExpenseFormError ? error.message : "Błąd podczas wypełniania formularza z transkrypcji";
-        formState.setSubmitError(message);
-        throw error;
-      }
-    },
-    [form, groupMembers, groupCurrencies, defaultPayerId, formState]
-  );
-
   const reset = useCallback(() => {
     form.reset();
     formState.reset();
@@ -209,7 +165,7 @@ export function useExpenseForm(
     form,
     validation,
     handleSubmit,
-    populateFromTranscription,
+    populateFromTranscription: population.populateFromTranscription,
     reset,
   };
 }
