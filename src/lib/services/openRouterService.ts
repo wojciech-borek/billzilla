@@ -228,6 +228,51 @@ export class OpenRouterService {
     }
   }
 
+  public async performStructuredAnalysis(params: {
+    prompt: string;
+    model?: string;
+    temperature?: number;
+    maxTokens?: number;
+  }): Promise<string> {
+    try {
+      const payload = {
+        model: params.model || "anthropic/claude-3-haiku",
+        messages: [
+          {
+            role: "user",
+            content: params.prompt,
+          },
+        ],
+        max_tokens: params.maxTokens || 4000,
+        temperature: params.temperature || 0.1,
+      };
+
+      const apiResponse = await this.makeApiRequest(payload);
+      const responseContent = apiResponse.choices[0]?.message?.content;
+
+      if (!responseContent) {
+        throw new Error("No response content from OpenRouter API");
+      }
+
+      return responseContent;
+    } catch (error) {
+      // Re-throw custom errors as-is
+      if (
+        error instanceof OpenRouterApiError ||
+        error instanceof NetworkError ||
+        error instanceof InvalidJsonResponseError ||
+        error instanceof ValidationError
+      ) {
+        throw error;
+      }
+
+      // Wrap unexpected errors
+      throw new Error(
+        `Unexpected error in OpenRouterService during structured analysis: ${error instanceof Error ? error.message : String(error)}`
+      );
+    }
+  }
+
   // ==========================================================================
   // Private Helper Methods
   // ==========================================================================

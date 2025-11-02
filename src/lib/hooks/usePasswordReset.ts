@@ -33,6 +33,9 @@ export function usePasswordReset(): UsePasswordResetReturn {
         setError(result.error || "Wystąpił nieoczekiwany błąd");
         return false;
       }
+    } catch (_error) {
+      setError("Wystąpił nieoczekiwany błąd");
+      return false;
     } finally {
       setIsLoading(false);
     }
