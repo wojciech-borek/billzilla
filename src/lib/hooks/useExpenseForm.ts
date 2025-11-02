@@ -120,7 +120,7 @@ export function useExpenseForm(
         }
 
         // Submit the expense
-        return await submission.submit(groupId, formData);
+        return await submission.submit(groupId, formData as CreateExpenseCommand);
       } catch (error) {
         const expenseError =
           error instanceof ExpenseFormError ? error : new ExpenseFormError("Wystąpił nieznany błąd podczas wysyłania");
