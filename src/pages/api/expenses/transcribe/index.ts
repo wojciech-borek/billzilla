@@ -17,6 +17,7 @@ import {
   TaskProcessingError,
   GroupContextError,
 } from "../../../../lib/services/transcriptionTaskService";
+import { AudioFileValidator } from "../../../../lib/utils/audioValidation";
 import { z } from "zod";
 
 export const prerender = false;
@@ -118,46 +119,17 @@ export const POST: APIRoute = async ({ request, locals }) => {
       });
     }
 
-    // Guard clause: check file size (25MB limit)
-    const maxSize = 25 * 1024 * 1024;
-    if (audioFile.size > maxSize) {
+    // Guard clause: validate audio file
+    const validation = AudioFileValidator.validate(audioFile);
+    if (!validation.valid) {
       const errorResponse: ErrorResponseDTO = {
         error: {
-          code: "FILE_TOO_LARGE",
-          message: `Audio file too large. Maximum size: 25MB, received: ${(audioFile.size / 1024 / 1024).toFixed(2)}MB`,
+          code: audioFile.size > AudioFileValidator.getMaxFileSize() ? "FILE_TOO_LARGE" : "INVALID_AUDIO_FORMAT",
+          message: validation.error!,
         },
       };
       return new Response(JSON.stringify(errorResponse), {
-        status: 413,
-        headers: { "Content-Type": "application/json" },
-      });
-    }
-
-    // Guard clause: validate audio MIME type
-    const supportedFormats = [
-      "audio/flac",
-      "audio/mp3",
-      "audio/mpeg",
-      "audio/mp4",
-      "audio/m4a",
-      "audio/ogg",
-      "audio/wav",
-      "audio/webm",
-    ];
-
-    const isValidFormat = supportedFormats.some(
-      (format) => audioFile.type.startsWith(format) || audioFile.type.includes(format)
-    );
-
-    if (!isValidFormat) {
-      const errorResponse: ErrorResponseDTO = {
-        error: {
-          code: "INVALID_AUDIO_FORMAT",
-          message: `Unsupported audio format: ${audioFile.type}. Supported formats: ${supportedFormats.join(", ")}`,
-        },
-      };
-      return new Response(JSON.stringify(errorResponse), {
-        status: 400,
+        status: audioFile.size > AudioFileValidator.getMaxFileSize() ? 413 : 400,
         headers: { "Content-Type": "application/json" },
       });
     }
