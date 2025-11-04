@@ -762,6 +762,7 @@ taskService.processTask(/* ... */).catch((error) => {
 #### Problem
 
 Walidacja audio file występowała w dwóch miejscach:
+
 - `src/pages/api/expenses/transcribe/index.ts` (linie 121-163)
 - `src/lib/services/whisperService.ts` (linie 166-180)
 
@@ -778,8 +779,14 @@ export interface ValidationResult {
 export class AudioFileValidator {
   private static readonly MAX_FILE_SIZE = 25 * 1024 * 1024; // 25MB
   private static readonly SUPPORTED_FORMATS = [
-    "audio/flac", "audio/mp3", "audio/mpeg", "audio/mp4",
-    "audio/m4a", "audio/ogg", "audio/wav", "audio/webm"
+    "audio/flac",
+    "audio/mp3",
+    "audio/mpeg",
+    "audio/mp4",
+    "audio/m4a",
+    "audio/ogg",
+    "audio/wav",
+    "audio/webm",
   ];
 
   static validate(file: File | Blob): ValidationResult {
@@ -803,9 +810,7 @@ export class AudioFileValidator {
   }
 
   private static isSupportedFormat(mimeType: string): boolean {
-    return this.SUPPORTED_FORMATS.some(
-      (format) => mimeType.startsWith(format) || mimeType.includes(format)
-    );
+    return this.SUPPORTED_FORMATS.some((format) => mimeType.startsWith(format) || mimeType.includes(format));
   }
 
   static getMaxFileSize(): number {
@@ -819,10 +824,12 @@ export class AudioFileValidator {
 ```
 
 **Zastosowanie w kodzie:**
+
 - **API endpoint:** Zastąpiono ~40 linii duplikowanego kodu pojedynczym wywołaniem `AudioFileValidator.validate()`
 - **WhisperService:** Uproszczono metodę `validateAudioFile()` i usunięto duplikowane stałe/metody
 
 **Korzyści:**
+
 - ✅ Eliminacja duplikacji kodu (DRY principle)
 - ✅ Łatwiejsze utrzymanie i testowanie
 - ✅ Spójne komunikaty błędów

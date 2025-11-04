@@ -17,7 +17,7 @@ import {
   TaskProcessingError,
   GroupContextError,
 } from "../../../../lib/services/transcriptionTaskService";
-import { AudioFileValidator } from "../../../../lib/utils/audioValidation";
+import { validateAudioFile, getMaxFileSize } from "../../../../lib/utils/audioValidation";
 import { z } from "zod";
 
 export const prerender = false;
@@ -120,16 +120,16 @@ export const POST: APIRoute = async ({ request, locals }) => {
     }
 
     // Guard clause: validate audio file
-    const validation = AudioFileValidator.validate(audioFile);
+    const validation = validateAudioFile(audioFile);
     if (!validation.valid) {
       const errorResponse: ErrorResponseDTO = {
         error: {
-          code: audioFile.size > AudioFileValidator.getMaxFileSize() ? "FILE_TOO_LARGE" : "INVALID_AUDIO_FORMAT",
-          message: validation.error!,
+          code: audioFile.size > getMaxFileSize() ? "FILE_TOO_LARGE" : "INVALID_AUDIO_FORMAT",
+          message: validation.error || "Unknown validation error",
         },
       };
       return new Response(JSON.stringify(errorResponse), {
-        status: audioFile.size > AudioFileValidator.getMaxFileSize() ? 413 : 400,
+        status: audioFile.size > getMaxFileSize() ? 413 : 400,
         headers: { "Content-Type": "application/json" },
       });
     }

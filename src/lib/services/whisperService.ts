@@ -6,7 +6,7 @@
  */
 
 import type { WhisperTranscriptionResponse, TranscriptionResult } from "../../types";
-import { AudioFileValidator } from "../utils/audioValidation";
+import { validateAudioFile } from "../utils/audioValidation";
 
 // ============================================================================
 // Custom Error Classes
@@ -154,12 +154,11 @@ export class WhisperService {
    * Validates the audio file format and size
    */
   private validateAudioFile(audioBlob: Blob): void {
-    const validation = AudioFileValidator.validate(audioBlob);
+    const validation = validateAudioFile(audioBlob);
     if (!validation.valid) {
-      throw new InvalidAudioFileError(validation.error!);
+      throw new InvalidAudioFileError(validation.error || "Unknown validation error");
     }
   }
-
 
   /**
    * Prepares FormData for the API request

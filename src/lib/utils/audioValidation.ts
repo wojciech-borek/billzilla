@@ -10,66 +10,62 @@ export interface ValidationResult {
   error?: string;
 }
 
-export class AudioFileValidator {
-  private static readonly MAX_FILE_SIZE = 25 * 1024 * 1024; // 25MB
-  private static readonly SUPPORTED_FORMATS = [
-    "audio/flac",
-    "audio/mp3",
-    "audio/mpeg",
-    "audio/mp4",
-    "audio/m4a",
-    "audio/ogg",
-    "audio/wav",
-    "audio/webm",
-  ];
+const MAX_FILE_SIZE = 25 * 1024 * 1024; // 25MB
+const SUPPORTED_FORMATS = [
+  "audio/flac",
+  "audio/mp3",
+  "audio/mpeg",
+  "audio/mp4",
+  "audio/m4a",
+  "audio/ogg",
+  "audio/wav",
+  "audio/webm",
+] as const;
 
-  /**
-   * Validates an audio file or blob
-   * @param file - File or Blob to validate
-   * @returns ValidationResult with valid status and optional error message
-   */
-  static validate(file: File | Blob): ValidationResult {
-    // Check size
-    if (file.size > this.MAX_FILE_SIZE) {
-      return {
-        valid: false,
-        error: `File too large (${(file.size / 1024 / 1024).toFixed(2)}MB). Maximum size: 25MB`,
-      };
-    }
-
-    // Check format (skip if no type provided)
-    if (file.type && !this.isSupportedFormat(file.type)) {
-      return {
-        valid: false,
-        error: `Unsupported audio format: ${file.type}. Supported formats: ${this.SUPPORTED_FORMATS.join(", ")}`,
-      };
-    }
-
-    return { valid: true };
+/**
+ * Validates an audio file or blob
+ * @param file - File or Blob to validate
+ * @returns ValidationResult with valid status and optional error message
+ */
+export function validateAudioFile(file: File | Blob): ValidationResult {
+  // Check size
+  if (file.size > MAX_FILE_SIZE) {
+    return {
+      valid: false,
+      error: `File too large (${(file.size / 1024 / 1024).toFixed(2)}MB). Maximum size: 25MB`,
+    };
   }
 
-  /**
-   * Checks if the MIME type is supported
-   * @param mimeType - MIME type to check
-   * @returns true if supported, false otherwise
-   */
-  private static isSupportedFormat(mimeType: string): boolean {
-    return this.SUPPORTED_FORMATS.some(
-      (format) => mimeType.startsWith(format) || mimeType.includes(format)
-    );
+  // Check format (skip if no type provided)
+  if (file.type && !isSupportedFormat(file.type)) {
+    return {
+      valid: false,
+      error: `Unsupported audio format: ${file.type}. Supported formats: ${SUPPORTED_FORMATS.join(", ")}`,
+    };
   }
 
-  /**
-   * Gets the maximum allowed file size in bytes
-   */
-  static getMaxFileSize(): number {
-    return this.MAX_FILE_SIZE;
-  }
+  return { valid: true };
+}
 
-  /**
-   * Gets the list of supported formats
-   */
-  static getSupportedFormats(): readonly string[] {
-    return this.SUPPORTED_FORMATS;
-  }
+/**
+ * Checks if the MIME type is supported
+ * @param mimeType - MIME type to check
+ * @returns true if supported, false otherwise
+ */
+function isSupportedFormat(mimeType: string): boolean {
+  return SUPPORTED_FORMATS.some((format) => mimeType.startsWith(format) || mimeType.includes(format));
+}
+
+/**
+ * Gets the maximum allowed file size in bytes
+ */
+export function getMaxFileSize(): number {
+  return MAX_FILE_SIZE;
+}
+
+/**
+ * Gets the list of supported formats
+ */
+export function getSupportedFormats(): readonly string[] {
+  return SUPPORTED_FORMATS;
 }

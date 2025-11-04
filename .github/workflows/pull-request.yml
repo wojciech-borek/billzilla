@@ -21,7 +21,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Fetch all history for proper git diff
+          fetch-depth: 0 # Fetch all history for proper git diff
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -43,7 +43,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Fetch all history for proper git diff
+          fetch-depth: 0 # Fetch all history for proper git diff
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -75,7 +75,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Fetch all history for proper git diff
+          fetch-depth: 0 # Fetch all history for proper git diff
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -124,7 +124,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Fetch all history for proper git diff
+          fetch-depth: 0 # Fetch all history for proper git diff
 
       - name: Download unit test coverage
         uses: actions/download-artifact@v4

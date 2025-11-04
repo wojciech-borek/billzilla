@@ -31,6 +31,13 @@ const baseConfig = tseslint.config({
   },
 });
 
+const e2eTestConfig = tseslint.config({
+  files: ["e2e/**/*.{js,ts,tsx}"],
+  rules: {
+    "no-console": "off",
+  },
+});
+
 const jsxA11yConfig = tseslint.config({
   files: ["**/*.{js,jsx,ts,tsx}"],
   extends: [jsxA11y.flatConfigs.recommended],
@@ -66,10 +73,11 @@ const reactConfig = tseslint.config({
 
 export default tseslint.config(
   {
-    ignores: ["src/db/database.types.ts"],
+    ignores: ["src/db/database.types.ts", ".github/workflows/*.yml"],
   },
   includeIgnoreFile(gitignorePath),
   baseConfig,
+  e2eTestConfig,
   jsxA11yConfig,
   reactConfig,
   eslintPluginAstro.configs["flat/recommended"],

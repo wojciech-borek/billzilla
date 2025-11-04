@@ -16,7 +16,7 @@ export type {
   OAuthResponse,
   AuthOtpResponse,
   SignUpWithPasswordCredentials,
-  SignInWithOAuthCredentials
+  SignInWithOAuthCredentials,
 } from "@supabase/supabase-js";
 
 // ============================================================================
