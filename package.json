@@ -21,8 +21,8 @@
     "test:e2e:update-snapshots": "playwright test e2e/unauthenticated.spec.ts --update-snapshots"
   },
   "dependencies": {
-    "@astrojs/node": "^9.4.6",
-    "@astrojs/react": "^4.4.1",
+    "@astrojs/cloudflare": "^12.6.10",
+    "@astrojs/react": "^4.4.0",
     "@astrojs/sitemap": "^3.6.0",
     "@hookform/resolvers": "^5.2.2",
     "@radix-ui/react-dialog": "^1.1.15",
