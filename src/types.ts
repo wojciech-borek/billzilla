@@ -7,6 +7,18 @@
 
 import type { Tables, TablesInsert, Enums } from "./db/database.types";
 
+// Re-export commonly used Supabase types
+export type {
+  AuthError,
+  User,
+  Session,
+  AuthResponse,
+  OAuthResponse,
+  AuthOtpResponse,
+  SignUpWithPasswordCredentials,
+  SignInWithOAuthCredentials
+} from "@supabase/supabase-js";
+
 // ============================================================================
 // Base Entity Types (from database)
 // ============================================================================

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import type { AuthError } from "@supabase/supabase-js";
+import type { AuthError } from "@/types";
 import { SignupError, signupUser } from "../../lib/services/authService";
 import type { SignupFormData } from "../../lib/schemas/authSchemas";
 import { createMockAuthSupabaseClient, type MockSupabaseClient } from "./testHelpers";

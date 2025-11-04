@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { PasswordResetService } from "../../lib/services/passwordResetService";
 import { createMockAuthSupabaseClient } from "./testHelpers";
 import type { MockSupabaseClient } from "../testTypes";
-import type { User } from "@supabase/supabase-js";
+import type { User } from "@/types";
 
 // Mock createClient to avoid Supabase environment requirements
 vi.mock("../../db/supabase.client", () => ({

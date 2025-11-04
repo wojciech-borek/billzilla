@@ -1,7 +1,6 @@
 import { useMemo, useCallback } from "react";
 import { createClient } from "@/db/supabase.client";
-import type { SignUpWithPasswordCredentials, SignInWithOAuthCredentials } from "@supabase/supabase-js";
-import type { UpdateUserAttributes } from "../../types";
+import type { SignUpWithPasswordCredentials, SignInWithOAuthCredentials, UpdateUserAttributes } from "@/types";
 
 export function useSupabaseAuth() {
   const supabase = useMemo(() => createClient(), []);

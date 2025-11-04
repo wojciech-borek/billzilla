@@ -1,6 +1,6 @@
 import type { SupabaseClient as RealSupabaseClient } from "@/db/supabase.client";
 import type { Mock } from "vitest";
-import type { AuthResponse, AuthError, User, Session, OAuthResponse, AuthOtpResponse } from "@supabase/supabase-js";
+import type { AuthResponse, AuthError, User, Session, OAuthResponse, AuthOtpResponse } from "@/types";
 
 /**
  * Mock Supabase client types for testing
