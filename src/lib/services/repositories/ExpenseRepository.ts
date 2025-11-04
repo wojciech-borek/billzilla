@@ -89,7 +89,6 @@ export class ExpenseRepository {
       .eq("group_members.profile_id", userId)
       .eq("group_members.status", "active")
       .single();
-
     if (groupError || !groupData) {
       throw new Error("Group not found or user is not an active member");
     }
@@ -206,6 +205,62 @@ export class ExpenseRepository {
     }
 
     return completeExpense;
+  }
+
+  /**
+   * Update an existing expense record
+   */
+  async updateExpense(
+    expenseId: string,
+    expenseData: {
+      description: string;
+      amount: number;
+      currency_code: string;
+      expense_date: string;
+      payer_id: string;
+    }
+  ): Promise<void> {
+    const { error: expenseUpdateError } = await this.supabase.from("expenses").update(expenseData).eq("id", expenseId);
+
+    if (expenseUpdateError) {
+      throw new Error("Failed to update expense");
+    }
+  }
+
+  /**
+   * Delete existing expense splits
+   */
+  async deleteExpenseSplits(expenseId: string): Promise<void> {
+    const { error: deleteError } = await this.supabase.from("expense_splits").delete().eq("expense_id", expenseId);
+
+    if (deleteError) {
+      throw new Error("Failed to delete existing expense splits");
+    }
+  }
+
+  /**
+   * Verify expense ownership for updates/deletes
+   */
+  async verifyExpenseOwnership(expenseId: string, userId: string): Promise<{ group_id: string }> {
+    const { data: expense, error: fetchError } = await this.supabase
+      .from("expenses")
+      .select("created_by, group_id")
+      .eq("id", expenseId)
+      .single();
+
+    if (fetchError) {
+      throw new Error("Failed to verify expense ownership");
+    }
+
+    if (!expense) {
+      throw new Error("Expense not found");
+    }
+
+    if (expense.created_by !== userId) {
+      throw new Error("Only the creator can update this expense");
+    }
+
+    return { group_id: expense.group_id };
   }
 
   /**

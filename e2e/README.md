@@ -5,6 +5,7 @@
 ### Platform-Specific Snapshots
 
 Visual regression tests create snapshots that are platform-specific. We maintain separate snapshots for:
+
 - **Windows** (local development): `*-win32.png`
 - **Linux** (CI/CD): `*-linux.png`
 
@@ -27,6 +28,7 @@ npx playwright test e2e/unauthenticated.spec.ts --update-snapshots
 ### Cross-Platform Compatibility
 
 Due to differences in:
+
 - Font rendering between Windows/Linux
 - System fonts availability
 - Antialiasing and rendering engines
@@ -56,15 +58,18 @@ We maintain separate snapshots for each platform. The `unauthenticated-chromium`
 ### Troubleshooting
 
 **"Snapshot doesn't exist" error**:
+
 - Check if snapshots exist for your platform (`*-win32.png` for Windows, `*-linux.png` for Linux)
 - Run `npm run test:e2e:update-snapshots` to generate missing snapshots
 
 **Visual differences between local and CI**:
+
 - Font rendering differences are normal
 - Check if UI changes are truly needed vs platform-specific rendering artifacts
 - Adjust `maxDiffPixelRatio` if needed (currently 2% in CI, 1% locally)
 
 **Large visual differences**:
+
 - Verify viewport sizes are consistent (1280x720)
 - Check for missing fonts or CSS issues
 - Consider if the change affects layout significantly

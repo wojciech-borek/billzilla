@@ -27,7 +27,7 @@ export function useCreateGroupModal(onGroupCreated?: () => Promise<void>) {
 
       let message = `Grupa "${result.groupName}" została utworzona!`;
       if (addedCount > 0 || invitedCount > 0) {
-        message += ` Dodano ${addedCount} członków i wysłano ${invitedCount} zaproszeń.`;
+        message += ` Dodano ${addedCount} uczestników i wysłano ${invitedCount} zaproszeń.`;
       }
 
       toast.success("Sukces!", {

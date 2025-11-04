@@ -1,7 +1,6 @@
 import React from "react";
 
 import { useExpenseForm } from "@/lib/hooks/useExpenseForm";
-import { useExpenseFormIntegration } from "@/lib/hooks/useExpenseFormIntegration";
 import { ExpenseFormHeader } from "./ExpenseFormHeader";
 import { ExpenseFormContent } from "./ExpenseFormContent";
 import { ExpenseFormFooter } from "./ExpenseFormFooter";
@@ -26,6 +25,8 @@ interface ExpenseFormProps {
   onTranscriptionComplete?: (result: TranscriptionResultDTO) => void;
   onTranscriptionError?: (error: TranscriptionErrorDTO) => void;
   isLoading?: boolean;
+  mode?: "create" | "edit";
+  expenseId?: string;
 }
 
 /**
@@ -43,22 +44,42 @@ export function ExpenseForm({
   onTranscriptionComplete,
   onTranscriptionError,
   isLoading = false,
+  mode = "create",
+  expenseId,
 }: ExpenseFormProps) {
+  console.log("ExpenseForm - called with mode:", mode, "expenseId:", expenseId);
+
   const {
     form,
-    splitValidation,
+    validation,
     isSubmitting,
     submitError,
     fieldErrors,
     handleSubmit: submitExpense,
-  } = useExpenseForm(groupMembers, groupCurrencies, currentUserId, initialData);
-
-  const { handleTranscriptionComplete } = useExpenseFormIntegration(form, onTranscriptionComplete);
+    populateFromTranscription,
+  } = useExpenseForm(groupMembers, groupCurrencies, currentUserId, initialData, mode, expenseId);
 
   const {
     handleSubmit,
     formState: { errors, isValid },
   } = form;
+
+  const handleTranscriptionComplete = (
+    result: TranscriptionResultDTO,
+    onTranscriptionError?: (error: TranscriptionErrorDTO) => void
+  ) => {
+    try {
+      populateFromTranscription(result.expense_data);
+      onTranscriptionComplete?.(result);
+    } catch (error) {
+      if (onTranscriptionError) {
+        onTranscriptionError({
+          code: "FORM_POPULATION_ERROR",
+          message: error instanceof Error ? error.message : "Błąd podczas wypełniania formularza",
+        });
+      }
+    }
+  };
 
   const onFormSubmit = async () => {
     try {
@@ -98,7 +119,7 @@ export function ExpenseForm({
         }
         isSubmitting={isSubmitting}
         isValid={isValid}
-        splitValidationValid={splitValidation.isValid}
+        splitValidationValid={validation.splitValidation.isValid}
       />
     </form>
   );

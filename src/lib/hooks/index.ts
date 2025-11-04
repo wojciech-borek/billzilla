@@ -11,13 +11,17 @@ export { useVoiceTranscription } from "./useVoiceTranscription";
 export { useTranscriptionPolling } from "./useTranscriptionPolling";
 export { useTranscriptionErrorHandler } from "./useTranscriptionErrorHandler";
 
-// Expense form hooks
+// Expense hooks
+export { useExpense } from "./useExpense";
 export { useExpenseForm } from "./useExpenseForm";
-export { useExpenseFormIntegration } from "./useExpenseFormIntegration";
+export { useExpenseFormPopulation } from "./useExpenseFormPopulation";
+export { useDeleteExpense } from "./useDeleteExpense";
 
 // Group management hooks
 export { useCreateGroupMutation } from "./useCreateGroupMutation";
 export { useCreateGroupFormLogic } from "./useCreateGroupFormLogic";
+export { useGroupDetails } from "./useGroupDetails";
+export { useGroupsSectionState } from "./useGroupsSectionState";
 
 // Utility hooks
 export { useCurrenciesList } from "./useCurrenciesList";

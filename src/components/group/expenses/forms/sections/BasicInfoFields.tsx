@@ -1,4 +1,5 @@
 import React from "react";
+import { Controller } from "react-hook-form";
 import { ExpenseDescriptionField } from "../fields/ExpenseDescriptionField";
 import { ExpenseAmountField } from "../fields/ExpenseAmountField";
 import { CurrencySelector } from "../CurrencySelector";
@@ -21,12 +22,18 @@ export function BasicInfoFields({ form, hasLowConfidence, groupCurrencies }: Bas
       {/* Amount and Currency */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <ExpenseAmountField form={form} hasLowConfidence={hasLowConfidence} />
-        <CurrencySelector
-          currencies={groupCurrencies}
-          value={form.watch("currency_code") || groupCurrencies[0]?.code || "PLN"}
-          onChange={(value) => form.setValue("currency_code", value)}
-          error={form.formState.errors.currency_code?.message}
-          hasLowConfidence={hasLowConfidence}
+        <Controller
+          name="currency_code"
+          control={form.control}
+          render={({ field }) => (
+            <CurrencySelector
+              currencies={groupCurrencies}
+              value={field.value}
+              onChange={field.onChange}
+              error={form.formState.errors.currency_code?.message}
+              hasLowConfidence={hasLowConfidence}
+            />
+          )}
         />
       </div>
     </>

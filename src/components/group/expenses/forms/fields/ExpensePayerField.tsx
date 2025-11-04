@@ -8,13 +8,12 @@ import type { FieldProps } from "./types";
 
 interface ExpensePayerFieldProps extends FieldProps {
   groupMembers: GroupMemberSummaryDTO[];
-  currentUserId: string;
 }
 
 /**
  * Payer field component for expense form
  */
-export function ExpensePayerField({ form, hasLowConfidence, groupMembers, currentUserId }: ExpensePayerFieldProps) {
+export function ExpensePayerField({ form, hasLowConfidence, groupMembers }: ExpensePayerFieldProps) {
   const {
     control,
     formState: { errors },
@@ -28,7 +27,6 @@ export function ExpensePayerField({ form, hasLowConfidence, groupMembers, curren
       <Controller
         name="payer_id"
         control={control}
-        defaultValue={currentUserId}
         render={({ field }) => (
           <Select value={field.value} onValueChange={field.onChange}>
             <SelectTrigger
