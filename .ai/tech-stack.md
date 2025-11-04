@@ -40,5 +40,5 @@
 ### CI/CD i Hosting:
 
 - **Github Actions:** Posłuży jako narzędzie do automatyzacji procesów: uruchamiania testów, lintera oraz budowania obrazu produkcyjnego aplikacji.
-- **Hosting DigitalOcean + Docker**
-  - **Uzasadnienie:** Zapewnia pełną kontrolę nad środowiskiem hostingowym i może być bardziej opłacalny w dużej skali, jednak wymaga większego nakładu pracy przy konfiguracji i utrzymaniu infrastruktury.
+- **Hosting Cloudflare Pages + Workers**
+  - **Uzasadnienie:** Doskonale zoptymalizowane dla aplikacji Astro z islands architecture, zapewnia globalną dystrybucję na edge z minimalnym latency. Pages Functions obsługują API routes aplikacji, a Workers współdziałają z Supabase dla funkcji backendowych. Rozwiązanie oferuje hojny darmowy plan dla startupów oraz przejrzyste skalowanie kosztów wraz z rozwojem biznesu.
