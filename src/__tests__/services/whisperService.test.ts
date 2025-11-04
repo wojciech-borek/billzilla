@@ -139,7 +139,7 @@ describe("WhisperService", () => {
       expect(() => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (service as any).validateAudioFile(audioBlob);
-      }).toThrow(/Audio file too large.*25MB.*30\.00MB/);
+      }).toThrow(/File too large.*30\.00MB.*Maximum size: 25MB/);
     });
 
     it("should throw InvalidAudioFileError when unsupported format", () => {
@@ -163,9 +163,11 @@ describe("WhisperService", () => {
 
       // Act & Assert
       supportedFormats.forEach((format) => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const result = (service as any).isSupportedFormat(format);
-        expect(result).toBe(true);
+        const audioBlob = createTestAudioBlob(format);
+        expect(() => {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (service as any).validateAudioFile(audioBlob);
+        }).not.toThrow();
       });
     });
   });

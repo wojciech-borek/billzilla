@@ -6,6 +6,7 @@
  */
 
 import type { WhisperTranscriptionResponse, TranscriptionResult } from "../../types";
+import { AudioFileValidator } from "../utils/audioValidation";
 
 // ============================================================================
 // Custom Error Classes
@@ -87,17 +88,6 @@ export interface TranscribeAudioParams {
 export class WhisperService {
   private readonly apiKey: string;
   private readonly baseUrl: string = "https://api.openai.com/v1";
-  private readonly maxFileSize: number = 25 * 1024 * 1024; // 25MB limit
-  private readonly supportedFormats = [
-    "audio/flac",
-    "audio/mp3",
-    "audio/mpeg",
-    "audio/mp4",
-    "audio/m4a",
-    "audio/ogg",
-    "audio/wav",
-    "audio/webm",
-  ];
 
   constructor(config: WhisperServiceConfig = {}) {
     // Try to get API key from config or environment
@@ -164,27 +154,12 @@ export class WhisperService {
    * Validates the audio file format and size
    */
   private validateAudioFile(audioBlob: Blob): void {
-    // Guard clause: check file size
-    if (audioBlob.size > this.maxFileSize) {
-      throw new InvalidAudioFileError(
-        `Audio file too large. Maximum size: ${this.maxFileSize / 1024 / 1024}MB, received: ${(audioBlob.size / 1024 / 1024).toFixed(2)}MB`
-      );
-    }
-
-    // Guard clause: check MIME type
-    if (audioBlob.type && !this.isSupportedFormat(audioBlob.type)) {
-      throw new InvalidAudioFileError(
-        `Unsupported audio format: ${audioBlob.type}. Supported formats: ${this.supportedFormats.join(", ")}`
-      );
+    const validation = AudioFileValidator.validate(audioBlob);
+    if (!validation.valid) {
+      throw new InvalidAudioFileError(validation.error!);
     }
   }
 
-  /**
-   * Checks if the audio format is supported
-   */
-  private isSupportedFormat(mimeType: string): boolean {
-    return this.supportedFormats.some((format) => mimeType.startsWith(format) || mimeType.includes(format));
-  }
 
   /**
    * Prepares FormData for the API request
