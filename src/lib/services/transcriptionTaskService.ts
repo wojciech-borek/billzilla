@@ -219,7 +219,9 @@ export class TranscriptionTaskService {
         prompt: this.buildWhisperPrompt(params.groupContext),
       });
 
-      console.log(`[TranscriptionTask] Step 1 completed for task ${params.taskId}. Text length: ${transcriptionResult.text.length}`);
+      console.log(
+        `[TranscriptionTask] Step 1 completed for task ${params.taskId}. Text length: ${transcriptionResult.text.length}`
+      );
 
       // Step 2: Build context for LLM
       console.log(`[TranscriptionTask] Step 2: Building LLM context for task ${params.taskId}`);
