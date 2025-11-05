@@ -188,6 +188,7 @@ interface DashboardTabProps {
 ```
 
 **Stan komponentu:**
+
 - Infinite scroll dla wydatków z paginacją
 - Dialog potwierdzenia usunięcia wydatku
 - Ładowanie i obsługa błędów dla wszystkich sekcji
@@ -241,6 +242,7 @@ interface DashboardTabProps {
 Widok grupy został pomyślnie przekształcony z systemu zakładek do pojedynczego, zunifikowanego dashboard zawierającego wszystkie funkcjonalności w jednym widoku. Wszystkie komponenty zostały zintegrowane, nawigacja została uproszczona, a kod został wyczyszczony z nieużywanych elementów.
 
 **Główne osiągnięcia:**
+
 - Przeniesienie wszystkich sekcji (wydatki, salda, ustawienia) do jednego widoku dashboard
 - Uproszczenie nawigacji - usunięcie systemu zakładek
 - Aktualizacja struktury komponentów dla lepszej spójności

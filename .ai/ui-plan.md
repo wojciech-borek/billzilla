@@ -113,26 +113,31 @@ Kluczowe założenia:
 Dashboard grupy zawiera wszystkie informacje w jednym widoku podzielonym na logiczne sekcje:
 
 **Sekcja podsumowania (Summary Cards):**
+
 - Karty z kluczowymi metrykami: suma wydatków, liczba członków, do rozliczenia, własne saldo.
 - Komponenty: `SummaryCard` (4 karty w grid).
 
 **Sekcja wydatki (Expenses Section):**
+
 - Lista wszystkich wydatków z opisem, kwotą, datą, płatnikiem oraz awatarami uczestników.
 - Możliwość dodawania nowych wydatków przez FAB.
 - Komponenty: `ExpenseList`, `ExpenseListItem`, `FloatingActionButton`.
 
 **Sekcja salda (Balances Section):**
+
 - Podsumowanie sald wszystkich członków grupy.
 - Lista sugerowanych rozliczeń z przyciskami szybkiego rozliczenia.
 - Komponenty: `MemberBalanceSummary`, `SuggestedSettlementList`, `SettleUpButton`.
 
 **Sekcja ustawień grupy (Group Settings Section):**
+
 - Zarządzanie członkami: lista uczestników, formularz zaproszeń.
 - Zarządzanie walutami: lista walut z kursami, dodawanie nowych walut.
 - Akcje grupy: opuszczenie grupy, archiwizacja (tylko dla twórcy).
 - Komponenty: `GroupSettingsCards` zawierający wszystkie podsekcje ustawień.
 
 **UX, dostępność, bezpieczeństwo:**
+
 - **UX:** Wszystkie informacje są dostępne w jednym miejscu bez przełączania kontekstu. Sekcje są logicznie oddzielone wizualnie.
 - **Dostępność:** Wszystkie komponenty są dostępne z klawiatury. Nowe dane są ogłaszane przez `aria-live`.
 - **Bezpieczeństwo:** Uprawnienia są egzekwowane na poziomie komponentów (tylko twórca może edytować nazwę grupy, tylko autor wydatku może go edytować).
