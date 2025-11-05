@@ -37,7 +37,7 @@ export const prerender = false;
  * @returns 500 - Internal server error
  * @returns 503 - AI service unavailable
  */
-export const POST: APIRoute = async ({ request, locals }) => {
+export const POST: APIRoute = async ({ request, locals, env }) => {
   try {
     // Step 1: Check authentication
     if (!locals.user) {
@@ -162,8 +162,11 @@ export const POST: APIRoute = async ({ request, locals }) => {
       });
     }
 
-    // Step 4: Initialize service
-    const taskService = new TranscriptionTaskService();
+    // Step 4: Initialize service with API keys from context.env
+    const taskService = new TranscriptionTaskService({
+      openaiApiKey: env.OPENAI_API_KEY,
+      openrouterApiKey: env.OPENROUTER_API_KEY,
+    });
 
     // Step 5: Get group context and verify membership
     let groupContext;

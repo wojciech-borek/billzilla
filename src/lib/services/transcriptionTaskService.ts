@@ -52,6 +52,11 @@ export interface ProcessTaskParams {
   userId: string;
 }
 
+export interface TranscriptionTaskServiceConfig {
+  openaiApiKey?: string;
+  openrouterApiKey?: string;
+}
+
 // ============================================================================
 // Custom Error Classes
 // ============================================================================
@@ -95,9 +100,9 @@ export class TranscriptionTaskService {
   private whisperService: WhisperService;
   private openRouterService: OpenRouterService;
 
-  constructor() {
-    this.whisperService = new WhisperService();
-    this.openRouterService = new OpenRouterService();
+  constructor(config: TranscriptionTaskServiceConfig = {}) {
+    this.whisperService = new WhisperService({ apiKey: config.openaiApiKey });
+    this.openRouterService = new OpenRouterService({ apiKey: config.openrouterApiKey });
   }
 
   // ==========================================================================
