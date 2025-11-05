@@ -109,12 +109,9 @@ export class OpenRouterService {
   private readonly baseUrl: string = "https://openrouter.ai/api/v1";
 
   constructor(config: OpenRouterServiceConfig = {}) {
-    // Try to get API key from config or environment
-    // Prioritize import.meta.env for local development, process.env for production
-    this.apiKey =
-      config.apiKey ||
-      import.meta.env.OPENROUTER_API_KEY ||
-      (typeof process !== "undefined" ? process.env.OPENROUTER_API_KEY : undefined);
+    // Use import.meta.env which works in all environments (dev, test, production)
+    // astro:env schema in astro.config.mjs provides type safety and validation
+    this.apiKey = config.apiKey || import.meta.env.OPENROUTER_API_KEY;
 
     // Guard clause: ensure API key is available
     if (!this.apiKey) {
