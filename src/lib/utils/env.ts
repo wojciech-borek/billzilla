@@ -62,8 +62,8 @@ export function resolveOpenAIApiKey(
   }
 
   // 5) globalThis (Cloudflare Workers/Pages runtime)
-  if (typeof globalThis !== "undefined" && (globalThis as any).OPENAI_API_KEY) {
-    return (globalThis as any).OPENAI_API_KEY;
+  if (typeof globalThis !== "undefined" && (globalThis as Record<string, unknown>).OPENAI_API_KEY) {
+    return (globalThis as Record<string, unknown>).OPENAI_API_KEY as string;
   }
 
   // 6) not found
@@ -97,8 +97,8 @@ export function resolveOpenRouterApiKey(
   }
 
   // 5) globalThis (Cloudflare Workers/Pages runtime)
-  if (typeof globalThis !== "undefined" && (globalThis as any).OPENROUTER_API_KEY) {
-    return (globalThis as any).OPENROUTER_API_KEY;
+  if (typeof globalThis !== "undefined" && (globalThis as Record<string, unknown>).OPENROUTER_API_KEY) {
+    return (globalThis as Record<string, unknown>).OPENROUTER_API_KEY as string;
   }
 
   // 6) not found

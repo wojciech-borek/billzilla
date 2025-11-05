@@ -27,7 +27,7 @@ export const prerender = false;
  * @returns 404 - Task not found or access denied
  * @returns 500 - Internal server error
  */
-export const GET: APIRoute = async ({ params, locals, env }) => {
+export const GET: APIRoute = async ({ params, locals }) => {
   try {
     // Step 1: Check authentication
     if (!locals.user) {
@@ -76,11 +76,9 @@ export const GET: APIRoute = async ({ params, locals, env }) => {
       });
     }
 
-    // Step 3: Initialize service with env passed directly
-    // The services will resolve API keys from env using resolveApiKey helper
-    const taskService = new TranscriptionTaskService({
-      env, // Pass context.env (Pages Functions) or undefined (local)
-    });
+    // Step 3: Initialize service - let it resolve API keys automatically
+    // The services will resolve API keys from environment using resolveApiKey helper
+    const taskService = new TranscriptionTaskService();
 
     let task;
     try {
