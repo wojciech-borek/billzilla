@@ -219,7 +219,7 @@ export class TranscriptionTaskService {
         transcription: transcriptionResult.text,
         context,
         schema: expenseTranscriptionSchema,
-        model: "google/gemini-2.0-flash-exp:free",
+        model: "anthropic/claude-3-haiku",
         temperature: 0.1,
         maxTokens: 1024,
       };
