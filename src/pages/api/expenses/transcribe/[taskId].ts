@@ -27,7 +27,7 @@ export const prerender = false;
  * @returns 404 - Task not found or access denied
  * @returns 500 - Internal server error
  */
-export const GET: APIRoute = async ({ params, locals }) => {
+export const GET: APIRoute = async ({ params, locals, env }) => {
   try {
     // Step 1: Check authentication
     if (!locals.user) {
@@ -76,8 +76,11 @@ export const GET: APIRoute = async ({ params, locals }) => {
       });
     }
 
-    // Step 3: Initialize service and fetch task
-    const taskService = new TranscriptionTaskService();
+    // Step 3: Initialize service with API keys from context.env
+    const taskService = new TranscriptionTaskService({
+      openaiApiKey: env.OPENAI_API_KEY,
+      openrouterApiKey: env.OPENROUTER_API_KEY,
+    });
 
     let task;
     try {
