@@ -39,8 +39,11 @@ export const prerender = false;
  */
 export const POST: APIRoute = async ({ request, locals }) => {
   try {
+    console.log(`[TranscribeAPI] Received POST request`);
+
     // Step 1: Check authentication
     if (!locals.user) {
+      console.log(`[TranscribeAPI] No user authenticated`);
       const errorResponse: ErrorResponseDTO = {
         error: {
           code: "UNAUTHORIZED",
@@ -73,6 +76,9 @@ export const POST: APIRoute = async ({ request, locals }) => {
     // Step 3: Extract and validate required fields
     const audioFile = formData.get("audio");
     const groupId = formData.get("group_id");
+
+    console.log(`[TranscribeAPI] Audio file: ${audioFile ? "present" : "missing"}, size: ${audioFile?.size || 0}`);
+    console.log(`[TranscribeAPI] Group ID: ${groupId || "missing"}`);
 
     // Guard clause: validate audio file
     if (!audioFile || !(audioFile instanceof File)) {
@@ -206,10 +212,12 @@ export const POST: APIRoute = async ({ request, locals }) => {
     }
 
     // Step 6: Create transcription task in database
+    console.log(`[TranscribeAPI] Creating task for user ${locals.user.id}, group ${groupId}`);
     const task = await taskService.createTask(locals.supabase, {
       groupId,
       userId: locals.user.id,
     });
+    console.log(`[TranscribeAPI] Task created with ID: ${task.id}`);
 
     // Step 7: Convert File to Blob
     const audioBlob = new Blob([await audioFile.arrayBuffer()], {
@@ -236,6 +244,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
       status: task.status as "processing",
       created_at: task.created_at,
     };
+
+    console.log(`[TranscribeAPI] Returning response with task ID: ${task.id}`);
 
     return new Response(JSON.stringify(response), {
       status: 201,
