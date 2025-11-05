@@ -173,9 +173,9 @@ export const POST: APIRoute = async ({ request, locals, ...context }) => {
 
     try {
       // Check if import.meta.env exists (available in Vite/Astro dev environments)
-      if (typeof import !== "undefined" && import.meta && import.meta.env) {
-        importMetaOpenaiKey = import.meta.env.OPENAI_API_KEY;
-        importMetaOpenrouterKey = import.meta.env.OPENROUTER_API_KEY;
+      if (typeof import !== "undefined" && (globalThis as any).import?.meta?.env) {
+        importMetaOpenaiKey = (globalThis as any).import.meta.env.OPENAI_API_KEY;
+        importMetaOpenrouterKey = (globalThis as any).import.meta.env.OPENROUTER_API_KEY;
       }
     } catch {
       // import.meta.env not available in this environment (e.g., Cloudflare Pages Functions)
