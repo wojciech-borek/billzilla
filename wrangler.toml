@@ -1,8 +1,6 @@
 name = "billzilla"
 compatibility_date = "2025-09-15"
 
-compatibility_flags = ["nodejs_compat"]
-
 # Cloudflare Pages automatically provides environment variables set in the dashboard
 # The following environment variables should be configured in Cloudflare Pages dashboard:
 # - OPENAI_API_KEY: Your OpenAI API key
