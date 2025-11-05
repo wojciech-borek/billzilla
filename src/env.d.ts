@@ -8,6 +8,9 @@ declare global {
     interface Locals {
       supabase: SupabaseClient;
       user: AuthUserWithProfile | null;
+      runtime?: {
+        env?: Record<string, string | undefined>;
+      };
     }
   }
 }

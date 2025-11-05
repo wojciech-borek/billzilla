@@ -71,7 +71,7 @@ export class InvalidTranscriptionError extends Error {
 // ============================================================================
 
 export interface WhisperServiceConfig {
-  apiKey?: string; // Optional: override the default OPENAI_API_KEY from astro:env
+  apiKey: string; // OpenAI API key - should be resolved in API endpoint
 }
 
 export interface TranscribeAudioParams {
@@ -99,14 +99,14 @@ export class WhisperService {
     "audio/webm",
   ];
 
-  constructor(config: WhisperServiceConfig = {}) {
-    // Use explicit config API key, or fall back to environment variable
-    this.apiKey = config.apiKey || import.meta.env.OPENAI_API_KEY;
-    if (!this.apiKey) {
+  constructor(config: WhisperServiceConfig) {
+    // API key must be provided by caller (resolved from astro:env)
+    if (!config.apiKey) {
       throw new WhisperConfigurationError(
         "OPENAI_API_KEY not set. Pass apiKey via config or set it in your environment."
       );
     }
+    this.apiKey = config.apiKey;
   }
 
   // ==========================================================================

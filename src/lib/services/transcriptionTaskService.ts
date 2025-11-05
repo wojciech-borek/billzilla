@@ -53,8 +53,8 @@ export interface ProcessTaskParams {
 }
 
 export interface TranscriptionTaskServiceConfig {
-  openaiApiKey?: string; // Optional: override the default OPENAI_API_KEY from astro:env
-  openrouterApiKey?: string; // Optional: override the default OPENROUTER_API_KEY from astro:env
+  openaiApiKey: string; // OpenAI API key - should be resolved in API endpoint
+  openrouterApiKey: string; // OpenRouter API key - should be resolved in API endpoint
 }
 
 // ============================================================================
@@ -100,7 +100,7 @@ export class TranscriptionTaskService {
   private whisperService: WhisperService;
   private openRouterService: OpenRouterService;
 
-  constructor(config: TranscriptionTaskServiceConfig = {}) {
+  constructor(config: TranscriptionTaskServiceConfig) {
     this.whisperService = new WhisperService({ apiKey: config.openaiApiKey });
     this.openRouterService = new OpenRouterService({ apiKey: config.openrouterApiKey });
   }

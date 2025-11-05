@@ -94,7 +94,7 @@ describe("PasswordResetService", () => {
         // Arrange
         const service = createMockedService();
         const tokens = { accessToken: "invalid_access_token", refreshToken: "invalid_refresh_token" };
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
         const authError = { message: "Invalid tokens", code: "invalid_token" } as any;
         const expectedErrorMessage = "Przetworzona wiadomość błędu";
 
@@ -193,7 +193,7 @@ describe("PasswordResetService", () => {
         // Arrange
         const service = createMockedService();
         const tokens = { token: "invalid_token_hash" };
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
         const authError = { message: "Invalid token", code: "invalid_token" } as any;
         const expectedErrorMessage = "Przetworzona wiadomość błędu";
 
@@ -277,7 +277,7 @@ describe("PasswordResetService", () => {
         // Arrange
         const service = createMockedService();
         const newPassword = "weak_password";
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
         const authError = { message: "Password policy violation", code: "weak_password" } as any;
         const expectedErrorMessage = "Przetworzona wiadomość błędu";
 
@@ -361,7 +361,6 @@ describe("PasswordResetService", () => {
         location: {
           origin: "https://app.example.com",
         },
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any;
     });
 
@@ -378,7 +377,7 @@ describe("PasswordResetService", () => {
 
         // Mock development environment
         const originalDev = import.meta.env.DEV;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
         (import.meta.env as any).DEV = true;
 
         vi.mocked(mockSupabaseClient.auth.resetPasswordForEmail).mockResolvedValue({
@@ -396,7 +395,7 @@ describe("PasswordResetService", () => {
         expect(mockSupabaseClient.auth.resetPasswordForEmail).toHaveBeenCalledTimes(1);
 
         // Restore original value
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
         (import.meta.env as any).DEV = originalDev;
       });
     });
@@ -409,7 +408,7 @@ describe("PasswordResetService", () => {
 
         // Mock production environment by directly modifying import.meta.env
         const originalDev = import.meta.env.DEV;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
         (import.meta.env as any).DEV = false;
 
         vi.mocked(mockSupabaseClient.auth.resetPasswordForEmail).mockResolvedValue({
@@ -427,7 +426,7 @@ describe("PasswordResetService", () => {
         expect(mockSupabaseClient.auth.resetPasswordForEmail).toHaveBeenCalledTimes(1);
 
         // Restore original value
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
         (import.meta.env as any).DEV = originalDev;
       });
     });
@@ -437,13 +436,13 @@ describe("PasswordResetService", () => {
         // Arrange
         const service = createMockedService();
         const email = "invalid@example.com";
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
         const authError = { message: "User not found", code: "user_not_found" } as any;
         const expectedErrorMessage = "Przetworzona wiadomość błędu";
 
         // Mock development environment for simplicity
         const originalDev = import.meta.env.DEV;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
         (import.meta.env as any).DEV = true;
 
         vi.mocked(mockSupabaseClient.auth.resetPasswordForEmail).mockResolvedValue({
@@ -463,7 +462,7 @@ describe("PasswordResetService", () => {
         expect(getAuthErrorMessage).toHaveBeenCalledWith(authError);
 
         // Restore original value
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
         (import.meta.env as any).DEV = originalDev;
       });
     });
@@ -478,7 +477,7 @@ describe("PasswordResetService", () => {
 
         // Mock development environment
         const originalDev = import.meta.env.DEV;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
         (import.meta.env as any).DEV = true;
 
         vi.mocked(mockSupabaseClient.auth.resetPasswordForEmail).mockRejectedValue(unexpectedError);
@@ -496,7 +495,7 @@ describe("PasswordResetService", () => {
         expect(getAuthErrorMessage).toHaveBeenCalledWith(unexpectedError);
 
         // Restore original value
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
         (import.meta.env as any).DEV = originalDev;
       });
     });
@@ -509,7 +508,7 @@ describe("PasswordResetService", () => {
 
         // Mock development environment
         const originalDev = import.meta.env.DEV;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
         (import.meta.env as any).DEV = true;
 
         vi.mocked(mockSupabaseClient.auth.resetPasswordForEmail).mockResolvedValue({
@@ -527,7 +526,7 @@ describe("PasswordResetService", () => {
         expect(mockSupabaseClient.auth.resetPasswordForEmail).toHaveBeenCalledTimes(1);
 
         // Restore original value
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
         (import.meta.env as any).DEV = originalDev;
       });
     });

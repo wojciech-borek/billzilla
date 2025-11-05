@@ -64,6 +64,25 @@ const reactConfig = tseslint.config({
   },
 });
 
+const vitestConfig = tseslint.config({
+  files: ["src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}"],
+  languageOptions: {
+    globals: {
+      vi: "readonly",
+      describe: "readonly",
+      it: "readonly",
+      expect: "readonly",
+      beforeEach: "readonly",
+      afterEach: "readonly",
+      beforeAll: "readonly",
+      afterAll: "readonly",
+    },
+  },
+  rules: {
+    "@typescript-eslint/no-explicit-any": "off",
+  },
+});
+
 export default tseslint.config(
   {
     ignores: ["src/db/database.types.ts"],
@@ -72,6 +91,7 @@ export default tseslint.config(
   baseConfig,
   jsxA11yConfig,
   reactConfig,
+  vitestConfig,
   eslintPluginAstro.configs["flat/recommended"],
   eslintPluginPrettier
 );

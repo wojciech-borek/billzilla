@@ -69,7 +69,7 @@ export class ValidationError extends Error {
 // ============================================================================
 
 export interface OpenRouterServiceConfig {
-  apiKey?: string; // Optional: override the default OPENROUTER_API_KEY from astro:env
+  apiKey: string; // OpenRouter API key - should be resolved in API endpoint
 }
 
 export interface ExtractDataParams<T extends z.ZodTypeAny> {
@@ -108,12 +108,12 @@ export class OpenRouterService {
   private readonly apiKey: string;
   private readonly baseUrl: string = "https://openrouter.ai/api/v1";
 
-  constructor(config: OpenRouterServiceConfig = {}) {
-    // Use explicit config API key, or fall back to environment variable
-    this.apiKey = config.apiKey || import.meta.env.OPENROUTER_API_KEY;
-    if (!this.apiKey) {
+  constructor(config?: OpenRouterServiceConfig) {
+    // API key must be provided by caller (resolved from astro:env)
+    if (!config || !config.apiKey) {
       throw new ConfigurationError("OPENROUTER_API_KEY not set. Pass apiKey via config or set it in your environment.");
     }
+    this.apiKey = config.apiKey;
   }
 
   // ==========================================================================

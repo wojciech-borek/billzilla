@@ -162,9 +162,28 @@ export const POST: APIRoute = async ({ request, locals }) => {
       });
     }
 
-    // Step 4: Initialize service
-    // Services will use astro:env for API keys
-    const taskService = new TranscriptionTaskService();
+    // Step 4: Initialize service with API keys from astro:env
+    // Using astro:env ensures safe access in both local and Cloudflare environments
+    const openaiApiKey = import.meta.env.OPENAI_API_KEY;
+    const openrouterApiKey = import.meta.env.OPENROUTER_API_KEY;
+
+    if (!openaiApiKey || !openrouterApiKey) {
+      const errorResponse: ErrorResponseDTO = {
+        error: {
+          code: "SERVICE_CONFIGURATION_ERROR",
+          message: "API keys not configured on server. Please contact administrator.",
+        },
+      };
+      return new Response(JSON.stringify(errorResponse), {
+        status: 503,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    const taskService = new TranscriptionTaskService({
+      openaiApiKey,
+      openrouterApiKey,
+    });
 
     // Step 5: Get group context and verify membership
     let groupContext;
