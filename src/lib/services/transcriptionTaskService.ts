@@ -10,7 +10,7 @@
 
 import type { SupabaseClient } from "../../db/supabase.client";
 import type { Database } from "../../db/database.types";
-import type { Profile, ExpenseTranscriptionResult, CloudflarePagesEnv } from "../../types";
+import type { Profile, ExpenseTranscriptionResult } from "../../types";
 import { WhisperService } from "./whisperService";
 import { OpenRouterService, type ExtractDataParams } from "./openRouterService";
 import { expenseTranscriptionSchema } from "../schemas/expenseSchemas";
@@ -53,9 +53,8 @@ export interface ProcessTaskParams {
 }
 
 export interface TranscriptionTaskServiceConfig {
-  openaiApiKey?: string;
-  openrouterApiKey?: string;
-  env?: CloudflarePagesEnv; // Optional: pass context.env from Pages Functions
+  openaiApiKey?: string; // Optional: override the default OPENAI_API_KEY from astro:env
+  openrouterApiKey?: string; // Optional: override the default OPENROUTER_API_KEY from astro:env
 }
 
 // ============================================================================

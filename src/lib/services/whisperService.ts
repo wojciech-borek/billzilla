@@ -5,8 +5,7 @@
  * This service handles the first step of the expense transcription pipeline.
  */
 
-import type { WhisperTranscriptionResponse, TranscriptionResult, CloudflarePagesEnv } from "../../types";
-import { resolveOpenAIApiKey } from "../utils/env";
+import type { WhisperTranscriptionResponse, TranscriptionResult } from "../../types";
 
 // ============================================================================
 // Custom Error Classes
@@ -72,8 +71,7 @@ export class InvalidTranscriptionError extends Error {
 // ============================================================================
 
 export interface WhisperServiceConfig {
-  apiKey?: string;
-  env?: CloudflarePagesEnv; // Optional: pass context.env from Pages Functions
+  apiKey?: string; // Optional: override the default OPENAI_API_KEY from astro:env
 }
 
 export interface TranscribeAudioParams {
@@ -102,13 +100,13 @@ export class WhisperService {
   ];
 
   constructor(config: WhisperServiceConfig = {}) {
-    const key = resolveOpenAIApiKey(config.apiKey, config.env);
-    if (!key) {
+    // Use explicit config API key, or fall back to environment variable
+    this.apiKey = config.apiKey || import.meta.env.OPENAI_API_KEY;
+    if (!this.apiKey) {
       throw new WhisperConfigurationError(
-        "OPENAI_API_KEY not set. Pass apiKey via config or pass env (context.env or process.env) as config.env."
+        "OPENAI_API_KEY not set. Pass apiKey via config or set it in your environment."
       );
     }
-    this.apiKey = key;
   }
 
   // ==========================================================================

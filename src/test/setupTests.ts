@@ -30,6 +30,14 @@ global.IntersectionObserver = vi.fn().mockImplementation(() => ({
   disconnect: vi.fn(),
 }));
 
+// Mock environment variables for testing
+Object.assign(import.meta.env, {
+  OPENAI_API_KEY: "test-openai-key",
+  OPENROUTER_API_KEY: "test-openrouter-key",
+  PUBLIC_SUPABASE_URL: "http://test.supabase.url",
+  PUBLIC_SUPABASE_ANON_KEY: "test-anon-key",
+});
+
 // Clean up after each test
 afterEach(() => {
   vi.clearAllMocks();

@@ -1,7 +1,6 @@
 import { z } from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";
-import type { OpenRouterApiResponse, CloudflarePagesEnv } from "../../types";
-import { resolveOpenRouterApiKey } from "../utils/env";
+import type { OpenRouterApiResponse } from "../../types";
 
 // ============================================================================
 // Custom Error Classes
@@ -70,8 +69,7 @@ export class ValidationError extends Error {
 // ============================================================================
 
 export interface OpenRouterServiceConfig {
-  apiKey?: string;
-  env?: CloudflarePagesEnv; // Optional: pass context.env from Pages Functions
+  apiKey?: string; // Optional: override the default OPENROUTER_API_KEY from astro:env
 }
 
 export interface ExtractDataParams<T extends z.ZodTypeAny> {
@@ -111,13 +109,11 @@ export class OpenRouterService {
   private readonly baseUrl: string = "https://openrouter.ai/api/v1";
 
   constructor(config: OpenRouterServiceConfig = {}) {
-    const key = resolveOpenRouterApiKey(config.apiKey, config.env);
-    if (!key) {
-      throw new ConfigurationError(
-        "OPENROUTER_API_KEY not set. Pass apiKey via config or pass env (context.env or process.env) as config.env."
-      );
+    // Use explicit config API key, or fall back to environment variable
+    this.apiKey = config.apiKey || import.meta.env.OPENROUTER_API_KEY;
+    if (!this.apiKey) {
+      throw new ConfigurationError("OPENROUTER_API_KEY not set. Pass apiKey via config or set it in your environment.");
     }
-    this.apiKey = key;
   }
 
   // ==========================================================================

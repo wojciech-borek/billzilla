@@ -11,7 +11,7 @@
  */
 
 import type { APIRoute } from "astro";
-import type { ErrorResponseDTO, TranscribeTaskResponseDTO, CloudflarePagesEnv } from "../../../../types";
+import type { ErrorResponseDTO, TranscribeTaskResponseDTO } from "../../../../types";
 import {
   TranscriptionTaskService,
   TaskProcessingError,
@@ -37,7 +37,7 @@ export const prerender = false;
  * @returns 500 - Internal server error
  * @returns 503 - AI service unavailable
  */
-export const POST: APIRoute = async ({ request, locals, ...context }) => {
+export const POST: APIRoute = async ({ request, locals }) => {
   try {
     // Step 1: Check authentication
     if (!locals.user) {
@@ -52,29 +52,6 @@ export const POST: APIRoute = async ({ request, locals, ...context }) => {
         headers: { "Content-Type": "application/json" },
       });
     }
-
-    // Diagnostic logging for environment variables
-    const contextEnv = (context as { env?: CloudflarePagesEnv }).env;
-    console.log("=== ENVIRONMENT DIAGNOSTICS ===");
-    console.log("context.env exists:", !!contextEnv);
-    console.log("context.env keys:", contextEnv ? Object.keys(contextEnv) : "null");
-    console.log("process.env exists:", typeof process !== "undefined" && !!process.env);
-    console.log(
-      "process.env.OPENAI_API_KEY exists:",
-      typeof process !== "undefined" && process.env && !!process.env.OPENAI_API_KEY
-    );
-    console.log(
-      "process.env.OPENROUTER_API_KEY exists:",
-      typeof process !== "undefined" && process.env && !!process.env.OPENROUTER_API_KEY
-    );
-
-    // Try different sources
-    console.log("context.env?.OPENAI_API_KEY:", contextEnv?.OPENAI_API_KEY ? "present" : "missing");
-    console.log(
-      "process.env?.OPENAI_API_KEY:",
-      typeof process !== "undefined" && process.env?.OPENAI_API_KEY ? "present" : "missing"
-    );
-    console.log("================================");
 
     // Step 2: Parse multipart/form-data
     let formData: FormData;
@@ -185,8 +162,8 @@ export const POST: APIRoute = async ({ request, locals, ...context }) => {
       });
     }
 
-    // Step 4: Initialize service - let it resolve API keys automatically
-    // The services will resolve API keys from environment using resolveApiKey helper
+    // Step 4: Initialize service
+    // Services will use astro:env for API keys
     const taskService = new TranscriptionTaskService();
 
     // Step 5: Get group context and verify membership
