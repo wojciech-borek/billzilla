@@ -101,7 +101,8 @@ export class WhisperService {
 
   constructor(config: WhisperServiceConfig = {}) {
     // Try to get API key from config or environment
-    this.apiKey = config.apiKey || import.meta.env.OPENAI_API_KEY;
+    // Use process.env for server-side access in Cloudflare Pages
+    this.apiKey = config.apiKey || (typeof process !== 'undefined' ? process.env.OPENAI_API_KEY : import.meta.env.OPENAI_API_KEY);
 
     // Guard clause: ensure API key is available
     if (!this.apiKey) {

@@ -110,7 +110,8 @@ export class OpenRouterService {
 
   constructor(config: OpenRouterServiceConfig = {}) {
     // Try to get API key from config or environment
-    this.apiKey = config.apiKey || import.meta.env.OPENROUTER_API_KEY;
+    // Use process.env for server-side access in Cloudflare Pages
+    this.apiKey = config.apiKey || (typeof process !== 'undefined' ? process.env.OPENROUTER_API_KEY : import.meta.env.OPENROUTER_API_KEY);
 
     // Guard clause: ensure API key is available
     if (!this.apiKey) {
