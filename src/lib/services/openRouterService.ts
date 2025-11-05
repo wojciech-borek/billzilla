@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";
-import type { OpenRouterApiResponse } from "../../types";
+import type { OpenRouterApiResponse, CloudflarePagesEnv } from "../../types";
+import { resolveOpenRouterApiKey } from "../utils/env";
 
 // ============================================================================
 // Custom Error Classes
@@ -70,6 +71,7 @@ export class ValidationError extends Error {
 
 export interface OpenRouterServiceConfig {
   apiKey?: string;
+  env?: CloudflarePagesEnv; // Optional: pass context.env from Pages Functions
 }
 
 export interface ExtractDataParams<T extends z.ZodTypeAny> {
@@ -109,14 +111,13 @@ export class OpenRouterService {
   private readonly baseUrl: string = "https://openrouter.ai/api/v1";
 
   constructor(config: OpenRouterServiceConfig = {}) {
-    // Use import.meta.env which works in all environments (dev, test, production)
-    // astro:env schema in astro.config.mjs provides type safety and validation
-    this.apiKey = config.apiKey || import.meta.env.OPENROUTER_API_KEY;
-
-    // Guard clause: ensure API key is available
-    if (!this.apiKey) {
-      throw new ConfigurationError("OPENROUTER_API_KEY is not set in environment variables.");
+    const key = resolveOpenRouterApiKey(config.apiKey, config.env);
+    if (!key) {
+      throw new ConfigurationError(
+        "OPENROUTER_API_KEY not set. Pass apiKey via config or pass env (context.env or process.env) as config.env."
+      );
     }
+    this.apiKey = key;
   }
 
   // ==========================================================================
@@ -554,7 +555,8 @@ Please analyze this code for quality, patterns, and compliance with project stan
 
         try {
           const errorData = await response.json();
-          errorMessage = errorData.error?.message || errorMessage;
+          console.log("OpenRouter API Error Response:", errorData);
+          errorMessage = errorData.error?.message || errorData.message || errorMessage;
         } catch {
           // If parsing error response fails, use the default message
         }

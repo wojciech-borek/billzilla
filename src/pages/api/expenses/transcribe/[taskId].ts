@@ -76,10 +76,10 @@ export const GET: APIRoute = async ({ params, locals, env }) => {
       });
     }
 
-    // Step 3: Initialize service with API keys from context.env
+    // Step 3: Initialize service with env passed directly
+    // The services will resolve API keys from env using resolveApiKey helper
     const taskService = new TranscriptionTaskService({
-      openaiApiKey: env.OPENAI_API_KEY,
-      openrouterApiKey: env.OPENROUTER_API_KEY,
+      env, // Pass context.env (Pages Functions) or undefined (local)
     });
 
     let task;

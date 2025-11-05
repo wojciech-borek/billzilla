@@ -11,7 +11,7 @@
  */
 
 import type { APIRoute } from "astro";
-import type { ErrorResponseDTO, TranscribeTaskResponseDTO } from "../../../../types";
+import type { ErrorResponseDTO, TranscribeTaskResponseDTO, CloudflarePagesEnv } from "../../../../types";
 import {
   TranscriptionTaskService,
   TaskProcessingError,
@@ -37,7 +37,7 @@ export const prerender = false;
  * @returns 500 - Internal server error
  * @returns 503 - AI service unavailable
  */
-export const POST: APIRoute = async ({ request, locals, env }) => {
+export const POST: APIRoute = async ({ request, locals, ...context }) => {
   try {
     // Step 1: Check authentication
     if (!locals.user) {
@@ -52,6 +52,10 @@ export const POST: APIRoute = async ({ request, locals, env }) => {
         headers: { "Content-Type": "application/json" },
       });
     }
+
+    // Diagnostic logging for environment variables
+    const contextEnv = (context as { env?: CloudflarePagesEnv }).env;
+    console.log("transcribe handler env defined:", !!contextEnv, "keys:", contextEnv ? Object.keys(contextEnv) : null);
 
     // Step 2: Parse multipart/form-data
     let formData: FormData;
@@ -162,10 +166,10 @@ export const POST: APIRoute = async ({ request, locals, env }) => {
       });
     }
 
-    // Step 4: Initialize service with API keys from context.env
+    // Step 4: Initialize service with env passed directly
+    // The services will resolve API keys from env using resolveApiKey helper
     const taskService = new TranscriptionTaskService({
-      openaiApiKey: env.OPENAI_API_KEY,
-      openrouterApiKey: env.OPENROUTER_API_KEY,
+      env: contextEnv, // Pass context.env (Pages Functions) or undefined (local)
     });
 
     // Step 5: Get group context and verify membership
