@@ -11,7 +11,7 @@
  */
 
 import type { APIRoute } from "astro";
-import type { ErrorResponseDTO, TranscribeTaskResponseDTO } from "../../../../types";
+import type { ErrorResponseDTO, TranscribeTaskResponseDTO, CloudflarePagesEnv } from "../../../../types";
 import {
   TranscriptionTaskService,
   TaskProcessingError,
@@ -37,7 +37,7 @@ export const prerender = false;
  * @returns 500 - Internal server error
  * @returns 503 - AI service unavailable
  */
-export const POST: APIRoute = async ({ request, locals, env }) => {
+export const POST: APIRoute = async ({ request, locals, ...context }) => {
   try {
     // Step 1: Check authentication
     if (!locals.user) {
@@ -52,6 +52,10 @@ export const POST: APIRoute = async ({ request, locals, env }) => {
         headers: { "Content-Type": "application/json" },
       });
     }
+
+    // Diagnostic logging for environment variables
+    const contextEnv = (context as { env?: CloudflarePagesEnv }).env;
+    console.log("transcribe handler env defined:", !!contextEnv, "keys:", contextEnv ? Object.keys(contextEnv) : null);
 
     // Step 2: Parse multipart/form-data
     let formData: FormData;
@@ -162,10 +166,46 @@ export const POST: APIRoute = async ({ request, locals, env }) => {
       });
     }
 
-    // Step 4: Initialize service with API keys from context.env
+    // Step 4: Check for API keys from multiple sources
+    // Priority: context.env (Pages Functions) > process.env (Node) > import.meta.env (Vite)
+    let importMetaOpenaiKey: string | undefined;
+    let importMetaOpenrouterKey: string | undefined;
+
+    try {
+      // Check if import.meta.env exists (available in Vite/Astro dev environments)
+      if (typeof import !== "undefined" && import.meta && import.meta.env) {
+        importMetaOpenaiKey = import.meta.env.OPENAI_API_KEY;
+        importMetaOpenrouterKey = import.meta.env.OPENROUTER_API_KEY;
+      }
+    } catch {
+      // import.meta.env not available in this environment (e.g., Cloudflare Pages Functions)
+    }
+
+    const openaiKey = contextEnv?.OPENAI_API_KEY ||
+                     (typeof process !== "undefined" ? process.env?.OPENAI_API_KEY : undefined) ||
+                     importMetaOpenaiKey;
+
+    const openrouterKey = contextEnv?.OPENROUTER_API_KEY ||
+                         (typeof process !== "undefined" ? process.env?.OPENROUTER_API_KEY : undefined) ||
+                         importMetaOpenrouterKey;
+
+    if (!openaiKey || !openrouterKey) {
+      const errorResponse: ErrorResponseDTO = {
+        error: {
+          code: "CONFIGURATION_ERROR",
+          message: "AI service configuration is missing. Please check environment variables (OPENAI_API_KEY, OPENROUTER_API_KEY).",
+        },
+      };
+      return new Response(JSON.stringify(errorResponse), {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
     const taskService = new TranscriptionTaskService({
-      openaiApiKey: env.OPENAI_API_KEY,
-      openrouterApiKey: env.OPENROUTER_API_KEY,
+      openaiApiKey: openaiKey,
+      openrouterApiKey: openrouterKey,
+      env: contextEnv, // Pass context.env for Pages Functions, undefined locally is fine
     });
 
     // Step 5: Get group context and verify membership

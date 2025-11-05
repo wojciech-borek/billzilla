@@ -18,6 +18,20 @@ export type Currency = Tables<"currencies">;
 export type GroupCurrency = Tables<"group_currencies">;
 export type Invitation = Tables<"invitations">;
 export type Expense = Tables<"expenses">;
+
+// ============================================================================
+// Environment Types
+// ============================================================================
+
+/**
+ * Cloudflare Pages Functions environment variables interface
+ * Contains all environment variables that may be available in edge runtime
+ */
+export interface CloudflarePagesEnv {
+  OPENAI_API_KEY?: string;
+  OPENROUTER_API_KEY?: string;
+  [key: string]: string | undefined;
+}
 export type ExpenseSplit = Tables<"expense_splits">;
 export type Settlement = Tables<"settlements">;
 

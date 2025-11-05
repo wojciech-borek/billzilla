@@ -100,7 +100,9 @@ describe("WhisperService", () => {
 
         expect(() => {
           new WhisperService(config);
-        }).toThrow("OPENAI_API_KEY is not set in environment variables.");
+        }).toThrow(
+          "OPENAI_API_KEY is not set. Pass apiKey via config or env via config.env (context.env from Pages Functions)."
+        );
       } finally {
         // Cleanup
         // eslint-disable-next-line @typescript-eslint/no-explicit-any

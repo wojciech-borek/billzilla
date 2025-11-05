@@ -10,7 +10,7 @@
 
 import type { SupabaseClient } from "../../db/supabase.client";
 import type { Database } from "../../db/database.types";
-import type { Profile, ExpenseTranscriptionResult } from "../../types";
+import type { Profile, ExpenseTranscriptionResult, CloudflarePagesEnv } from "../../types";
 import { WhisperService } from "./whisperService";
 import { OpenRouterService, type ExtractDataParams } from "./openRouterService";
 import { expenseTranscriptionSchema } from "../schemas/expenseSchemas";
@@ -55,6 +55,7 @@ export interface ProcessTaskParams {
 export interface TranscriptionTaskServiceConfig {
   openaiApiKey?: string;
   openrouterApiKey?: string;
+  env?: CloudflarePagesEnv; // Optional: pass context.env from Pages Functions
 }
 
 // ============================================================================
@@ -101,8 +102,8 @@ export class TranscriptionTaskService {
   private openRouterService: OpenRouterService;
 
   constructor(config: TranscriptionTaskServiceConfig = {}) {
-    this.whisperService = new WhisperService({ apiKey: config.openaiApiKey });
-    this.openRouterService = new OpenRouterService({ apiKey: config.openrouterApiKey });
+    this.whisperService = new WhisperService({ apiKey: config.openaiApiKey, env: config.env });
+    this.openRouterService = new OpenRouterService({ apiKey: config.openrouterApiKey, env: config.env });
   }
 
   // ==========================================================================

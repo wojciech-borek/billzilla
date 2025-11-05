@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";
-import type { OpenRouterApiResponse } from "../../types";
+import type { OpenRouterApiResponse, CloudflarePagesEnv } from "../../types";
 
 // ============================================================================
 // Custom Error Classes
@@ -70,6 +70,7 @@ export class ValidationError extends Error {
 
 export interface OpenRouterServiceConfig {
   apiKey?: string;
+  env?: CloudflarePagesEnv; // Optional: pass context.env from Pages Functions
 }
 
 export interface ExtractDataParams<T extends z.ZodTypeAny> {
@@ -109,13 +110,19 @@ export class OpenRouterService {
   private readonly baseUrl: string = "https://openrouter.ai/api/v1";
 
   constructor(config: OpenRouterServiceConfig = {}) {
-    // Use import.meta.env which works in all environments (dev, test, production)
-    // astro:env schema in astro.config.mjs provides type safety and validation
-    this.apiKey = config.apiKey || import.meta.env.OPENROUTER_API_KEY;
+    // Prefer explicit config.apiKey, then env (Pages Functions), then process.env (Node)
+    const fromConfig = config.apiKey;
+    const fromEnv = config.env?.OPENROUTER_API_KEY ?? config.env?.OPENAI_API_KEY;
+    const fromProcess =
+      typeof process !== "undefined" ? (process.env?.OPENROUTER_API_KEY ?? process.env?.OPENAI_API_KEY) : undefined;
+
+    this.apiKey = fromConfig ?? fromEnv ?? fromProcess ?? "";
 
     // Guard clause: ensure API key is available
     if (!this.apiKey) {
-      throw new ConfigurationError("OPENROUTER_API_KEY is not set in environment variables.");
+      throw new ConfigurationError(
+        "OPENROUTER_API_KEY / OPENAI_API_KEY is not set. Pass apiKey via config or env via config.env (context.env from Pages Functions)."
+      );
     }
   }
 
