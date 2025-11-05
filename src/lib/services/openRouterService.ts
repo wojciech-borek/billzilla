@@ -555,7 +555,7 @@ Please analyze this code for quality, patterns, and compliance with project stan
 
         try {
           const errorData = await response.json();
-          console.log('OpenRouter API Error Response:', errorData);
+          console.log("OpenRouter API Error Response:", errorData);
           errorMessage = errorData.error?.message || errorData.message || errorMessage;
         } catch {
           // If parsing error response fails, use the default message

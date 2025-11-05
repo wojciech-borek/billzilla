@@ -38,7 +38,10 @@ export function resolveApiKey(configApiKey?: string, env?: Record<string, string
 /**
  * Resolve OpenAI API key specifically
  */
-export function resolveOpenAIApiKey(configApiKey?: string, env?: Record<string, string | undefined>): string | undefined {
+export function resolveOpenAIApiKey(
+  configApiKey?: string,
+  env?: Record<string, string | undefined>
+): string | undefined {
   // 1) explicit config
   if (configApiKey) return configApiKey;
 
@@ -65,7 +68,10 @@ export function resolveOpenAIApiKey(configApiKey?: string, env?: Record<string, 
 /**
  * Resolve OpenRouter API key specifically
  */
-export function resolveOpenRouterApiKey(configApiKey?: string, env?: Record<string, string | undefined>): string | undefined {
+export function resolveOpenRouterApiKey(
+  configApiKey?: string,
+  env?: Record<string, string | undefined>
+): string | undefined {
   // 1) explicit config
   if (configApiKey) return configApiKey;
 
