@@ -1,7 +1,6 @@
 import { z } from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";
 import type { OpenRouterApiResponse } from "../../types";
-import { OPENROUTER_API_KEY } from "astro:env/server";
 
 // ============================================================================
 // Custom Error Classes
@@ -110,8 +109,9 @@ export class OpenRouterService {
   private readonly baseUrl: string = "https://openrouter.ai/api/v1";
 
   constructor(config: OpenRouterServiceConfig = {}) {
-    // Use type-safe astro:env for environment variables
-    this.apiKey = config.apiKey || OPENROUTER_API_KEY;
+    // Use import.meta.env which works in all environments (dev, test, production)
+    // astro:env schema in astro.config.mjs provides type safety and validation
+    this.apiKey = config.apiKey || import.meta.env.OPENROUTER_API_KEY;
 
     // Guard clause: ensure API key is available
     if (!this.apiKey) {

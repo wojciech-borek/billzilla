@@ -6,7 +6,6 @@
  */
 
 import type { WhisperTranscriptionResponse, TranscriptionResult } from "../../types";
-import { OPENAI_API_KEY } from "astro:env/server";
 
 // ============================================================================
 // Custom Error Classes
@@ -101,8 +100,9 @@ export class WhisperService {
   ];
 
   constructor(config: WhisperServiceConfig = {}) {
-    // Use type-safe astro:env for environment variables
-    this.apiKey = config.apiKey || OPENAI_API_KEY;
+    // Use import.meta.env which works in all environments (dev, test, production)
+    // astro:env schema in astro.config.mjs provides type safety and validation
+    this.apiKey = config.apiKey || import.meta.env.OPENAI_API_KEY;
 
     // Guard clause: ensure API key is available
     if (!this.apiKey) {
