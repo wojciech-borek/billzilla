@@ -576,6 +576,7 @@ export interface ApiError {
 export interface OpenRouterApiResponse {
   choices: {
     message: {
+      content?: string;
       tool_calls?: {
         function: {
           arguments: string;

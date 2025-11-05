@@ -166,46 +166,10 @@ export const POST: APIRoute = async ({ request, locals, ...context }) => {
       });
     }
 
-    // Step 4: Check for API keys from multiple sources
-    // Priority: context.env (Pages Functions) > process.env (Node) > import.meta.env (Vite)
-    let importMetaOpenaiKey: string | undefined;
-    let importMetaOpenrouterKey: string | undefined;
-
-    try {
-      // Check if import.meta.env exists (available in Vite/Astro dev environments)
-      if (typeof import !== "undefined" && (globalThis as any).import?.meta?.env) {
-        importMetaOpenaiKey = (globalThis as any).import.meta.env.OPENAI_API_KEY;
-        importMetaOpenrouterKey = (globalThis as any).import.meta.env.OPENROUTER_API_KEY;
-      }
-    } catch {
-      // import.meta.env not available in this environment (e.g., Cloudflare Pages Functions)
-    }
-
-    const openaiKey = contextEnv?.OPENAI_API_KEY ||
-                     (typeof process !== "undefined" ? process.env?.OPENAI_API_KEY : undefined) ||
-                     importMetaOpenaiKey;
-
-    const openrouterKey = contextEnv?.OPENROUTER_API_KEY ||
-                         (typeof process !== "undefined" ? process.env?.OPENROUTER_API_KEY : undefined) ||
-                         importMetaOpenrouterKey;
-
-    if (!openaiKey || !openrouterKey) {
-      const errorResponse: ErrorResponseDTO = {
-        error: {
-          code: "CONFIGURATION_ERROR",
-          message: "AI service configuration is missing. Please check environment variables (OPENAI_API_KEY, OPENROUTER_API_KEY).",
-        },
-      };
-      return new Response(JSON.stringify(errorResponse), {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
-      });
-    }
-
+    // Step 4: Initialize service with env passed directly
+    // The services will resolve API keys from env using resolveApiKey helper
     const taskService = new TranscriptionTaskService({
-      openaiApiKey: openaiKey,
-      openrouterApiKey: openrouterKey,
-      env: contextEnv, // Pass context.env for Pages Functions, undefined locally is fine
+      env: contextEnv, // Pass context.env (Pages Functions) or undefined (local)
     });
 
     // Step 5: Get group context and verify membership

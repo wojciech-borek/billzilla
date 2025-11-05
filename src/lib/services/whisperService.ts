@@ -6,6 +6,7 @@
  */
 
 import type { WhisperTranscriptionResponse, TranscriptionResult, CloudflarePagesEnv } from "../../types";
+import { resolveOpenAIApiKey } from "../utils/env";
 
 // ============================================================================
 // Custom Error Classes
@@ -101,19 +102,13 @@ export class WhisperService {
   ];
 
   constructor(config: WhisperServiceConfig = {}) {
-    // Prefer explicit config.apiKey, then env (Pages Functions), then process.env (Node)
-    const fromConfig = config.apiKey;
-    const fromEnv = config.env?.OPENAI_API_KEY;
-    const fromProcess = typeof process !== "undefined" ? process.env?.OPENAI_API_KEY : undefined;
-
-    this.apiKey = fromConfig ?? fromEnv ?? fromProcess ?? "";
-
-    // Guard clause: ensure API key is available
-    if (!this.apiKey) {
+    const key = resolveOpenAIApiKey(config.apiKey, config.env);
+    if (!key) {
       throw new WhisperConfigurationError(
-        "OPENAI_API_KEY is not set. Pass apiKey via config or env via config.env (context.env from Pages Functions)."
+        "OPENAI_API_KEY not set. Pass apiKey via config or pass env (context.env or process.env) as config.env."
       );
     }
+    this.apiKey = key;
   }
 
   // ==========================================================================

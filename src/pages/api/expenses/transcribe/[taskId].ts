@@ -76,24 +76,10 @@ export const GET: APIRoute = async ({ params, locals, env }) => {
       });
     }
 
-    // Step 3: Initialize service with API keys from context.env
-    // In Cloudflare Pages Functions, env should contain the API keys
-    if (!env || !env.OPENAI_API_KEY || !env.OPENROUTER_API_KEY) {
-      const errorResponse: ErrorResponseDTO = {
-        error: {
-          code: "CONFIGURATION_ERROR",
-          message: "AI service configuration is missing. Please check environment variables.",
-        },
-      };
-      return new Response(JSON.stringify(errorResponse), {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
-      });
-    }
-
+    // Step 3: Initialize service with env passed directly
+    // The services will resolve API keys from env using resolveApiKey helper
     const taskService = new TranscriptionTaskService({
-      openaiApiKey: env.OPENAI_API_KEY,
-      openrouterApiKey: env.OPENROUTER_API_KEY,
+      env, // Pass context.env (Pages Functions) or undefined (local)
     });
 
     let task;

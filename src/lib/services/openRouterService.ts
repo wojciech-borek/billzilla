@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";
 import type { OpenRouterApiResponse, CloudflarePagesEnv } from "../../types";
+import { resolveOpenRouterApiKey } from "../utils/env";
 
 // ============================================================================
 // Custom Error Classes
@@ -110,20 +111,13 @@ export class OpenRouterService {
   private readonly baseUrl: string = "https://openrouter.ai/api/v1";
 
   constructor(config: OpenRouterServiceConfig = {}) {
-    // Prefer explicit config.apiKey, then env (Pages Functions), then process.env (Node)
-    const fromConfig = config.apiKey;
-    const fromEnv = config.env?.OPENROUTER_API_KEY ?? config.env?.OPENAI_API_KEY;
-    const fromProcess =
-      typeof process !== "undefined" ? (process.env?.OPENROUTER_API_KEY ?? process.env?.OPENAI_API_KEY) : undefined;
-
-    this.apiKey = fromConfig ?? fromEnv ?? fromProcess ?? "";
-
-    // Guard clause: ensure API key is available
-    if (!this.apiKey) {
+    const key = resolveOpenRouterApiKey(config.apiKey, config.env);
+    if (!key) {
       throw new ConfigurationError(
-        "OPENROUTER_API_KEY / OPENAI_API_KEY is not set. Pass apiKey via config or env via config.env (context.env from Pages Functions)."
+        "OPENROUTER_API_KEY not set. Pass apiKey via config or pass env (context.env or process.env) as config.env."
       );
     }
+    this.apiKey = key;
   }
 
   // ==========================================================================
@@ -561,7 +555,8 @@ Please analyze this code for quality, patterns, and compliance with project stan
 
         try {
           const errorData = await response.json();
-          errorMessage = errorData.error?.message || errorMessage;
+          console.log('OpenRouter API Error Response:', errorData);
+          errorMessage = errorData.error?.message || errorData.message || errorMessage;
         } catch {
           // If parsing error response fails, use the default message
         }

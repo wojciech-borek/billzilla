@@ -101,7 +101,7 @@ describe("WhisperService", () => {
         expect(() => {
           new WhisperService(config);
         }).toThrow(
-          "OPENAI_API_KEY is not set. Pass apiKey via config or env via config.env (context.env from Pages Functions)."
+          "OPENAI_API_KEY / OPENROUTER_API_KEY not set. Pass apiKey via config or pass env (context.env or process.env) as config.env."
         );
       } finally {
         // Cleanup
