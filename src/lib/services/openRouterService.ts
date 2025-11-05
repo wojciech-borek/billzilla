@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";
 import type { OpenRouterApiResponse } from "../../types";
+import { OPENROUTER_API_KEY } from "astro:env/server";
 
 // ============================================================================
 // Custom Error Classes
@@ -109,12 +110,8 @@ export class OpenRouterService {
   private readonly baseUrl: string = "https://openrouter.ai/api/v1";
 
   constructor(config: OpenRouterServiceConfig = {}) {
-    // Try to get API key from config or environment
-    // Prioritize import.meta.env for local development, process.env for production
-    this.apiKey =
-      config.apiKey ||
-      import.meta.env.OPENROUTER_API_KEY ||
-      (typeof process !== "undefined" ? process.env.OPENROUTER_API_KEY : undefined);
+    // Use type-safe astro:env for environment variables
+    this.apiKey = config.apiKey || OPENROUTER_API_KEY;
 
     // Guard clause: ensure API key is available
     if (!this.apiKey) {
