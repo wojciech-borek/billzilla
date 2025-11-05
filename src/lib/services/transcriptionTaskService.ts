@@ -209,17 +209,24 @@ export class TranscriptionTaskService {
    */
   async processTask(supabase: SupabaseClient, params: ProcessTaskParams): Promise<void> {
     try {
+      console.log(`[TranscriptionTask] Starting task ${params.taskId}`);
+
       // Step 1: Transcribe audio to text
+      console.log(`[TranscriptionTask] Step 1: Starting Whisper transcription for task ${params.taskId}`);
       const transcriptionResult = await this.whisperService.transcribeAudio({
         audioBlob: params.audioBlob,
         language: "pl", // Polish - can be made dynamic based on group settings
         prompt: this.buildWhisperPrompt(params.groupContext),
       });
 
+      console.log(`[TranscriptionTask] Step 1 completed for task ${params.taskId}. Text length: ${transcriptionResult.text.length}`);
+
       // Step 2: Build context for LLM
+      console.log(`[TranscriptionTask] Step 2: Building LLM context for task ${params.taskId}`);
       const context = this.buildLLMContext(params.groupContext, params.userId);
 
       // Step 3: Extract expense data from transcription
+      console.log(`[TranscriptionTask] Step 3: Starting LLM extraction for task ${params.taskId}`);
       const extractParams: ExtractDataParams<typeof expenseTranscriptionSchema> = {
         transcription: transcriptionResult.text,
         context,
@@ -230,6 +237,7 @@ export class TranscriptionTaskService {
       };
 
       const expenseData = await this.openRouterService.extractExpenseData(extractParams);
+      console.log(`[TranscriptionTask] Step 3 completed for task ${params.taskId}`);
 
       // Step 4: Calculate final confidence score
       // Use LLM's confidence if provided, otherwise fall back to heuristic calculation
@@ -252,8 +260,11 @@ export class TranscriptionTaskService {
       };
 
       // Step 5: Update task as completed
+      console.log(`[TranscriptionTask] Step 5: Completing task ${params.taskId}`);
       await this.completeTask(supabase, params.taskId, transcriptionResult.text, expenseDataWithConfidence);
+      console.log(`[TranscriptionTask] Task ${params.taskId} completed successfully`);
     } catch (error) {
+      console.error(`[TranscriptionTask] Error in task ${params.taskId}:`, error);
       // Determine error code and message
       let errorCode = "UNKNOWN_ERROR";
       let errorMessage = "An unexpected error occurred";
@@ -264,6 +275,7 @@ export class TranscriptionTaskService {
       }
 
       // Update task as failed
+      console.log(`[TranscriptionTask] Marking task ${params.taskId} as failed with code: ${errorCode}`);
       await this.failTask(supabase, params.taskId, errorCode, errorMessage);
 
       // Re-throw the error for caller to handle
