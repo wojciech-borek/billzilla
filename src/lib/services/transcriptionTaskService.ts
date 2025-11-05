@@ -102,8 +102,8 @@ export class TranscriptionTaskService {
   private openRouterService: OpenRouterService;
 
   constructor(config: TranscriptionTaskServiceConfig = {}) {
-    this.whisperService = new WhisperService({ apiKey: config.openaiApiKey, env: config.env });
-    this.openRouterService = new OpenRouterService({ apiKey: config.openrouterApiKey, env: config.env });
+    this.whisperService = new WhisperService({ apiKey: config.openaiApiKey });
+    this.openRouterService = new OpenRouterService({ apiKey: config.openrouterApiKey });
   }
 
   // ==========================================================================

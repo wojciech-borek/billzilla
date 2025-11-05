@@ -48,7 +48,12 @@ export function resolveOpenAIApiKey(
   // 2) env passed explicitly (context.env in Pages Functions)
   if (env?.OPENAI_API_KEY) return env.OPENAI_API_KEY;
 
-  // 3) import.meta.env (Astro dev environment)
+  // 3) process.env (Node / Cloudflare Pages Functions)
+  if (typeof process !== "undefined" && process.env?.OPENAI_API_KEY) {
+    return process.env.OPENAI_API_KEY;
+  }
+
+  // 4) import.meta.env (Astro dev environment)
   try {
     const metaEnv = (import.meta as { env?: Record<string, string | undefined> }).env;
     if (metaEnv?.OPENAI_API_KEY) return metaEnv.OPENAI_API_KEY;
@@ -56,12 +61,12 @@ export function resolveOpenAIApiKey(
     // import.meta.env not available
   }
 
-  // 4) process.env (Node / local)
-  if (typeof process !== "undefined" && process.env?.OPENAI_API_KEY) {
-    return process.env.OPENAI_API_KEY;
+  // 5) globalThis (Cloudflare Workers/Pages runtime)
+  if (typeof globalThis !== "undefined" && (globalThis as any).OPENAI_API_KEY) {
+    return (globalThis as any).OPENAI_API_KEY;
   }
 
-  // 5) not found
+  // 6) not found
   return undefined;
 }
 
@@ -78,7 +83,12 @@ export function resolveOpenRouterApiKey(
   // 2) env passed explicitly (context.env in Pages Functions)
   if (env?.OPENROUTER_API_KEY) return env.OPENROUTER_API_KEY;
 
-  // 3) import.meta.env (Astro dev environment)
+  // 3) process.env (Node / Cloudflare Pages Functions)
+  if (typeof process !== "undefined" && process.env?.OPENROUTER_API_KEY) {
+    return process.env.OPENROUTER_API_KEY;
+  }
+
+  // 4) import.meta.env (Astro dev environment)
   try {
     const metaEnv = (import.meta as { env?: Record<string, string | undefined> }).env;
     if (metaEnv?.OPENROUTER_API_KEY) return metaEnv.OPENROUTER_API_KEY;
@@ -86,11 +96,11 @@ export function resolveOpenRouterApiKey(
     // import.meta.env not available
   }
 
-  // 4) process.env (Node / local)
-  if (typeof process !== "undefined" && process.env?.OPENROUTER_API_KEY) {
-    return process.env.OPENROUTER_API_KEY;
+  // 5) globalThis (Cloudflare Workers/Pages runtime)
+  if (typeof globalThis !== "undefined" && (globalThis as any).OPENROUTER_API_KEY) {
+    return (globalThis as any).OPENROUTER_API_KEY;
   }
 
-  // 5) not found
+  // 6) not found
   return undefined;
 }

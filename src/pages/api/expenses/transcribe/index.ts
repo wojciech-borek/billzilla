@@ -55,7 +55,17 @@ export const POST: APIRoute = async ({ request, locals, ...context }) => {
 
     // Diagnostic logging for environment variables
     const contextEnv = (context as { env?: CloudflarePagesEnv }).env;
-    console.log("transcribe handler env defined:", !!contextEnv, "keys:", contextEnv ? Object.keys(contextEnv) : null);
+    console.log("=== ENVIRONMENT DIAGNOSTICS ===");
+    console.log("context.env exists:", !!contextEnv);
+    console.log("context.env keys:", contextEnv ? Object.keys(contextEnv) : "null");
+    console.log("process.env exists:", typeof process !== "undefined" && !!process.env);
+    console.log("process.env.OPENAI_API_KEY exists:", typeof process !== "undefined" && process.env && !!process.env.OPENAI_API_KEY);
+    console.log("process.env.OPENROUTER_API_KEY exists:", typeof process !== "undefined" && process.env && !!process.env.OPENROUTER_API_KEY);
+
+    // Try different sources
+    console.log("context.env?.OPENAI_API_KEY:", contextEnv?.OPENAI_API_KEY ? "present" : "missing");
+    console.log("process.env?.OPENAI_API_KEY:", typeof process !== "undefined" && process.env?.OPENAI_API_KEY ? "present" : "missing");
+    console.log("================================");
 
     // Step 2: Parse multipart/form-data
     let formData: FormData;
@@ -166,11 +176,9 @@ export const POST: APIRoute = async ({ request, locals, ...context }) => {
       });
     }
 
-    // Step 4: Initialize service with env passed directly
-    // The services will resolve API keys from env using resolveApiKey helper
-    const taskService = new TranscriptionTaskService({
-      env: contextEnv, // Pass context.env (Pages Functions) or undefined (local)
-    });
+    // Step 4: Initialize service - let it resolve API keys automatically
+    // The services will resolve API keys from environment using resolveApiKey helper
+    const taskService = new TranscriptionTaskService();
 
     // Step 5: Get group context and verify membership
     let groupContext;
