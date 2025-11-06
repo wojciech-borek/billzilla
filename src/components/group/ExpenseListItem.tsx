@@ -102,7 +102,7 @@ export const ExpenseListItem: React.FC<ExpenseListItemProps> = ({
 
           {/* Actions - only visible for owner */}
           {isOwner && (
-            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            <div className="flex items-center gap-1">
               {onEdit && (
                 <button
                   onClick={(e) => {

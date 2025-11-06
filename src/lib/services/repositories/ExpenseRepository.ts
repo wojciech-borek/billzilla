@@ -244,7 +244,7 @@ export class ExpenseRepository {
   async verifyExpenseOwnership(expenseId: string, userId: string): Promise<{ group_id: string }> {
     const { data: expense, error: fetchError } = await this.supabase
       .from("expenses")
-      .select("created_by, group_id")
+      .select("created_by, payer_id, group_id")
       .eq("id", expenseId)
       .single();
 
@@ -256,8 +256,8 @@ export class ExpenseRepository {
       throw new Error("Expense not found");
     }
 
-    if (expense.created_by !== userId) {
-      throw new Error("Only the creator can update this expense");
+    if (expense.created_by !== userId && expense.payer_id !== userId) {
+      throw new Error("Only the creator or payer can update this expense");
     }
 
     return { group_id: expense.group_id };

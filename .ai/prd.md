@@ -40,7 +40,7 @@ Billzilla adresuje te problemy, oferując proste, zautomatyzowane i scentralizow
 - F-010: Każdy wydatek dodany za pomocą głosu musi zostać zweryfikowany i zatwierdzony przez użytkownika przed zapisaniem. Użytkownik ma możliwość edycji pól wypełnionych przez AI.
 - F-011: Aplikacja obsługuje dwa sposoby podziału wydatku: "po równo" oraz "każdy ma swoją kwotę".
 - F-012: System zapewnia, że suma podziałów wydatku zawsze odpowiada jego całkowitej kwocie. Walidacja odbywa się w czasie rzeczywistym w formularzu, uniemożliwiając zapis, gdy sumy się nie zgadzają.
-- F-013: Tylko twórca wydatku ma uprawnienia do jego edycji lub usunięcia.
+- F-013: Twórca wydatku lub osoba, która za niego zapłaciła, ma uprawnienia do jego edycji lub usunięcia.
 
 ### 3.3. System sald i rozliczeń
 
@@ -60,7 +60,7 @@ Billzilla adresuje te problemy, oferując proste, zautomatyzowane i scentralizow
 Następujące funkcje i cechy są świadomie wyłączone z zakresu wersji MVP (Minimum Viable Product), aby zapewnić szybkie wdrożenie i skupić się na kluczowej wartości produktu:
 
 - Ograniczona obsługa wielu walut: Aplikacja pozwala na ręczne zdefiniowanie stałych kursów wymiany w ramach grupy. Brak automatycznego pobierania kursów z zewnętrznych serwisów (np. NBP, EBC). Wszystkie salda prowadzone są w jednej, bazowej walucie grupy.
-- Brak skomplikowanych ról i uprawnień w grupach (poza zasadą, że tylko autor może edytować/usuwać swój wydatek).
+- Brak skomplikowanych ról i uprawnień w grupach (poza zasadą, że autor lub płatnik może edytować/usuwać wydatek).
 - Brak powiadomień push o nowych wydatkach czy zmianach salda.
 - Brak funkcji eksportu danych.
 - Brak możliwości dodawania zdjęć/paragonów do wydatków.
@@ -189,18 +189,18 @@ Następujące funkcje i cechy są świadomie wyłączone z zakresu wersji MVP (M
 
 - ID: US-008
 - Tytuł: Edycja własnego wydatku
-- Opis: Jako autor wydatku, chcę mieć możliwość jego edycji, aby poprawić ewentualne błędy.
+- Opis: Jako autor wydatku lub osoba, która za niego zapłaciła, chcę mieć możliwość jego edycji, aby poprawić ewentualne błędy.
 - Kryteria akceptacji:
-  - Użytkownik może otworzyć do edycji tylko te wydatki, które sam dodał.
+  - Użytkownik może otworzyć do edycji wydatki, które sam dodał lub za które zapłacił.
   - Formularz edycji jest tożsamy z formularzem dodawania wydatku i pozwala na zmianę wszystkich pól.
   - Po zapisaniu zmian, salda wszystkich zaangażowanych użytkowników są przeliczane i aktualizowane.
-  - Użytkownik nie widzi opcji edycji przy wydatkach dodanych przez inne osoby.
+  - Użytkownik nie widzi opcji edycji przy wydatkach, których nie jest ani autorem ani płatnikiem.
 
 - ID: US-009
 - Tytuł: Usuwanie własnego wydatku
-- Opis: Jako autor wydatku, chcę mieć możliwość jego usunięcia, jeśli został dodany przez pomyłkę.
+- Opis: Jako autor wydatku lub osoba, która za niego zapłaciła, chcę mieć możliwość jego usunięcia, jeśli został dodany przez pomyłkę.
 - Kryteria akceptacji:
-  - Użytkownik może usunąć tylko te wydatki, które sam dodał.
+  - Użytkownik może usunąć wydatki, które sam dodał lub za które zapłacił.
   - Przed usunięciem wyświetlany jest monit z prośbą o potwierdzenie.
   - Po usunięciu, wydatek znika z historii grupy, a salda wszystkich zaangażowanych użytkowników są przeliczane i aktualizowane.
 

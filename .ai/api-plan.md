@@ -1094,7 +1094,7 @@ Poniżej lista głównych zasobów API wraz z odpowiadającymi im tabelami bazy 
 
 #### PATCH /api/expenses/:id
 
-**Opis:** Aktualizuje wydatek. Dostępne tylko dla twórcy wydatku.
+**Opis:** Aktualizuje wydatek. Dostępne tylko dla twórcy wydatku lub osoby, która za niego zapłaciła.
 
 **Wymagane nagłówki:**
 
@@ -1176,7 +1176,7 @@ Poniżej lista głównych zasobów API wraz z odpowiadającymi im tabelami bazy 
 
 #### DELETE /api/expenses/:id
 
-**Opis:** Usuwa wydatek. Dostępne tylko dla twórcy wydatku.
+**Opis:** Usuwa wydatek. Dostępne tylko dla twórcy wydatku lub osoby, która za niego zapłaciła.
 
 **Wymagane nagłówki:**
 
@@ -1781,7 +1781,7 @@ Autoryzacja opiera się na **Row-Level Security (RLS)** w PostgreSQL:
 4. **Expenses:**
    - Użytkownik może odczytać wydatki tylko w swoich grupach
    - Każdy członek grupy może tworzyć wydatki
-   - Tylko twórca wydatku może go edytować lub usunąć
+   - Tylko twórca wydatku lub osoba, która za niego zapłaciła, może go edytować lub usunąć
 
 5. **Settlements:**
    - Użytkownik może odczytać rozliczenia tylko w swoich grupach

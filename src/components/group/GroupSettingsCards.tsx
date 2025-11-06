@@ -171,7 +171,7 @@ export const GroupSettingsCards: React.FC<GroupSettingsCardsProps> = ({ groupId,
 
                 {/* Actions for group creator */}
                 {userRole === "creator" && member.role !== "creator" && (
-                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="flex items-center gap-1">
                     <button
                       onClick={() => handleEditMember(member)}
                       className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 text-muted-foreground hover:text-foreground hover:bg-accent h-8 w-8"

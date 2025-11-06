@@ -641,8 +641,8 @@ export class ExpenseUpdateUnitOfWork {
         if (error.message.includes("not found")) {
           throw new ExpenseAccessError("Expense not found");
         }
-        if (error.message.includes("creator")) {
-          throw new ExpenseAccessError("Only the creator can update this expense");
+        if (error.message.includes("creator") || error.message.includes("payer")) {
+          throw new ExpenseAccessError("Only the creator or payer can update this expense");
         }
       }
       throw new ExpenseDataError("check expense ownership", error instanceof Error ? error.message : "Unknown error");
@@ -807,10 +807,10 @@ export async function updateExpense(
 
 export async function deleteExpense(supabase: SupabaseClient, expenseId: string, userId: string): Promise<void> {
   try {
-    // First check if user can delete this expense (must be creator)
+    // First check if user can delete this expense (must be creator or payer)
     const { data: expense, error: fetchError } = await supabase
       .from("expenses")
-      .select("created_by, group_id")
+      .select("created_by, payer_id, group_id")
       .eq("id", expenseId)
       .single();
 
@@ -822,8 +822,8 @@ export async function deleteExpense(supabase: SupabaseClient, expenseId: string,
       throw new ExpenseAccessError("Expense not found");
     }
 
-    if (expense.created_by !== userId) {
-      throw new ExpenseAccessError("Only the creator can delete this expense");
+    if (expense.created_by !== userId && expense.payer_id !== userId) {
+      throw new ExpenseAccessError("Only the creator or payer can delete this expense");
     }
 
     // Check if user is still a member of the group
