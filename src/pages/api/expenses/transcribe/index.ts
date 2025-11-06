@@ -232,6 +232,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     // Step 8: Process task asynchronously (don't await - fire and forget)
     // The task will update its status in the database when done
+    console.error(`[TranscribeAPI] Starting async processTask for task: ${task.id}`);
     taskService
       .processTask(locals.supabase, {
         taskId: task.id,
@@ -239,7 +240,11 @@ export const POST: APIRoute = async ({ request, locals }) => {
         groupContext,
         userId: locals.user.id,
       })
-      .catch(() => {
+      .then(() => {
+        console.error(`[TranscribeAPI] processTask completed successfully for task: ${task.id}`);
+      })
+      .catch((error) => {
+        console.error(`[TranscribeAPI] processTask failed for task: ${task.id}`, error);
         // Errors are already handled in processTask (updates task status to failed)
         // Just log for debugging
       });

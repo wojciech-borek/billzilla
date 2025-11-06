@@ -208,6 +208,14 @@ export class TranscriptionTaskService {
    * 3. Update task with results
    */
   async processTask(supabase: SupabaseClient, params: ProcessTaskParams): Promise<void> {
+    console.error(`[TranscriptionTask] processTask called with params:`, {
+      taskId: params.taskId,
+      audioBlobSize: params.audioBlob?.size,
+      audioBlobType: params.audioBlob?.type,
+      userId: params.userId,
+      groupId: params.groupContext?.groupId
+    });
+
     try {
       console.error(`[TranscriptionTask] Starting task ${params.taskId}`);
       console.error(`[TranscriptionTask] Audio blob size: ${params.audioBlob.size} bytes`);
