@@ -6,16 +6,10 @@
 flowchart TD
     A["ExpenseForm.tsx<br/>Główny formularz wydatku"] --> B["VoiceInputButton.tsx<br/>Przycisk nagrywania"]
 
-    subgraph "Komponenty Nagrywania"
-        C1["VoiceRecordingIndicator.tsx<br/>Wskaźnik nagrywania"]
-        C2["VoiceTranscriptionStatus.tsx<br/>Status przetwarzania"]
-    end
-
     subgraph "Serwisy Backend"
         D1["expenseTranscriptionService.ts<br/>API transkrypcji"]
-        D2["transcriptionTaskService.ts<br/>Zarządzanie zadaniami"]
+        D2["whisperService.ts<br/>Transkrypcja audio"]
         D3["openRouterService.ts<br/>AI/LLM ekstrakcja"]
-        D4["whisperService.ts<br/>Transkrypcja audio"]
     end
 
     subgraph "Schematy Walidacji"
@@ -24,20 +18,18 @@ flowchart TD
     end
 
     subgraph "Hooki React"
-        F1["useExpenseTranscription<br/>Hook głosowy"]
+        F1["useVoiceTranscription.ts<br/>Hook głosowy"]
         F2["useExpenseForm<br/>Hook formularza"]
+        F3["useAudioRecorder<br/>Hook nagrywania"]
     end
 
-    B --> C1
-    B --> C2
-
     B --> F1
+    F1 --> F3
     F1 --> D1
     F1 --> F2
 
     D1 --> D2
-    D2 --> D3
-    D2 --> D4
+    D1 --> D3
 
     F2 --> E2
     D3 --> E1
@@ -47,10 +39,10 @@ flowchart TD
     classDef validation fill:#fce4ec,stroke:#880e4f,stroke-width:2px
     classDef hooks fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
 
-    class A,B,C1,C2 ui
-    class D1,D2,D3,D4 services
+    class A,B ui
+    class D1,D2,D3 services
     class E1,E2 validation
-    class F1,F2 hooks
+    class F1,F2,F3 hooks
 ```
 
 ## Diagram Przepływu Dodawania Wydatku Głosowo
@@ -67,9 +59,9 @@ flowchart TD
     D --> E["Zatrzymaj nagrywanie"]
     E --> F["Wyślij audio do API"]
     F --> G["/api/expenses/transcribe"]
-    G --> H["Utwórz zadanie transkrypcji"]
+    G --> H["Synchroniczne przetwarzanie"]
 
-    H --> I["Przetwarzanie audio przez Whisper"]
+    H --> I["Transkrypcja audio przez Whisper"]
     I --> J["Transkrypcja tekstowa"]
     J --> K["Wyślij do OpenRouter (AI)"]
     K --> L["Ekstrakcja danych wydatku"]
@@ -149,38 +141,35 @@ sequenceDiagram
     F->>U: Wyświetl sukces
 ```
 
-## Diagram Stanów Zadania Transkrypcji
+## Diagram Przepływu Synchronicznego Przetwarzania
 
 ```mermaid
 stateDiagram-v2
-    [*] --> pending: Rozpoczęcie zadania
+    [*] --> processing: Rozpoczęcie uploadu
 
-    pending --> processing: Rozpoczęcie przetwarzania
-    processing --> completed: Sukces - dane wyciągnięte
-    processing --> failed: Błąd przetwarzania
+    processing --> success: Przetwarzanie zakończone sukcesem
+    processing --> error: Błąd przetwarzania
 
-    completed --> [*]: Dane wykorzystane
-    failed --> [*]: Błąd obsłużony
-
-    note right of pending
-        Status: Oczekujące
-        Komunikat: "Przetwarzam..."
-    end note
+    success --> [*]: Formularz wypełniony
+    error --> [*]: Błąd obsłużony
 
     note right of processing
         Status: Przetwarzanie
         Komunikat: "Analizuję nagranie..."
+        Timeout: 25 sekund
     end note
 
-    note right of completed
-        Status: Ukończone
-        Komunikat: "Dane zostały wyciągnięte"
-        Dane: opis, kwota, uczestnicy...
+    note right of success
+        Status: Sukces
+        Komunikat: "Wydatek wypełniony automatycznie"
+        Dane: opis, kwota, uczestnicy, waluta...
+        Confidence: poziom pewności AI
     end note
 
-    note right of failed
+    note right of error
         Status: Błąd
-        Komunikat: "Nie udało się przetworzyć"
-        Przyczyna: audio nieczytelne, błąd API...
+        Komunikat: "Nie udało się przetworzyć nagrania"
+        Przyczyna: audio nieczytelne, błąd API, timeout...
+        Fallback: ręczne dodawanie wydatku
     end note
 ```

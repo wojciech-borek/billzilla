@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import type { TranscriptionErrorDTO, TranscribeTaskResponseDTO } from "../../types";
+import type { TranscriptionErrorDTO, TranscriptionResultDTO } from "../../types";
 import { useAudioRecorder } from "./useAudioRecorder";
 import { useTranscriptionErrorHandler } from "./useTranscriptionErrorHandler";
 import { createClient } from "../../db/supabase.client";
@@ -12,8 +12,6 @@ interface VoiceTranscriptionState {
   isRecording: boolean;
   /** Whether the upload/transcription task is being processed */
   isProcessing: boolean;
-  /** ID of the transcription task (null if not yet uploaded) */
-  taskId: string | null;
   /** Current error state, if any */
   error: TranscriptionErrorDTO | null;
 }
@@ -31,7 +29,12 @@ type UseVoiceTranscriptionResult = VoiceTranscriptionState & {
   /** Cancel ongoing recording and reset state */
   cancelRecording: () => void;
   /** Upload audio blob for transcription. Validates size and duration. */
-  uploadAudio: (audioBlob: Blob, groupId: string) => Promise<TranscribeTaskResponseDTO>;
+  uploadAudio: (
+    audioBlob: Blob,
+    groupId: string,
+    onComplete: (result: TranscriptionResultDTO) => void,
+    onError: (error: TranscriptionErrorDTO) => void
+  ) => Promise<void>;
   /** Reset all state to initial values */
   reset: () => void;
 };
@@ -45,16 +48,15 @@ type UseVoiceTranscriptionResult = VoiceTranscriptionState & {
  *
  * @example
  * ```tsx
- * const { isRecording, startRecording, stopRecording, uploadAudio, taskId } = useVoiceTranscription();
+ * const { isRecording, startRecording, stopRecording, uploadAudio } = useVoiceTranscription();
  *
  * // Start recording
  * await startRecording();
  *
- * // Stop and upload
+ * // Stop and upload with callbacks
  * const blob = await stopRecording();
  * if (blob) {
- *   await uploadAudio(blob, groupId);
- *   // Use taskId for polling
+ *   await uploadAudio(blob, groupId, onComplete, onError);
  * }
  * ```
  *
@@ -62,16 +64,14 @@ type UseVoiceTranscriptionResult = VoiceTranscriptionState & {
  * - Maximum file size: 25MB
  * - Minimum recording duration: 1 second
  * - Audio format: webm (fallback to mp4 if unsupported)
- * - Polling for results is handled by VoiceTranscriptionStatus component
+ * - Results are handled directly without polling
  *
- * @see {@link useTranscriptionPolling} for polling task status
  * @see {@link useTranscriptionErrorHandler} for error handling
  */
 export function useVoiceTranscription(): UseVoiceTranscriptionResult {
   const [state, setState] = useState<VoiceTranscriptionState>({
     isRecording: false,
     isProcessing: false,
-    taskId: null,
     error: null,
   });
 
@@ -128,19 +128,20 @@ export function useVoiceTranscription(): UseVoiceTranscriptionResult {
   }, [audioRecorder]);
 
   const uploadAudio = useCallback(
-    async (audioBlob: Blob, groupId: string): Promise<TranscribeTaskResponseDTO> => {
-      console.error(
-        `[useVoiceTranscription] uploadAudio called with blob size: ${audioBlob.size}, groupId: ${groupId}`
-      );
-
+    async (
+      audioBlob: Blob,
+      groupId: string,
+      onComplete: (result: TranscriptionResultDTO) => void,
+      onError: (error: TranscriptionErrorDTO) => void
+    ): Promise<void> => {
       // Validate audio blob size (max 25MB as per plan)
       const maxSize = 25 * 1024 * 1024; // 25MB
       if (audioBlob.size > maxSize) {
-        console.error(`[useVoiceTranscription] File too large: ${audioBlob.size} > ${maxSize}`);
         const error = errorHandler.createError("FILE_TOO_LARGE");
         setState((prev) => ({ ...prev, error }));
         errorHandler.handleError(error);
-        throw new Error(error.message);
+        onError(error);
+        return;
       }
 
       // Validate minimum recording duration (1 second as per plan)
@@ -148,7 +149,8 @@ export function useVoiceTranscription(): UseVoiceTranscriptionResult {
         const error = errorHandler.createError("RECORDING_TOO_SHORT");
         setState((prev) => ({ ...prev, error }));
         errorHandler.handleError(error);
-        throw new Error(error.message);
+        onError(error);
+        return;
       }
 
       setState((prev) => ({ ...prev, isProcessing: true, error: null }));
@@ -164,7 +166,6 @@ export function useVoiceTranscription(): UseVoiceTranscriptionResult {
         formData.append("audio", audioBlob, "recording.webm");
         formData.append("group_id", groupId);
 
-        console.error(`[useVoiceTranscription] Sending POST request to /api/expenses/transcribe`);
         const response = await fetch("/api/expenses/transcribe", {
           method: "POST",
           body: formData,
@@ -172,30 +173,26 @@ export function useVoiceTranscription(): UseVoiceTranscriptionResult {
             Authorization: `Bearer ${session?.access_token || ""}`,
           },
         });
-        console.error(`[useVoiceTranscription] Response status: ${response.status}`);
 
         if (!response.ok) {
           const error = errorHandler.handleHttpError(response.status);
           setState((prev) => ({ ...prev, isProcessing: false, error }));
           errorHandler.handleError(error);
-          throw new Error(error.message);
+          onError(error);
+          return;
         }
 
-        const data: TranscribeTaskResponseDTO = await response.json();
-        setState((prev) => ({ ...prev, taskId: data.task_id }));
+        const data: TranscriptionResultDTO = await response.json();
 
-        return data;
+        // Directly handle the result - synchronous processing!
+        setState((prev) => ({ ...prev, isProcessing: false }));
+        onComplete(data);
       } catch (error) {
-        // If it's already a network error we threw, just re-throw
-        if (error instanceof Error && error.message.includes("Błąd")) {
-          throw error;
-        }
-
         // Otherwise, handle as network error
         const transcriptionError = errorHandler.handleNetworkError(error);
         setState((prev) => ({ ...prev, isProcessing: false, error: transcriptionError }));
         errorHandler.handleError(transcriptionError);
-        throw error;
+        onError(transcriptionError);
       }
     },
     [audioRecorder.duration, errorHandler]
@@ -205,7 +202,6 @@ export function useVoiceTranscription(): UseVoiceTranscriptionResult {
     setState({
       isRecording: false,
       isProcessing: false,
-      taskId: null,
       error: null,
     });
     audioRecorder.reset();

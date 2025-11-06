@@ -8,7 +8,6 @@
 // Voice transcription hooks
 export { useAudioRecorder } from "./useAudioRecorder";
 export { useVoiceTranscription } from "./useVoiceTranscription";
-export { useTranscriptionPolling } from "./useTranscriptionPolling";
 export { useTranscriptionErrorHandler } from "./useTranscriptionErrorHandler";
 
 // Expense hooks

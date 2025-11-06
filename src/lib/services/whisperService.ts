@@ -239,23 +239,13 @@ export class WhisperService {
   private async makeApiRequest(formData: FormData): Promise<WhisperTranscriptionResponse> {
     const url = `${this.baseUrl}/audio/transcriptions`;
 
-    console.error(`[WhisperService] Starting API request to: ${url}`);
-    console.error(
-      `[WhisperService] FormData entries:`,
-      [...formData.entries()].map(([key, value]) =>
-        value instanceof File ? `${key}: File(${value.name}, ${value.size} bytes, ${value.type})` : `${key}: ${value}`
-      )
-    );
-
     try {
       // Dodaj timeout aby uniknąć nieskończonego oczekiwania
       const controller = new AbortController();
       const timeoutId = setTimeout(() => {
-        console.error(`[WhisperService] Request timeout after 25 seconds`);
         controller.abort();
       }, 25000); // 25 sekund timeout
 
-      console.error(`[WhisperService] Making fetch request...`);
       const response = await fetch(url, {
         method: "POST",
         headers: {
@@ -267,7 +257,6 @@ export class WhisperService {
       });
 
       clearTimeout(timeoutId);
-      console.error(`[WhisperService] Response received - status: ${response.status}, ok: ${response.ok}`);
 
       // Handle non-2xx responses
       if (!response.ok) {
@@ -285,14 +274,12 @@ export class WhisperService {
 
       // Parse and return the successful response
       const result = await response.json();
-      console.error(`[WhisperService] Successfully parsed response:`, result);
       return result;
     } catch (error) {
       console.error(`[WhisperService] Error in makeApiRequest:`, error);
 
       // Handle specific error types
       if (error.name === "AbortError") {
-        console.error(`[WhisperService] Request was aborted (timeout)`);
         throw new WhisperNetworkError("Request timeout - OpenAI API may be unreachable or blocking requests");
       }
       // Handle fetch-level errors (network issues, etc.)

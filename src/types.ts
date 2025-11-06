@@ -357,25 +357,6 @@ export interface TranscriptionErrorDTO {
   message: string;
 }
 
-/**
- * Transcription task status
- * Used in: GET /api/expenses/transcribe/:taskId
- */
-export interface TranscribeTaskStatusDTO {
-  task_id: string;
-  status: "processing" | "completed" | "failed";
-  created_at: string;
-  completed_at?: string;
-  result?: TranscriptionResultDTO;
-  error?: TranscriptionErrorDTO;
-}
-
-/**
- * Transcribe audio task response
- * Used in: POST /api/expenses/transcribe
- */
-export type TranscribeTaskResponseDTO = Pick<TranscribeTaskStatusDTO, "task_id" | "status" | "created_at">;
-
 // ============================================================================
 // Settlement DTOs and Commands
 // ============================================================================

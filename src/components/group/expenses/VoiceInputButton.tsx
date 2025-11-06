@@ -1,11 +1,10 @@
 import React, { useCallback } from "react";
-import { Mic, MicOff } from "lucide-react";
+import { Mic, MicOff, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
 import { useVoiceTranscription } from "@/lib/hooks/useVoiceTranscription";
 import { VoiceRecordingIndicator } from "./VoiceRecordingIndicator";
-import { VoiceTranscriptionStatus } from "./VoiceTranscriptionStatus";
 import type { TranscriptionResultDTO, TranscriptionErrorDTO } from "@/types";
 
 /**
@@ -63,7 +62,6 @@ export function VoiceInputButton({
     isRecording,
     isProcessing,
     recordingDuration,
-    taskId,
     error,
     startRecording,
     stopRecording,
@@ -74,55 +72,23 @@ export function VoiceInputButton({
 
   // ALL HOOKS MUST BE DEFINED BEFORE ANY CONDITIONAL RETURNS
   const handleClick = useCallback(async () => {
-    console.error("[VoiceInputButton] Button clicked");
-
     // Don't allow starting recording if already recording or processing
     if (isRecording || isProcessing) {
-      console.error("[VoiceInputButton] Button disabled - recording or processing");
       return;
     }
 
     // Don't allow starting if disabled
     if (disabled) {
-      console.error("[VoiceInputButton] Button disabled - component disabled");
       return;
     }
 
-    console.error("[VoiceInputButton] Starting recording...");
     try {
       // Start recording
       await startRecording();
-      console.error("[VoiceInputButton] Recording started");
     } catch {
       // Error is handled in the hook
-      console.error("[VoiceInputButton] Recording failed to start");
     }
   }, [isRecording, isProcessing, disabled, startRecording]);
-
-  const handleStopRecording = useCallback(async () => {
-    try {
-      // Stop recording and get audio blob
-      const audioBlob = await stopRecording();
-
-      if (!audioBlob) {
-        toast.error("Nie udało się zatrzymać nagrywania");
-        return;
-      }
-
-      // Upload audio for transcription
-      // The upload will set taskId in the hook state, which will trigger
-      // VoiceTranscriptionStatus component to show and handle polling
-      await uploadAudio(audioBlob, groupId);
-    } catch {
-      toast.error("Błąd podczas zatrzymywania nagrywania");
-      reset();
-    }
-  }, [stopRecording, uploadAudio, groupId, reset]);
-
-  const handleCancelRecording = useCallback(() => {
-    cancelRecording();
-    toast.info("Nagrywanie anulowane");
-  }, [cancelRecording]);
 
   // Wrap callbacks to reset state after completion
   const handleTranscriptionComplete = useCallback(
@@ -141,6 +107,29 @@ export function VoiceInputButton({
     [onTranscriptionError, reset]
   );
 
+  const handleStopRecording = useCallback(async () => {
+    try {
+      // Stop recording and get audio blob
+      const audioBlob = await stopRecording();
+
+      if (!audioBlob) {
+        toast.error("Nie udało się zatrzymać nagrywania");
+        return;
+      }
+
+      // Upload audio for transcription - directly handles result
+      await uploadAudio(audioBlob, groupId, handleTranscriptionComplete, handleTranscriptionError);
+    } catch {
+      toast.error("Błąd podczas zatrzymywania nagrywania");
+      reset();
+    }
+  }, [stopRecording, uploadAudio, groupId, reset, handleTranscriptionComplete, handleTranscriptionError]);
+
+  const handleCancelRecording = useCallback(() => {
+    cancelRecording();
+    toast.info("Nagrywanie anulowane");
+  }, [cancelRecording]);
+
   // CONDITIONAL RENDERING AFTER ALL HOOKS
   // Show recording indicator if currently recording
   if (isRecording) {
@@ -154,15 +143,19 @@ export function VoiceInputButton({
     );
   }
 
-  // Show transcription status if currently processing and we have a taskId
-  if (isProcessing && taskId) {
+  // Show processing state while uploading/transcribing
+  if (isProcessing) {
     return (
-      <VoiceTranscriptionStatus
-        taskId={taskId}
-        onComplete={handleTranscriptionComplete}
-        onError={handleTranscriptionError}
-        pollingInterval={1000}
-      />
+      <div className="flex flex-col items-center space-y-3 p-4">
+        <div className="relative">
+          <Loader2 className="h-8 w-8 text-primary animate-spin" />
+          <div className="absolute inset-0 rounded-full bg-primary/20 animate-ping" />
+        </div>
+        <div className="text-center">
+          <p className="text-sm font-medium text-foreground">Przetwarzam nagranie...</p>
+          <p className="text-xs text-muted-foreground mt-1">Może zająć do 30 sekund</p>
+        </div>
+      </div>
     );
   }
 

@@ -9,7 +9,6 @@
  */
 
 import type { SupabaseClient } from "../../db/supabase.client";
-import type { Database } from "../../db/database.types";
 import type { Profile, ExpenseTranscriptionResult } from "../../types";
 import { WhisperService } from "./whisperService";
 import { OpenRouterService, type ExtractDataParams } from "./openRouterService";
@@ -18,10 +17,6 @@ import { expenseTranscriptionSchema } from "../schemas/expenseSchemas";
 // ============================================================================
 // Type Definitions
 // ============================================================================
-
-type TranscriptionTaskRow = Database["public"]["Tables"]["transcription_tasks"]["Row"];
-type TranscriptionTaskInsert = Database["public"]["Tables"]["transcription_tasks"]["Insert"];
-type TranscriptionTaskStatus = Database["public"]["Enums"]["transcription_task_status"];
 
 export interface GroupContext {
   groupId: string;
@@ -38,21 +33,18 @@ export interface GroupContext {
   }[];
 }
 
-export interface CreateTaskParams {
-  groupId: string;
-  userId: string;
-  audioBlob?: Blob; // Optional - can store URL instead
-  audioUrl?: string;
+export interface ProcessAudioResult {
+  transcription: string;
+  expenseData: ExpenseTranscriptionResult;
 }
 
-export interface ProcessTaskParams {
-  taskId: string;
+export interface ProcessAudioParams {
   audioBlob: Blob;
   groupContext: GroupContext;
   userId: string;
 }
 
-export interface TranscriptionTaskServiceConfig {
+export interface AudioTranscriptionServiceConfig {
   openaiApiKey: string; // OpenAI API key - should be resolved in API endpoint
   openrouterApiKey: string; // OpenRouter API key - should be resolved in API endpoint
 }
@@ -60,20 +52,6 @@ export interface TranscriptionTaskServiceConfig {
 // ============================================================================
 // Custom Error Classes
 // ============================================================================
-
-export class TaskNotFoundError extends Error {
-  constructor(taskId: string) {
-    super(`Transcription task not found: ${taskId}`);
-    this.name = "TaskNotFoundError";
-  }
-}
-
-export class TaskAccessDeniedError extends Error {
-  constructor(taskId: string) {
-    super(`Access denied to transcription task: ${taskId}`);
-    this.name = "TaskAccessDeniedError";
-  }
-}
 
 export class TaskProcessingError extends Error {
   constructor(
@@ -93,14 +71,14 @@ export class GroupContextError extends Error {
 }
 
 // ============================================================================
-// TranscriptionTaskService Implementation
+// AudioTranscriptionService Implementation
 // ============================================================================
 
-export class TranscriptionTaskService {
+export class AudioTranscriptionService {
   private whisperService: WhisperService;
   private openRouterService: OpenRouterService;
 
-  constructor(config: TranscriptionTaskServiceConfig) {
+  constructor(config: AudioTranscriptionServiceConfig) {
     this.whisperService = new WhisperService({ apiKey: config.openaiApiKey });
     this.openRouterService = new OpenRouterService({ apiKey: config.openrouterApiKey });
   }
@@ -109,143 +87,29 @@ export class TranscriptionTaskService {
   // Public Methods - Task Management
   // ==========================================================================
 
-  /**
-   * Creates a new transcription task in the database
-   */
-  async createTask(supabase: SupabaseClient, params: CreateTaskParams): Promise<TranscriptionTaskRow> {
-    const taskData: TranscriptionTaskInsert = {
-      group_id: params.groupId,
-      user_id: params.userId,
-      status: "processing",
-      audio_url: params.audioUrl || null,
-    };
-
-    const { data, error } = await supabase.from("transcription_tasks").insert(taskData).select().single();
-
-    if (error || !data) {
-      throw new Error("Failed to create transcription task");
-    }
-
-    return data;
-  }
-
-  /**
-   * Gets a transcription task by ID
-   */
-  async getTask(supabase: SupabaseClient, taskId: string, userId: string): Promise<TranscriptionTaskRow> {
-    const { data, error } = await supabase
-      .from("transcription_tasks")
-      .select("*")
-      .eq("id", taskId)
-      .eq("user_id", userId) // RLS ensures user can only see their own tasks
-      .single();
-
-    if (error) {
-      if (error.code === "PGRST116") {
-        throw new TaskNotFoundError(taskId);
-      }
-      throw new Error("Failed to fetch transcription task");
-    }
-
-    if (!data) {
-      throw new TaskNotFoundError(taskId);
-    }
-
-    return data;
-  }
-
-  /**
-   * Updates task status to completed with results
-   */
-  async completeTask(
-    supabase: SupabaseClient,
-    taskId: string,
-    transcriptionText: string,
-    resultData: ExpenseTranscriptionResult
-  ): Promise<void> {
-    const { error } = await supabase
-      .from("transcription_tasks")
-      .update({
-        status: "completed" as TranscriptionTaskStatus,
-        transcription_text: transcriptionText,
-        result_data: JSON.parse(JSON.stringify(resultData)),
-        completed_at: new Date().toISOString(),
-      })
-      .eq("id", taskId);
-
-    if (error) {
-      throw new Error("Failed to update task status");
-    }
-  }
-
-  /**
-   * Updates task status to failed with error details
-   */
-  async failTask(supabase: SupabaseClient, taskId: string, errorCode: string, errorMessage: string): Promise<void> {
-    const { error } = await supabase
-      .from("transcription_tasks")
-      .update({
-        status: "failed" as TranscriptionTaskStatus,
-        error_code: errorCode,
-        error_message: errorMessage,
-        completed_at: new Date().toISOString(),
-      })
-      .eq("id", taskId);
-
-    if (error) {
-      throw new Error("Failed to update task status");
-    }
-  }
-
   // ==========================================================================
   // Public Methods - Processing Pipeline
   // ==========================================================================
 
   /**
-   * Processes a transcription task through the complete pipeline:
+   * Processes audio directly through the complete pipeline:
    * 1. Transcribe audio to text (Whisper)
    * 2. Extract expense data from text (OpenRouter LLM)
-   * 3. Update task with results
+   * 3. Return result immediately
    */
-  async processTask(supabase: SupabaseClient, params: ProcessTaskParams): Promise<void> {
-    console.error(`[TranscriptionTask] processTask called with params:`, {
-      taskId: params.taskId,
-      audioBlobSize: params.audioBlob?.size,
-      audioBlobType: params.audioBlob?.type,
-      userId: params.userId,
-      groupId: params.groupContext?.groupId,
-    });
-
+  async processAudio(params: ProcessAudioParams): Promise<ProcessAudioResult> {
     try {
-      console.error(`[TranscriptionTask] Starting task ${params.taskId}`);
-      console.error(`[TranscriptionTask] Audio blob size: ${params.audioBlob.size} bytes`);
-      console.error(`[TranscriptionTask] Audio blob type: ${params.audioBlob.type}`);
-
       // Step 1: Transcribe audio to text
-      console.error(`[TranscriptionTask] Step 1: Starting Whisper transcription for task ${params.taskId}`);
-      console.error(`[TranscriptionTask] Group context:`, {
-        groupId: params.groupContext.groupId,
-        groupName: params.groupContext.groupName,
-        membersCount: params.groupContext.members.length,
-        currenciesCount: params.groupContext.currencies.length,
-      });
-
       const transcriptionResult = await this.whisperService.transcribeAudio({
         audioBlob: params.audioBlob,
         language: "pl", // Polish - can be made dynamic based on group settings
         prompt: this.buildWhisperPrompt(params.groupContext),
       });
 
-      console.error(
-        `[TranscriptionTask] Step 1 completed for task ${params.taskId}. Text length: ${transcriptionResult.text.length}`
-      );
-
       // Step 2: Build context for LLM
-      console.error(`[TranscriptionTask] Step 2: Building LLM context for task ${params.taskId}`);
       const context = this.buildLLMContext(params.groupContext, params.userId);
 
       // Step 3: Extract expense data from transcription
-      console.error(`[TranscriptionTask] Step 3: Starting LLM extraction for task ${params.taskId}`);
       const extractParams: ExtractDataParams<typeof expenseTranscriptionSchema> = {
         transcription: transcriptionResult.text,
         context,
@@ -256,7 +120,6 @@ export class TranscriptionTaskService {
       };
 
       const expenseData = await this.openRouterService.extractExpenseData(extractParams);
-      console.error(`[TranscriptionTask] Step 3 completed for task ${params.taskId}`);
 
       // Step 4: Calculate final confidence score
       // Use LLM's confidence if provided, otherwise fall back to heuristic calculation
@@ -278,12 +141,13 @@ export class TranscriptionTaskService {
         extraction_confidence: confidenceScore,
       };
 
-      // Step 5: Update task as completed
-      console.error(`[TranscriptionTask] Step 5: Completing task ${params.taskId}`);
-      await this.completeTask(supabase, params.taskId, transcriptionResult.text, expenseDataWithConfidence);
-      console.error(`[TranscriptionTask] Task ${params.taskId} completed successfully`);
+      // Step 5: Return the result directly
+      return {
+        transcription: transcriptionResult.text,
+        expenseData: expenseDataWithConfidence,
+      };
     } catch (error) {
-      console.error(`[TranscriptionTask] Error in task ${params.taskId}:`, error);
+      console.error(`[AudioTranscription] Error processing audio:`, error);
       // Determine error code and message
       let errorCode = "UNKNOWN_ERROR";
       let errorMessage = "An unexpected error occurred";
@@ -292,10 +156,6 @@ export class TranscriptionTaskService {
         errorCode = error.name;
         errorMessage = error.message;
       }
-
-      // Update task as failed
-      console.error(`[TranscriptionTask] Marking task ${params.taskId} as failed with code: ${errorCode}`);
-      await this.failTask(supabase, params.taskId, errorCode, errorMessage);
 
       // Re-throw the error for caller to handle
       throw new TaskProcessingError(errorMessage, errorCode);

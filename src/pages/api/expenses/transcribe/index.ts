@@ -1,35 +1,34 @@
 /**
  * API Endpoint: POST /api/expenses/transcribe
- * Creates a new audio transcription task for expense extraction
+ * Transcribes audio and extracts expense data synchronously
  *
- * This endpoint handles the asynchronous processing of audio files:
+ * This endpoint handles the synchronous processing of audio files:
  * 1. Validates user authentication and group membership
  * 2. Validates audio file (format, size)
- * 3. Creates a transcription task in database
- * 4. Processes the task asynchronously (Whisper → LLM)
- * 5. Returns task ID for status polling
+ * 3. Processes audio directly (Whisper → LLM)
+ * 4. Returns transcription and expense data immediately
  */
 
 import type { APIRoute } from "astro";
-import type { ErrorResponseDTO, TranscribeTaskResponseDTO } from "../../../../types";
+import type { ErrorResponseDTO, TranscriptionResultDTO } from "../../../../types";
 import {
-  TranscriptionTaskService,
+  AudioTranscriptionService,
   TaskProcessingError,
   GroupContextError,
-} from "../../../../lib/services/transcriptionTaskService";
+} from "../../../../lib/services/audioTranscriptionService";
 import { z } from "zod";
 
 export const prerender = false;
 
 /**
  * POST /api/expenses/transcribe
- * Submits audio file for transcription and expense data extraction
+ * Transcribes audio and extracts expense data synchronously
  *
  * @requires Authentication - User must be logged in
  * @requires Membership - User must be an active member of the group
  * @requires Valid audio file - Max 25MB, supported formats
  *
- * @returns 201 - Task created and processing started
+ * @returns 200 - Audio processed successfully, returns transcription and expense data
  * @returns 400 - Invalid request (missing fields, invalid file)
  * @returns 401 - Unauthorized (not authenticated)
  * @returns 403 - Forbidden (not a group member)
@@ -39,11 +38,8 @@ export const prerender = false;
  */
 export const POST: APIRoute = async ({ request, locals }) => {
   try {
-    console.error(`[TranscribeAPI] Received POST request`);
-
     // Step 1: Check authentication
     if (!locals.user) {
-      console.error(`[TranscribeAPI] No user authenticated`);
       const errorResponse: ErrorResponseDTO = {
         error: {
           code: "UNAUTHORIZED",
@@ -76,9 +72,6 @@ export const POST: APIRoute = async ({ request, locals }) => {
     // Step 3: Extract and validate required fields
     const audioFile = formData.get("audio");
     const groupId = formData.get("group_id");
-
-    console.error(`[TranscribeAPI] Audio file: ${audioFile ? "present" : "missing"}, size: ${audioFile?.size || 0}`);
-    console.error(`[TranscribeAPI] Group ID: ${groupId || "missing"}`);
 
     // Guard clause: validate audio file
     if (!audioFile || !(audioFile instanceof File)) {
@@ -173,13 +166,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const openaiApiKey = import.meta.env.OPENAI_API_KEY;
     const openrouterApiKey = import.meta.env.OPENROUTER_API_KEY;
 
-    console.error(`[TranscribeAPI] API Keys available - OpenAI: ${!!openaiApiKey}, OpenRouter: ${!!openrouterApiKey}`);
-    console.error(`[TranscribeAPI] User authenticated: ${!!locals.user}`);
-
     if (!openaiApiKey || !openrouterApiKey) {
-      console.error(
-        `[TranscribeAPI] CRITICAL: API keys not configured! OpenAI: ${!!openaiApiKey}, OpenRouter: ${!!openrouterApiKey}`
-      );
       const errorResponse: ErrorResponseDTO = {
         error: {
           code: "SERVICE_CONFIGURATION_ERROR",
@@ -192,7 +179,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       });
     }
 
-    const taskService = new TranscriptionTaskService({
+    const transcriptionService = new AudioTranscriptionService({
       openaiApiKey,
       openrouterApiKey,
     });
@@ -200,7 +187,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     // Step 5: Get group context and verify membership
     let groupContext;
     try {
-      groupContext = await taskService.getGroupContext(locals.supabase, groupId, locals.user.id);
+      groupContext = await transcriptionService.getGroupContext(locals.supabase, groupId, locals.user.id);
     } catch (error) {
       if (error instanceof GroupContextError) {
         const errorResponse: ErrorResponseDTO = {
@@ -217,70 +204,26 @@ export const POST: APIRoute = async ({ request, locals }) => {
       throw error; // Re-throw unexpected errors
     }
 
-    // Step 6: Create transcription task in database
-    console.error(`[TranscribeAPI] Creating task for user ${locals.user.id}, group ${groupId}`);
-    const task = await taskService.createTask(locals.supabase, {
-      groupId,
-      userId: locals.user.id,
-    });
-    console.error(`[TranscribeAPI] Task created with ID: ${task.id}`);
-
-    // Step 7: Convert File to Blob
+    // Step 6: Convert File to Blob
     const audioBlob = new Blob([await audioFile.arrayBuffer()], {
       type: audioFile.type,
     });
 
-    // Step 8: Process task SYNCHRONICALLY (user will wait for result)
-    // This is a workaround for Pages Functions limitation
-    console.error(`[TranscribeAPI] Starting SYNC processTask for task: ${task.id}`);
-    try {
-      await taskService.processTask(locals.supabase, {
-        taskId: task.id,
-        audioBlob,
-        groupContext,
-        userId: locals.user.id,
-      });
-      console.error(`[TranscribeAPI] processTask completed successfully for task: ${task.id}`);
-    } catch (error) {
-      console.error(`[TranscribeAPI] processTask failed for task: ${task.id}`, error);
-      // Errors are already handled in processTask (updates task status to failed)
-    }
+    // Step 7: Process audio SYNCHRONICALLY (user will wait for result)
+    const result = await transcriptionService.processAudio({
+      audioBlob,
+      groupContext,
+      userId: locals.user.id,
+    });
 
-    // Step 9: Get final task status after processing
-    const finalTask = await taskService.getTask(locals.supabase, task.id, locals.user.id);
-
-    const response: TranscribeTaskResponseDTO = {
-      task_id: finalTask.id,
-      status: finalTask.status,
-      created_at: finalTask.created_at,
-      completed_at: finalTask.completed_at || undefined,
+    const response: TranscriptionResultDTO = {
+      transcription: result.transcription,
+      expense_data: result.expenseData,
+      confidence: result.expenseData.extraction_confidence ?? 0.5,
     };
 
-    // Add result data if task is completed
-    if (finalTask.status === "completed" && finalTask.result_data && finalTask.transcription_text) {
-      // Extract confidence from result_data or use default
-      const resultData = finalTask.result_data as unknown as ExpenseTranscriptionResult;
-      const confidence = resultData?.extraction_confidence ?? 0.5; // Default to 0.5 if not available
-
-      response.result = {
-        transcription: finalTask.transcription_text,
-        expense_data: finalTask.result_data as unknown as ExpenseTranscriptionResult,
-        confidence,
-      };
-    }
-
-    // Add error details if task failed
-    if (finalTask.status === "failed" && finalTask.error_code && finalTask.error_message) {
-      response.error = {
-        code: finalTask.error_code,
-        message: finalTask.error_message,
-      };
-    }
-
-    console.error(`[TranscribeAPI] Returning response with task ID: ${task.id}`);
-
     return new Response(JSON.stringify(response), {
-      status: 201,
+      status: 200,
       headers: { "Content-Type": "application/json" },
     });
   } catch (error) {

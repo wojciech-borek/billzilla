@@ -18,8 +18,6 @@ src/pages/groups/[groupId]/expenses/
 src/components/group/expenses/
 ├── AddExpenseModal.tsx (modal wrapper dla formularza)
 ├── VoiceInputButton.tsx (przycisk aktywujący nagrywanie głosowe)
-├── VoiceRecordingIndicator.tsx (wskaźnik aktywnego nagrywania)
-├── VoiceTranscriptionStatus.tsx (status przetwarzania transkrypcji)
 ├── forms/
 │   ├── ExpenseForm.tsx (główny komponent formularza - orchestruje podkomponenty)
 │   ├── ExpenseBasicInfo.tsx (informacje podstawowe: opis, kwota, waluta, data, płatnik)
@@ -54,9 +52,9 @@ src/components/group/expenses/
 
 ### VoiceInputButton
 
-- **Opis komponentu:** Przycisk w formie ikony mikrofonu, który aktywuje nagrywanie polecenia głosowego. Po kliknięciu przechodzi w tryb nagrywania z wizualnym wskaźnikiem, a po zakończeniu wysyła audio do API transkrypcji.
-- **Główne elementy:** Button z ikoną mikrofonu (Mic/MicOff z Lucide React), VoiceRecordingIndicator (podczas nagrywania), VoiceTranscriptionStatus (podczas przetwarzania).
-- **Obsługiwane interakcje:** onClick (rozpoczęcie/zakończenie nagrywania), onTranscriptionComplete (wypełnienie formularza danymi).
+- **Opis komponentu:** Przycisk w formie ikony mikrofonu, który aktywuje nagrywanie polecenia głosowego. Po kliknięciu przechodzi w tryb nagrywania z wizualnym wskaźnikiem, a po zakończeniu natychmiast przetwarza audio synchronicznie i wypełnia formularz.
+- **Główne elementy:** Button z ikoną mikrofonu (Mic/MicOff z Lucide React), animowany wskaźnik podczas nagrywania, spinner podczas przetwarzania.
+- **Obsługiwane interakcje:** onClick (rozpoczęcie/zakończenie nagrywania), onTranscriptionComplete (wypełnienie formularza danymi), onTranscriptionError (obsługa błędów).
 - **Obsługiwana walidacja:** Sprawdzenie uprawnień do mikrofonu, walidacja rozmiaru pliku audio (max 25MB), walidacja formatu audio.
 - **Typy:** TranscriptionResultDTO (wynik), TranscriptionErrorDTO (błędy transkrypcji).
 - **Propsy:**
@@ -68,40 +66,6 @@ src/components/group/expenses/
     disabled?: boolean;
     isRecording?: boolean;
     isProcessing?: boolean;
-  }
-  ```
-
-### VoiceRecordingIndicator
-
-- **Opis komponentu:** Komponent wyświetlany podczas aktywnego nagrywania. Pokazuje animowaną ikonę mikrofonu, czas nagrywania oraz przycisk anulowania nagrywania.
-- **Główne elementy:** Animowana ikona mikrofonu, timer nagrywania, przycisk "Anuluj" lub "Zatrzymaj nagrywanie".
-- **Obsługiwane interakcje:** onStop (zakończenie nagrywania), onCancel (anulowanie bez wysyłania).
-- **Obsługiwana walidacja:** Brak bezpośredniej walidacji.
-- **Typy:** Brak specyficznych DTO.
-- **Propsy:**
-  ```typescript
-  interface VoiceRecordingIndicatorProps {
-    recordingDuration: number; // w sekundach
-    onStop: () => void;
-    onCancel: () => void;
-    maxDuration?: number; // maksymalny czas nagrania (np. 60s)
-  }
-  ```
-
-### VoiceTranscriptionStatus
-
-- **Opis komponentu:** Komponent wyświetlający status przetwarzania transkrypcji. Pokazuje wskaźnik ładowania, komunikaty o postępie oraz wyświetla błędy w przypadku niepowodzenia. Odpytuje endpoint statusu zadania transkrypcji.
-- **Główne elementy:** Spinner/Progress indicator, komunikaty tekstowe o statusie ("Transkrybuję nagranie...", "Analizuję dane wydatku..."), komunikaty błędów.
-- **Obsługiwane interakcje:** onComplete (transkrypcja zakończona), onError (błąd transkrypcji), onRetry (ponowna próba).
-- **Obsługiwana walidacja:** Brak bezpośredniej walidacji.
-- **Typy:** TranscribeTaskStatusDTO, TranscriptionResultDTO, TranscriptionErrorDTO.
-- **Propsy:**
-  ```typescript
-  interface VoiceTranscriptionStatusProps {
-    taskId: string;
-    onComplete: (result: TranscriptionResultDTO) => void;
-    onError: (error: TranscriptionErrorDTO) => void;
-    pollingInterval?: number; // interwał odpytywania w ms (domyślnie 1000)
   }
   ```
 
@@ -214,21 +178,6 @@ Wymagane typy obejmują istniejące DTO z `types.ts` oraz typy używane w hookac
     message: string;                 // komunikat błędu
   }
 
-- TranscribeTaskStatusDTO: {
-    task_id: string;                 // UUID zadania
-    status: "processing" | "completed" | "failed";
-    created_at: string;              // ISO 8601
-    completed_at?: string;           // ISO 8601 (jeśli zakończone)
-    result?: TranscriptionResultDTO; // wynik (jeśli status = completed)
-    error?: TranscriptionErrorDTO;   // błąd (jeśli status = failed)
-  }
-
-- TranscribeTaskResponseDTO: {
-    task_id: string;
-    status: "processing";
-    created_at: string;
-  }
-
 // Typy hooków - useExpenseForm
 type ExpenseFormState = {
   isSubmitting: boolean;
@@ -254,7 +203,6 @@ type VoiceTranscriptionState = {
   isRecording: boolean;
   isProcessing: boolean;
   recordingDuration: number;
-  taskId: string | null;
   error: TranscriptionErrorDTO | null;
 };
 
@@ -262,8 +210,7 @@ type UseVoiceTranscriptionResult = VoiceTranscriptionState & {
   startRecording: () => Promise<void>;
   stopRecording: () => Promise<void>;
   cancelRecording: () => void;
-  uploadAudio: (audioBlob: Blob, groupId: string) => Promise<TranscribeTaskResponseDTO>;
-  pollTaskStatus: (taskId: string) => Promise<TranscribeTaskStatusDTO>;
+  processAudio: (audioBlob: Blob, groupId: string, onComplete: (result: TranscriptionResultDTO) => void, onError: (error: TranscriptionErrorDTO) => void) => Promise<void>;
   reset: () => void;
 };
 
@@ -371,7 +318,7 @@ function useExpenseForm(
 
 ### useVoiceTranscription
 
-Hook zarządza całym procesem transkrypcji głosowej: nagrywaniem audio, uploadem do API oraz pollowaniem statusu zadania:
+Hook zarządza całym procesem transkrypcji głosowej: nagrywaniem audio oraz synchronicznym przetwarzaniem przez API:
 
 ```typescript
 function useVoiceTranscription(): UseVoiceTranscriptionResult {
@@ -379,7 +326,6 @@ function useVoiceTranscription(): UseVoiceTranscriptionResult {
     isRecording: false,
     isProcessing: false,
     recordingDuration: 0,
-    taskId: null,
     error: null,
   });
 
@@ -416,53 +362,53 @@ function useVoiceTranscription(): UseVoiceTranscriptionResult {
     }));
   }, [audioRecorder]);
 
-  const uploadAudio = useCallback(async (audioBlob: Blob, groupId: string): Promise<TranscribeTaskResponseDTO> => {
-    setState((prev) => ({ ...prev, isProcessing: true, error: null }));
+  const processAudio = useCallback(
+    async (
+      audioBlob: Blob,
+      groupId: string,
+      onComplete: (result: TranscriptionResultDTO) => void,
+      onError: (error: TranscriptionErrorDTO) => void
+    ): Promise<void> => {
+      setState((prev) => ({ ...prev, isProcessing: true, error: null }));
 
-    try {
-      const formData = new FormData();
-      formData.append("audio", audioBlob, "recording.webm");
-      formData.append("group_id", groupId);
+      try {
+        const formData = new FormData();
+        formData.append("audio", audioBlob, "recording.webm");
+        formData.append("group_id", groupId);
 
-      const response = await fetch("/api/expenses/transcribe", {
-        method: "POST",
-        body: formData,
-      });
+        const response = await fetch("/api/expenses/transcribe", {
+          method: "POST",
+          body: formData,
+        });
 
-      if (!response.ok) {
-        throw new Error("Upload failed");
+        if (!response.ok) {
+          throw new Error("Processing failed");
+        }
+
+        const result: TranscriptionResultDTO = await response.json();
+        setState((prev) => ({ ...prev, isProcessing: false }));
+        onComplete(result);
+      } catch (error) {
+        const transcriptionError: TranscriptionErrorDTO = {
+          code: "PROCESSING_FAILED",
+          message: "Nie udało się przetworzyć nagrania",
+        };
+        setState((prev) => ({
+          ...prev,
+          isProcessing: false,
+          error: transcriptionError,
+        }));
+        onError(transcriptionError);
       }
-
-      const data: TranscribeTaskResponseDTO = await response.json();
-      setState((prev) => ({ ...prev, taskId: data.task_id }));
-      return data;
-    } catch (error) {
-      setState((prev) => ({
-        ...prev,
-        isProcessing: false,
-        error: {
-          code: "UPLOAD_FAILED",
-          message: "Nie udało się wysłać nagrania",
-        },
-      }));
-      throw error;
-    }
-  }, []);
-
-  const pollTaskStatus = useCallback(async (taskId: string): Promise<TranscribeTaskStatusDTO> => {
-    const response = await fetch(`/api/expenses/transcribe/${taskId}`);
-    if (!response.ok) {
-      throw new Error("Failed to fetch task status");
-    }
-    return response.json();
-  }, []);
+    },
+    []
+  );
 
   const reset = useCallback(() => {
     setState({
       isRecording: false,
       isProcessing: false,
       recordingDuration: 0,
-      taskId: null,
       error: null,
     });
     audioRecorder.reset();
@@ -474,8 +420,7 @@ function useVoiceTranscription(): UseVoiceTranscriptionResult {
     startRecording,
     stopRecording,
     cancelRecording,
-    uploadAudio,
-    pollTaskStatus,
+    processAudio,
     reset,
   };
 }
@@ -592,7 +537,7 @@ Hooki zapewniają separację odpowiedzialności, walidację w czasie rzeczywisty
 
 ## 7. Integracja API
 
-Widok integruje się z trzema endpointami: tworzenie wydatku, upload audio oraz sprawdzanie statusu transkrypcji.
+Widok integruje się z dwoma endpointami: tworzenie wydatku oraz synchroniczna transkrypcja audio.
 
 ### 7.1. Tworzenie wydatku (POST /api/groups/:groupId/expenses)
 
@@ -643,9 +588,9 @@ Body: ExpenseDTO {
 - 404: Group/Wallet not found
 - 500: Internal Server Error
 
-### 7.2. Upload audio dla transkrypcji (POST /api/expenses/transcribe)
+### 7.2. Synchroniczna transkrypcja audio (POST /api/expenses/transcribe)
 
-Endpoint do wysyłania pliku audio i inicjowania procesu transkrypcji asynchronicznej.
+Endpoint do wysyłania pliku audio i natychmiastowego przetwarzania z zwrotem wyników transkrypcji.
 
 **Żądanie (Request):**
 
@@ -662,13 +607,13 @@ FormData:
 **Odpowiedź (Response):**
 
 ```typescript
-201 Created
+200 OK
 Content-Type: application/json
 
-Body: TranscribeTaskResponseDTO {
-  task_id: string;           // UUID zadania
-  status: "processing";
-  created_at: string;        // ISO 8601
+Body: TranscriptionResultDTO {
+  transcription: string;     // surowy tekst transkrypcji
+  expense_data: CreateExpenseCommand;  // wyekstrahowane dane wydatku
+  confidence: number;        // 0-1, poziom pewności AI
 }
 ```
 
@@ -679,64 +624,18 @@ Body: TranscribeTaskResponseDTO {
 - 403: Forbidden (użytkownik nie należy do grupy)
 - 404: Not Found (grupa nie istnieje)
 - 413: Payload Too Large (plik > 25MB)
+- 422: Unprocessable Entity (AI nie mogła wyodrębnić danych)
 - 500: Internal Server Error
 - 503: Service Unavailable (usługa AI niedostępna)
 
-### 7.3. Status zadania transkrypcji (GET /api/expenses/transcribe/:taskId)
-
-Endpoint do sprawdzania statusu przetwarzania transkrypcji i pobierania wyników.
-
-**Żądanie (Request):**
-
-```typescript
-GET /api/expenses/transcribe/:taskId
-Authorization: Bearer <token>
-```
-
-**Odpowiedź (Response):**
-
-```typescript
-200 OK
-Content-Type: application/json
-
-Body: TranscribeTaskStatusDTO {
-  task_id: string;
-  status: "processing" | "completed" | "failed";
-  created_at: string;
-  completed_at?: string;     // jeśli status = completed lub failed
-  result?: TranscriptionResultDTO;  // jeśli status = completed
-  error?: TranscriptionErrorDTO;    // jeśli status = failed
-}
-
-// Gdy status = "completed":
-result: {
-  transcription: string;     // surowy tekst transkrypcji
-  expense_data: CreateExpenseCommand;  // wyekstrahowane dane
-  confidence: number;        // 0-1, poziom pewności AI
-}
-
-// Gdy status = "failed":
-error: {
-  code: string;              // "TRANSCRIPTION_FAILED", "INVALID_AUDIO", "AI_ERROR"
-  message: string;           // komunikat błędu
-}
-```
-
-**Obsługa błędów:**
-
-- 401: Unauthorized
-- 404: Not Found (zadanie nie istnieje lub nie należy do użytkownika)
-- 500: Internal Server Error
-
-### 7.4. Przepływ integracji dla dodawania głosem
+### 7.3. Przepływ integracji dla dodawania głosem
 
 1. **Nagrywanie:** Użytkownik klika VoiceInputButton → useAudioRecorder.startRecording()
 2. **Zakończenie nagrywania:** Użytkownik klika stop → useAudioRecorder.stopRecording() → zwraca audioBlob
-3. **Upload:** useVoiceTranscription.uploadAudio(audioBlob, groupId) → POST /api/expenses/transcribe → otrzymuje task_id
-4. **Polling:** VoiceTranscriptionStatus co 1s wywołuje GET /api/expenses/transcribe/:taskId
-5. **Sukces:** Gdy status = "completed" → VoiceTranscriptionStatus.onComplete(result) → ExpenseForm.populateFromTranscription(result.expense_data)
-6. **Weryfikacja:** Użytkownik edytuje wypełniony formularz (opcjonalnie)
-7. **Zatwierdzenie:** Użytkownik klika "Dodaj wydatek" → POST /api/groups/:groupId/expenses z danymi z formularza
+3. **Przetwarzanie:** useVoiceTranscription.processAudio(audioBlob, groupId, onComplete, onError) → POST /api/expenses/transcribe
+4. **Rezultat:** API zwraca natychmiast TranscriptionResultDTO → onComplete(result) → ExpenseForm.populateFromTranscription(result.expense_data)
+5. **Weryfikacja:** Użytkownik edytuje wypełniony formularz (opcjonalnie)
+6. **Zatwierdzenie:** Użytkownik klika "Dodaj wydatek" → POST /api/groups/:groupId/expenses z danymi z formularza
 
 ## 8. Interakcje użytkownika
 
@@ -765,28 +664,24 @@ error: {
    - Użytkownik może anulować nagrywanie przyciskiem "Anuluj"
    - Użytkownik może zakończyć nagrywanie przyciskiem "Zatrzymaj" lub po 60 sekundach
 
-3. **Upload i przetwarzanie:**
+3. **Przetwarzanie synchroniczne:**
    - Po zakończeniu nagrywania, audioBlob jest automatycznie wysyłany do API
-   - Wyświetla się VoiceTranscriptionStatus ze wskaźnikiem ładowania
-   - Komunikat: "Transkrybuję nagranie..." (faza 1: Whisper)
-   - Komunikat: "Analizuję dane wydatku..." (faza 2: LLM)
+   - Przycisk pokazuje spinner z komunikatem "Analizuję nagranie..."
+   - API przetwarza audio synchronicznie (transkrypcja + ekstrakcja danych)
+   - Czas oczekiwania: max 25 sekund
 
-4. **Polling statusu:**
-   - Co 1 sekundę komponent VoiceTranscriptionStatus odpytuje endpoint GET /api/expenses/transcribe/:taskId
-   - Użytkownik widzi wskaźnik postępu
-
-5. **Sukces transkrypcji:**
-   - Gdy status = "completed", formularz jest automatycznie wypełniany danymi z result.expense_data
+4. **Sukces przetwarzania:**
+   - API zwraca natychmiast dane wydatku, formularz jest automatycznie wypełniany
    - Pola formularza: opis, kwota, waluta, data, płatnik, podział - wszystkie wypełnione
    - Użytkownik widzi toast "Wydatek wypełniony automatycznie. Sprawdź i zatwierdź."
-   - VoiceTranscriptionStatus znika, pokazuje się wypełniony formularz
+   - Spinner znika, pokazuje się wypełniony formularz
 
-6. **Weryfikacja i edycja:**
+5. **Weryfikacja i edycja:**
    - Użytkownik może edytować wszystkie pola wypełnione przez AI
    - Szczególnie może skorygować podział kosztów między uczestników
    - Real-time walidacja działa jak przy ręcznym dodawaniu
 
-7. **Zatwierdzenie:**
+6. **Zatwierdzenie:**
    - Użytkownik klika "Dodaj wydatek"
    - Standardowy przepływ wysyłania formularza (POST /api/groups/:groupId/expenses)
    - Toast success, zamknięcie modala
@@ -865,9 +760,9 @@ Warunki weryfikowane przez komponenty wpływają na stan UI poprzez disabled/ena
   - Automatyczne zatrzymanie nagrywania po maxDuration (60s)
   - Blokada przycisku "Stop" przez pierwsze 0.5s nagrywania (zapobieganie przypadkowemu kliknięciu)
 
-- **VoiceTranscriptionStatus:**
-  - Timeout pollingu: max 60 sekund (jeśli status wciąż "processing", pokazuje błąd timeout)
-  - Walidacja odpowiedzi API: sprawdzenie poprawności struktury TranscribeTaskStatusDTO
+- **VoiceInputButton (podczas przetwarzania):**
+  - Timeout przetwarzania: max 25 sekund
+  - Walidacja odpowiedzi API: sprawdzenie poprawności struktury TranscriptionResultDTO
   - Walidacja confidence: jeśli < 0.5, wyświetlenie ostrzeżenia o niskiej pewności
 
 - **ExpenseForm.populateFromTranscription:**
@@ -980,14 +875,8 @@ Wszystkie warunki są walidowane zarówno po stronie klienta (UX) jak i serwera 
     - `LANGUAGE_NOT_SUPPORTED`: "Wykryto nieobsługiwany język. Użyj języka polskiego."
   - Przyciski: "Spróbuj ponownie" lub "Dodaj ręcznie"
 
-- **Timeout pollingu (> 60s):**
+- **Timeout przetwarzania (> 25s):**
   - Komunikat: "Przetwarzanie trwa zbyt długo. Spróbuj ponownie lub dodaj wydatek ręcznie."
-  - Toast error
-  - Zatrzymanie pollingu
-  - Opcje: "Sprawdź status później" lub "Dodaj ręcznie"
-
-- **Błąd 404 podczas pollingu (zadanie nie istnieje):**
-  - Komunikat: "Nie znaleziono zadania transkrypcji."
   - Toast error
   - Reset stanu, możliwość nowego nagrania
 
@@ -1054,12 +943,11 @@ Wszystkie warunki są walidowane zarówno po stronie klienta (UX) jak i serwera 
     - Timer i limity czasowe
     - Obsługa uprawnień do mikrofonu
 15. Zaimplementować `useVoiceTranscription` w `src/lib/hooks/useVoiceTranscription.ts`:
-    - Upload audio do API
-    - Polling statusu zadania
-    - Zarządzanie błędami i retry logic
+    - Synchroniczne przetwarzanie audio przez API
+    - Obsługa callback'ów onComplete/onError
+    - Zarządzanie błędami i timeout
 16. Dodać funkcje API w `src/lib/services/expenseTranscriptionService.ts`:
     - `uploadAudioForTranscription(audioBlob, groupId)`
-    - `getTranscriptionTaskStatus(taskId)`
     - Obsługa FormData i multipart/form-data
 
 ### Faza 4: Komponenty głosowe
@@ -1068,27 +956,19 @@ Wszystkie warunki są walidowane zarówno po stronie klienta (UX) jak i serwera 
     - Przycisk z ikoną mikrofonu
     - Stany: idle, recording, processing
     - Integracja z useVoiceTranscription
-18. Stworzyć `VoiceRecordingIndicator.tsx`:
-    - Animowana ikona mikrofonu podczas nagrywania
-    - Timer nagrywania
-    - Przyciski Stop i Anuluj
-19. Stworzyć `VoiceTranscriptionStatus.tsx`:
-    - Wskaźnik postępu przetwarzania
-    - Polling statusu zadania co 1s
-    - Komunikaty o fazach transkrypcji
-    - Obsługa błędów i timeoutów
+    - Wbudowany spinner podczas przetwarzania
 
 ### Faza 5: Integracja głosu z formularzem
 
-20. Zaktualizować `useExpenseForm`:
+18. Zaktualizować `useExpenseForm`:
     - Dodać metodę `populateFromTranscription(data: CreateExpenseCommand)`
     - Obsługa `initialData` prop
     - Walidacja danych z transkrypcji przed wypełnieniem
-21. Zaktualizować `ExpenseForm`:
+19. Zaktualizować `ExpenseForm`:
     - Dodać props `initialData` i `isFromVoice`
     - Wyświetlanie badge "Wypełnione głosem"
-    - Obsługa callback'a z VoiceTranscriptionStatus
-22. Zaktualizować `AddExpenseModal`:
+    - Obsługa callback'a z VoiceInputButton
+20. Zaktualizować `AddExpenseModal`:
     - Dodać VoiceInputButton w nagłówku modala
     - Orchestracja między nagrywaniem a formularzem
     - Obsługa stanu: recording → processing → form populated
@@ -1096,50 +976,49 @@ Wszystkie warunki są walidowane zarówno po stronie klienta (UX) jak i serwera 
 
 ### Faza 6: Walidacja i obsługa błędów
 
-23. Dodać walidacje dla funkcjonalności głosowej:
+21. Dodać walidacje dla funkcjonalności głosowej:
     - Sprawdzenie rozmiaru pliku audio (max 25MB)
     - Walidacja uprawnień do mikrofonu
     - Walidacja minimalnego czasu nagrania (1s)
-24. Zaimplementować obsługę błędów:
+22. Zaimplementować obsługę błędów:
     - Toast notifications dla wszystkich błędów
     - Komunikaty specyficzne dla kodów błędów API
     - Retry logic dla błędów sieciowych
     - Fallback do ręcznego dodawania
-25. Dodać testy walidacji confidence:
+23. Dodać testy walidacji confidence:
     - Warning toast gdy confidence < 0.5
     - Badge "Niska pewność" w formularzu
     - Podświetlenie pól wymagających weryfikacji
 
 ### Faza 7: UX i optymalizacje
 
-26. Dodać animacje i transitions:
+24. Dodać animacje i transitions:
     - Pulsująca ikona mikrofonu podczas nagrywania
     - Smooth transition między stanami
-    - Progress bar dla pollingu
-27. Zoptymalizować polling:
-    - Exponential backoff (1s → 2s → 5s)
-    - Maksymalny czas pollingu 60s
-28. Dodać feedback wizualny:
+    - Spinner podczas synchronicznego przetwarzania
+25. Zoptymalizować przetwarzanie:
+    - Maksymalny czas przetwarzania 25s
+    - Optymalizacja rozmiaru audio przed wysłaniem
+26. Dodać feedback wizualny:
     - Loading states dla wszystkich asynchronicznych operacji
     - Disable przyciski podczas przetwarzania
-    - Indykatory postępu
+    - Wskaźniki postępu
 
 ### Faza 8: Testowanie
 
-29. Testy jednostkowe:
+27. Testy jednostkowe:
     - `useAudioRecorder.test.ts` (mock MediaRecorder)
     - `useVoiceTranscription.test.ts` (mock fetch)
     - `VoiceInputButton.test.tsx`
-    - `VoiceTranscriptionStatus.test.tsx`
-30. Testy integracyjne:
-    - Pełny przepływ: nagrywanie → upload → polling → wypełnienie
+28. Testy integracyjne:
+    - Pełny przepływ: nagrywanie → przetwarzanie → wypełnienie
     - Różne scenariusze błędów
     - Edge cases (uprawnienia, timeout, niepełne dane)
-31. Testy end-to-end:
+29. Testy end-to-end:
     - Realne nagrania audio z różnymi poleceniami
     - Walidacja wypełnienia formularza
     - Test zatwierdzania wydatku po transkrypcji
-32. Testy UX:
+30. Testy UX:
     - Testy z użytkownikami
     - Weryfikacja komunikatów błędów
     - Optymalizacja czasu przetwarzania

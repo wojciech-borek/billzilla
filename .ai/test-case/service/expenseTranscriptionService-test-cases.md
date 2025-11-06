@@ -4,16 +4,16 @@
 
 ### UT-UPLOAD-001
 
-**Nazwa testu**: `should_return_transcription_task_when_valid_audio_uploaded_successfully`  
+**Nazwa testu**: `should_return_transcription_result_when_valid_audio_processed_successfully`  
 **Moduł / funkcja**: `uploadAudioForTranscription`  
-**Cel testu**: Weryfikuje poprawne utworzenie zadania transkrypcji przy prawidłowych danych wejściowych  
+**Cel testu**: Weryfikuje poprawne przetworzenie audio i zwrot danych wydatku przy prawidłowych danych wejściowych  
 **Wejście / dane testowe**: `audioBlob: Blob` (rozmiar: 1MB, typ: "audio/webm"), `groupId: "group-123"`  
-**Setup / izolacja**: Mock `fetch` aby zwracał status 200 z `TranscribeTaskResponseDTO` zawierającym `taskId: "task-456"`  
-**Kroki testowe**: 1. Utwórz prawidłowy Blob audio 2. Wywołaj funkcję z prawidłowym groupId 3. Sprawdź zwrócony obiekt zadania  
-**Oczekiwany rezultat**: Funkcja zwraca obiekt `TranscribeTaskResponseDTO` z `taskId: "task-456"` bez wyrzucania wyjątków  
+**Setup / izolacja**: Mock `fetch` aby zwracał status 200 z `TranscriptionResultDTO` zawierającym dane wydatku  
+**Kroki testowe**: 1. Utwórz prawidłowy Blob audio 2. Wywołaj funkcję z prawidłowym groupId 3. Sprawdź zwrócony obiekt z wynikiem transkrypcji  
+**Oczekiwany rezultat**: Funkcja zwraca obiekt `TranscriptionResultDTO` z danymi wydatku bez wyrzucania wyjątków  
 **Priorytet**: wysoki  
 **Edge cases**: Poprawny upload z maksymalnym dozwolonym rozmiarem (25MB), różne obsługiwane typy MIME  
-**Notatki / uwagi**: Test integruje walidację wejścia i komunikację HTTP
+**Notatki / uwagi**: Test integruje walidację wejścia i synchroniczne przetwarzanie AI
 
 ### UT-UPLOAD-002
 
@@ -170,99 +170,6 @@
 **Priorytet**: niski  
 **Edge cases**: Błędy TypeError, błędy CORS  
 **Notatki / uwagi**: Test odporności na nieoczekiwane błędy
-
-## Moduł: getTranscriptionTaskStatus
-
-### UT-STATUS-001
-
-**Nazwa testu**: `should_return_task_status_when_task_exists`  
-**Moduł / funkcja**: `getTranscriptionTaskStatus`  
-**Cel testu**: Weryfikuje poprawne pobranie statusu zadania  
-**Wejście / dane testowe**: `taskId: "task-456"`  
-**Setup / izolacja**: Mock `fetch` aby zwracał status 200 z `TranscribeTaskStatusDTO` zawierającym `status: "completed"`  
-**Kroki testowe**: 1. Wywołaj funkcję z prawidłowym taskId 2. Sprawdź zwrócony obiekt statusu  
-**Oczekiwany rezultat**: Funkcja zwraca obiekt `TranscribeTaskStatusDTO` z prawidłowym statusem  
-**Priorytet**: wysoki  
-**Edge cases**: Status "processing", status "failed"  
-**Notatki / uwagi**: Podstawowa funkcjonalność pobierania statusu
-
-### UT-STATUS-002
-
-**Nazwa testu**: `should_throw_error_when_task_id_missing`  
-**Moduł / funkcja**: `getTranscriptionTaskStatus`  
-**Cel testu**: Weryfikuje walidację brakującego identyfikatora zadania  
-**Wejście / dane testowe**: `taskId: ""` (pusty string)  
-**Setup / izolacja**: Brak mockowania - test walidacji wejścia  
-**Kroki testowe**: 1. Wywołaj funkcję z pustym taskId 2. Przechwyć wyjątek  
-**Oczekiwany rezultat**: Rzucony `Error` z wiadomością "Task ID is required"  
-**Priorytet**: wysoki  
-**Edge cases**: `taskId: null`, `taskId: undefined`  
-**Notatki / uwagi**: Walidacja obowiązkowych parametrów
-
-### UT-STATUS-003
-
-**Nazwa testu**: `should_throw_error_when_task_not_found`  
-**Moduł / funkcja**: `getTranscriptionTaskStatus`  
-**Cel testu**: Weryfikuje obsługę nieistniejącego zadania  
-**Wejście / dane testowe**: `taskId: "non-existent-task"`  
-**Setup / izolacja**: Mock `fetch` aby zwracał status 404  
-**Kroki testowe**: 1. Wywołaj funkcję z nieistniejącym taskId 2. Przechwyć wyjątek  
-**Oczekiwany rezultat**: Rzucony `Error` z wiadomością "Transcription task not found"  
-**Priorytet**: wysoki  
-**Edge cases**: Status 404 z dodatkowymi informacjami  
-**Notatki / uwagi**: Obsługa błędów API
-
-### UT-STATUS-004
-
-**Nazwa testu**: `should_throw_error_when_unauthorized_access`  
-**Moduł / funkcja**: `getTranscriptionTaskStatus`  
-**Cel testu**: Weryfikuje obsługę błędu 401  
-**Wejście / dane testowe**: `taskId: "task-456"`  
-**Setup / izolacja**: Mock `fetch` aby zwracał status 401  
-**Kroki testowe**: 1. Wywołaj funkcję z prawidłowym taskId 2. Przechwyć wyjątek  
-**Oczekiwany rezultat**: Rzucony `Error` z wiadomością "Authentication required"  
-**Priorytet**: średni  
-**Edge cases**: Status 401 z informacjami o sesji  
-**Notatki / uwagi**: Test autoryzacji
-
-### UT-STATUS-005
-
-**Nazwa testu**: `should_throw_error_when_server_error_occurs`  
-**Moduł / funkcja**: `getTranscriptionTaskStatus`  
-**Cel testu**: Weryfikuje obsługę błędów serwera  
-**Wejście / dane testowe**: `taskId: "task-456"`  
-**Setup / izolacja**: Mock `fetch` aby zwracał status 500  
-**Kroki testowe**: 1. Wywołaj funkcję z prawidłowym taskId 2. Przechwyć wyjątek  
-**Oczekiwany rezultat**: Rzucony `Error` z wiadomością "Server error occurred"  
-**Priorytet**: średni  
-**Edge cases**: Statusy 502, 503, 504  
-**Notatki / uwagi**: Test błędów infrastruktury
-
-### UT-STATUS-006
-
-**Nazwa testu**: `should_use_custom_error_message_from_api_when_available`  
-**Moduł / funkcja**: `getTranscriptionTaskStatus`  
-**Cel testu**: Weryfikuje parsowanie błędów API  
-**Wejście / dane testowe**: `taskId: "task-456"`  
-**Setup / izolacja**: Mock `fetch` aby zwracał status 404 z JSON `{"error": {"message": "Task expired"}}`  
-**Kroki testowe**: 1. Wywołaj funkcję 2. Przechwyć wyjątek  
-**Oczekiwany rezultat**: Rzucony `Error` z wiadomością "Task expired"  
-**Priorytet**: średni  
-**Edge cases**: Błąd bez struktury error.message  
-**Notatki / uwagi**: Parsowanie odpowiedzi błędów
-
-### UT-STATUS-007
-
-**Nazwa testu**: `should_throw_generic_error_when_unexpected_failure_occurs`  
-**Moduł / funkcja**: `getTranscriptionTaskStatus`  
-**Cel testu**: Weryfikuje obsługę nieoczekiwanych błędów  
-**Wejście / dane testowe**: `taskId: "task-456"`  
-**Setup / izolacja**: Mock `fetch` aby rzucał nieoczekiwany błąd  
-**Kroki testowe**: 1. Wywołaj funkcję 2. Przechwyć wyjątek  
-**Oczekiwany rezultat**: Rzucony `Error` z wiadomością "Unknown error occurred while checking task status"  
-**Priorytet**: niski  
-**Edge cases**: Błędy sieciowe, błędy timeout  
-**Notatki / uwagi**: Odporność na nieoczekiwane błędy
 
 ## Moduł: createTranscriptionError
 

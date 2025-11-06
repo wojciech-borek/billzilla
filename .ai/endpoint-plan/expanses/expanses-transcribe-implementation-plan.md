@@ -2,7 +2,7 @@
 
 ## 1. Przegląd punktu końcowego
 
-Endpoint `POST /api/expenses/transcribe` umożliwia asynchroniczne przetwarzanie plików audio w celu automatycznej ekstrakcji danych wydatków przy użyciu sztucznej inteligencji. Endpoint przyjmuje plik audio oraz identyfikator grupy, zwraca identyfikator zadania transkrypcji i inicjuje proces dwuetapowej analizy: transkrypcji mowy na tekst oraz ekstrakcji strukturalnych danych wydatku.
+Endpoint `POST /api/expenses/transcribe` umożliwia synchroniczne przetwarzanie plików audio w celu automatycznej ekstrakcji danych wydatków przy użyciu sztucznej inteligencji. Endpoint przyjmuje plik audio oraz identyfikator grupy, przetwarza go natychmiast i zwraca wyekstrahowane dane wydatku lub błąd. Proces obejmuje dwuetapową analizę: transkrypcję mowy na tekst (Whisper) oraz ekstrakcję strukturalnych danych wydatku (LLM).
 
 ## 2. Szczegóły żądania
 
@@ -30,13 +30,13 @@ Endpoint `POST /api/expenses/transcribe` umożliwia asynchroniczne przetwarzanie
 
 ## 4. Szczegóły odpowiedzi
 
-- **Kod sukcesu:** 201 Created
-- **Treść odpowiedzi:** `TranscribeTaskResponseDTO`
+- **Kod sukcesu:** 200 OK
+- **Treść odpowiedzi:** `TranscriptionResultDTO`
   ```typescript
   {
-    task_id: string;
-    status: "processing";
-    created_at: string;
+    transcription: string; // surowy tekst transkrypcji
+    expense_data: CreateExpenseCommand; // wyekstrahowane dane wydatku
+    confidence: number; // poziom pewności AI (0-1)
   }
   ```
 - **Kody błędów:**
@@ -52,13 +52,11 @@ Endpoint `POST /api/expenses/transcribe` umożliwia asynchroniczne przetwarzanie
 ## 5. Przepływ danych
 
 1. **Walidacja żądania:** Sprawdzenie autoryzacji, dostępu do grupy, formatu i rozmiaru pliku
-2. **Utworzenie zadania:** Wygenerowanie task_id i zapis stanu początkowego
-3. **Przesyłanie do AI:** Asynchroniczne wywołanie Edge Function z plikiem audio
-4. **Przetwarzanie AI:**
-   - Krok 1: Transkrypcja audio na tekst (model Whisper)
-   - Krok 2: Ekstrakcja danych wydatku z kontekstem grupy (model LLM)
-5. **Zapis wyniku:** Przechowanie strukturalnych danych w pamięci podręcznej
-6. **Status zadania:** Dostępny przez GET `/api/expenses/transcribe/:taskId`
+2. **Synchroniczne przetwarzanie:**
+   - Krok 1: Transkrypcja audio na tekst przez Whisper (timeout: 25s)
+   - Krok 2: Ekstrakcja danych wydatku z kontekstem grupy przez LLM
+3. **Walidacja wyniku:** Sprawdzenie poprawności wyekstrahowanych danych
+4. **Zwrot wyniku:** Natychmiastowe zwrócenie danych wydatku lub błędu
 
 ## 6. Względy bezpieczeństwa
 
@@ -83,11 +81,11 @@ Endpoint `POST /api/expenses/transcribe` umożliwia asynchroniczne przetwarzanie
 
 ## 8. Wydajność
 
-- **Asynchroniczne przetwarzanie:** Endpoint natychmiast zwraca odpowiedź, przetwarzanie w tle
-- **Timeout zadań:** Maksymalny czas przetwarzania AI (np. 60 sekund)
+- **Synchroniczne przetwarzanie:** Endpoint przetwarza audio i zwraca wynik w jednym żądaniu
+- **Timeout przetwarzania:** Maksymalny czas 25 sekund dla całego procesu AI
 - **Ograniczenia plików:** Maksymalny rozmiar 25MB dla plików audio
-- **Cache wyników:** Wyniki zadań przechowywane tymczasowo dla szybkiego dostępu
 - **Optymalizacja AI:** Wybór odpowiednich modeli dla balansu prędkość/jakość
+- **Brak cache:** Wyniki nie są cachowane - każde żądanie przetwarza audio od nowa
 
 ## 9. Kroki implementacji
 
@@ -112,16 +110,10 @@ Endpoint `POST /api/expenses/transcribe` umożliwia asynchroniczne przetwarzanie
 11. Obsługa wyników i błędów z Openrouter.ai
 12. Zapis wyników do pamięci podręcznej
 
-### Faza 4: Endpoint statusu zadania
+### Faza 4: Testowanie i optymalizacja
 
-13. Implementacja `GET /api/expenses/transcribe/:taskId`
-14. Logika pobierania statusu z cache/bazy danych
-15. Obsługa różnych stanów zadania (processing, completed, failed)
-
-### Faza 5: Testowanie i optymalizacja
-
-16. Testy jednostkowe dla walidacji i service
-17. Testy integracyjne z różnymi formatami audio
-18. Testy błędów i przypadków brzegowych
-19. Optymalizacja wydajności i kosztów AI
-20. Dokumentacja API i przykładów użycia
+13. Testy jednostkowe dla walidacji i service
+14. Testy integracyjne z różnymi formatami audio
+15. Testy błędów i przypadków brzegowych
+16. Optymalizacja wydajności i kosztów AI
+17. Dokumentacja API i przykładów użycia
