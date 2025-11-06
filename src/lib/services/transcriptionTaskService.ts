@@ -213,7 +213,7 @@ export class TranscriptionTaskService {
       audioBlobSize: params.audioBlob?.size,
       audioBlobType: params.audioBlob?.type,
       userId: params.userId,
-      groupId: params.groupContext?.groupId
+      groupId: params.groupContext?.groupId,
     });
 
     try {
