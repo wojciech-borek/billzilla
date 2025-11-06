@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import { toast } from "sonner";
-import type { TranscriptionResultDTO, CreateExpenseCommand, GroupCurrencyDTO } from "@/types";
+import type { TranscriptionResultDTO, CreateExpenseCommand, GroupCurrencyDTO, TranscriptionErrorDTO } from "@/types";
 
 export function useExpenseModalLogic(currentUserId: string) {
   const [isFromVoice, setIsFromVoice] = useState(false);
@@ -46,10 +46,9 @@ export function useExpenseModalLogic(currentUserId: string) {
     [currentUserId]
   );
 
-  const handleTranscriptionError = useCallback((error: { message: string }) => {
-    toast.error(`Błąd rozpoznania głosu: ${error.message}`, {
-      duration: 5000,
-    });
+  const handleTranscriptionError = useCallback((_error: TranscriptionErrorDTO) => {
+    // Error is already handled by VoiceInputButton/useVoiceTranscription hook
+    // No need to show duplicate toast here
   }, []);
 
   const resetVoiceState = useCallback(() => {

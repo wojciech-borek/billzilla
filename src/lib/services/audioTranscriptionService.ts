@@ -11,7 +11,11 @@
 import type { SupabaseClient } from "../../db/supabase.client";
 import type { Profile, ExpenseTranscriptionResult } from "../../types";
 import { WhisperService } from "./whisperService";
-import { OpenRouterService, type ExtractDataParams } from "./openRouterService";
+import {
+  OpenRouterService,
+  type ExtractDataParams,
+  ValidationError as OpenRouterValidationError,
+} from "./openRouterService";
 import { expenseTranscriptionSchema } from "../schemas/expenseSchemas";
 
 // ============================================================================
@@ -67,6 +71,23 @@ export class GroupContextError extends Error {
   constructor(message: string) {
     super(message);
     this.name = "GroupContextError";
+  }
+}
+
+interface ValidationErrorDetails {
+  field?: string;
+  validationMessage?: string;
+  zodErrors?: unknown[];
+}
+
+export class ValidationError extends Error {
+  constructor(
+    message: string,
+    public readonly code: string,
+    public readonly details?: ValidationErrorDetails
+  ) {
+    super(message);
+    this.name = "ValidationError";
   }
 }
 
@@ -148,7 +169,43 @@ export class AudioTranscriptionService {
       };
     } catch (error) {
       console.error(`[AudioTranscription] Error processing audio:`, error);
-      // Determine error code and message
+
+      // Handle OpenRouter validation errors
+      if (error instanceof OpenRouterValidationError) {
+        // Extract the first validation error for user-friendly messaging
+        const firstError = error.validationErrors.errors[0];
+        const fieldName = firstError.path.join(".");
+        const errorMessage = firstError.message;
+
+        // Map common validation errors to specific codes
+        let errorCode = "VALIDATION_ERROR";
+        let userMessage = `Błąd walidacji danych: ${errorMessage}`;
+
+        if (fieldName === "amount" && errorMessage.includes("positive")) {
+          errorCode = "AMOUNT_NOT_EXTRACTED";
+          userMessage =
+            "Nie udało się rozpoznać kwoty wydatku. Spróbuj wypowiedzieć ją wyraźniej, np. 'kwota 50 złotych'.";
+        } else if (fieldName === "description") {
+          errorCode = "DESCRIPTION_MISSING";
+          userMessage = "Nie udało się rozpoznać opisu wydatku. Spróbuj powiedzieć czego dotyczy wydatek.";
+        } else if (fieldName === "splits") {
+          errorCode = "PARTICIPANTS_NOT_RECOGNIZED";
+          userMessage = "Nie udało się rozpoznać kto bierze udział w wydatku. Wymień imiona osób.";
+        }
+
+        throw new ValidationError(userMessage, errorCode, {
+          field: fieldName,
+          validationMessage: errorMessage,
+          zodErrors: error.validationErrors.errors,
+        });
+      }
+
+      // Handle specific error types
+      if (error instanceof ValidationError) {
+        throw error; // Re-throw validation errors as-is
+      }
+
+      // Determine error code and message for other errors
       let errorCode = "UNKNOWN_ERROR";
       let errorMessage = "An unexpected error occurred";
 

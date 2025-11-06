@@ -7,6 +7,7 @@ import type {
   ExpenseDTO,
   CreateExpenseCommand,
   TranscriptionResultDTO,
+  TranscriptionErrorDTO,
 } from "@/types";
 
 interface ExpenseModalContentProps {
@@ -21,7 +22,7 @@ interface ExpenseModalContentProps {
   hasLowConfidence: boolean;
   onExpenseCreated: (expense: ExpenseDTO) => void;
   onTranscriptionComplete: (result: TranscriptionResultDTO) => void;
-  onTranscriptionError: (error: { message: string }) => void;
+  onTranscriptionError?: (error: TranscriptionErrorDTO) => void;
   onClose: () => void;
   mode?: "create" | "edit";
   expenseId?: string;

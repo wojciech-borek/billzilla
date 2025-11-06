@@ -20,6 +20,11 @@ const ERROR_MESSAGES: Record<string, string> = {
   TRANSCRIPTION_FAILED: "Nie udało się przetworzyć nagrania",
   PARSING_FAILED: "Nie udało się zrozumieć treści nagrania",
   NETWORK_ERROR: "Błąd połączenia. Sprawdź internet.",
+  AMOUNT_NOT_EXTRACTED:
+    "Nie udało się rozpoznać kwoty wydatku. Spróbuj wypowiedzieć ją wyraźniej, np. 'kwota 50 złotych'.",
+  DESCRIPTION_MISSING: "Nie udało się rozpoznać opisu wydatku. Spróbuj powiedzieć czego dotyczy wydatek.",
+  PARTICIPANTS_NOT_RECOGNIZED: "Nie udało się rozpoznać kto bierze udział w wydatku. Wymień imiona osób.",
+  VALIDATION_ERROR: "Błąd walidacji danych z nagrania",
 };
 
 /**

@@ -15,6 +15,7 @@ import {
   AudioTranscriptionService,
   TaskProcessingError,
   GroupContextError,
+  ValidationError,
 } from "../../../../lib/services/audioTranscriptionService";
 import { z } from "zod";
 
@@ -228,6 +229,19 @@ export const POST: APIRoute = async ({ request, locals }) => {
     });
   } catch (error) {
     // Handle specific error types
+    if (error instanceof ValidationError) {
+      const errorResponse: ErrorResponseDTO = {
+        error: {
+          code: error.code,
+          message: error.message,
+        },
+      };
+      return new Response(JSON.stringify(errorResponse), {
+        status: 400, // Bad request for validation errors
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
     if (error instanceof TaskProcessingError) {
       const errorResponse: ErrorResponseDTO = {
         error: {

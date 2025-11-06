@@ -175,7 +175,24 @@ export function useVoiceTranscription(): UseVoiceTranscriptionResult {
         });
 
         if (!response.ok) {
-          const error = errorHandler.handleHttpError(response.status);
+          let error: TranscriptionErrorDTO;
+
+          // For 400 errors (validation), try to parse the specific error from response body
+          if (response.status === 400) {
+            try {
+              const errorData = await response.json();
+              error = {
+                code: errorData.error?.code || "INVALID_REQUEST",
+                message: errorData.error?.message || "Nieprawidłowe dane",
+              };
+            } catch {
+              // Fallback to generic error if parsing fails
+              error = errorHandler.handleHttpError(response.status);
+            }
+          } else {
+            error = errorHandler.handleHttpError(response.status);
+          }
+
           setState((prev) => ({ ...prev, isProcessing: false, error }));
           errorHandler.handleError(error);
           onError(error);

@@ -1,7 +1,6 @@
 import React, { useCallback } from "react";
 import { Mic, MicOff, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
 
 import { useVoiceTranscription } from "@/lib/hooks/useVoiceTranscription";
 import { VoiceRecordingIndicator } from "./VoiceRecordingIndicator";
@@ -165,13 +164,12 @@ export function VoiceInputButton({
       <Button
         type="button"
         variant="outline"
-        size="default"
+        size="sm"
         onClick={() => reset()}
-        className="text-destructive hover:text-destructive px-4 py-2"
-        title="Rozpocznij nowe nagrywanie"
+        className="text-destructive hover:text-destructive"
+        title={`Błąd: ${error.message}. Kliknij aby spróbować ponownie.`}
       >
-        <MicOff className="h-4 w-4 mr-2" />
-        Spróbuj ponownie
+        <MicOff className="h-4 w-4" />
       </Button>
     );
   }
