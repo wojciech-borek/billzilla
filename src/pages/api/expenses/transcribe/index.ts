@@ -39,11 +39,11 @@ export const prerender = false;
  */
 export const POST: APIRoute = async ({ request, locals }) => {
   try {
-    console.log(`[TranscribeAPI] Received POST request`);
+    console.error(`[TranscribeAPI] Received POST request`);
 
     // Step 1: Check authentication
     if (!locals.user) {
-      console.log(`[TranscribeAPI] No user authenticated`);
+      console.error(`[TranscribeAPI] No user authenticated`);
       const errorResponse: ErrorResponseDTO = {
         error: {
           code: "UNAUTHORIZED",
@@ -77,8 +77,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const audioFile = formData.get("audio");
     const groupId = formData.get("group_id");
 
-    console.log(`[TranscribeAPI] Audio file: ${audioFile ? "present" : "missing"}, size: ${audioFile?.size || 0}`);
-    console.log(`[TranscribeAPI] Group ID: ${groupId || "missing"}`);
+    console.error(`[TranscribeAPI] Audio file: ${audioFile ? "present" : "missing"}, size: ${audioFile?.size || 0}`);
+    console.error(`[TranscribeAPI] Group ID: ${groupId || "missing"}`);
 
     // Guard clause: validate audio file
     if (!audioFile || !(audioFile instanceof File)) {
@@ -212,12 +212,12 @@ export const POST: APIRoute = async ({ request, locals }) => {
     }
 
     // Step 6: Create transcription task in database
-    console.log(`[TranscribeAPI] Creating task for user ${locals.user.id}, group ${groupId}`);
+    console.error(`[TranscribeAPI] Creating task for user ${locals.user.id}, group ${groupId}`);
     const task = await taskService.createTask(locals.supabase, {
       groupId,
       userId: locals.user.id,
     });
-    console.log(`[TranscribeAPI] Task created with ID: ${task.id}`);
+    console.error(`[TranscribeAPI] Task created with ID: ${task.id}`);
 
     // Step 7: Convert File to Blob
     const audioBlob = new Blob([await audioFile.arrayBuffer()], {
@@ -245,7 +245,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       created_at: task.created_at,
     };
 
-    console.log(`[TranscribeAPI] Returning response with task ID: ${task.id}`);
+    console.error(`[TranscribeAPI] Returning response with task ID: ${task.id}`);
 
     return new Response(JSON.stringify(response), {
       status: 201,
