@@ -230,31 +230,52 @@ export const POST: APIRoute = async ({ request, locals }) => {
       type: audioFile.type,
     });
 
-    // Step 8: Process task asynchronously (don't await - fire and forget)
-    // The task will update its status in the database when done
-    console.error(`[TranscribeAPI] Starting async processTask for task: ${task.id}`);
-    taskService
-      .processTask(locals.supabase, {
+    // Step 8: Process task SYNCHRONICALLY (user will wait for result)
+    // This is a workaround for Pages Functions limitation
+    console.error(`[TranscribeAPI] Starting SYNC processTask for task: ${task.id}`);
+    try {
+      await taskService.processTask(locals.supabase, {
         taskId: task.id,
         audioBlob,
         groupContext,
         userId: locals.user.id,
-      })
-      .then(() => {
-        console.error(`[TranscribeAPI] processTask completed successfully for task: ${task.id}`);
-      })
-      .catch((error) => {
-        console.error(`[TranscribeAPI] processTask failed for task: ${task.id}`, error);
-        // Errors are already handled in processTask (updates task status to failed)
-        // Just log for debugging
       });
+      console.error(`[TranscribeAPI] processTask completed successfully for task: ${task.id}`);
+    } catch (error) {
+      console.error(`[TranscribeAPI] processTask failed for task: ${task.id}`, error);
+      // Errors are already handled in processTask (updates task status to failed)
+    }
 
-    // Step 9: Return task response immediately
+    // Step 9: Get final task status after processing
+    const finalTask = await taskService.getTask(locals.supabase, task.id, locals.user.id);
+
     const response: TranscribeTaskResponseDTO = {
-      task_id: task.id,
-      status: task.status as "processing",
-      created_at: task.created_at,
+      task_id: finalTask.id,
+      status: finalTask.status,
+      created_at: finalTask.created_at,
+      completed_at: finalTask.completed_at || undefined,
     };
+
+    // Add result data if task is completed
+    if (finalTask.status === "completed" && finalTask.result_data && finalTask.transcription_text) {
+      // Extract confidence from result_data or use default
+      const resultData = finalTask.result_data as unknown as ExpenseTranscriptionResult;
+      const confidence = resultData?.extraction_confidence ?? 0.5; // Default to 0.5 if not available
+
+      response.result = {
+        transcription: finalTask.transcription_text,
+        expense_data: finalTask.result_data as unknown as ExpenseTranscriptionResult,
+        confidence,
+      };
+    }
+
+    // Add error details if task failed
+    if (finalTask.status === "failed" && finalTask.error_code && finalTask.error_message) {
+      response.error = {
+        code: finalTask.error_code,
+        message: finalTask.error_message,
+      };
+    }
 
     console.error(`[TranscribeAPI] Returning response with task ID: ${task.id}`);
 
