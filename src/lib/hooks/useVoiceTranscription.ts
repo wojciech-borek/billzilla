@@ -128,9 +128,14 @@ export function useVoiceTranscription(): UseVoiceTranscriptionResult {
 
   const uploadAudio = useCallback(
     async (audioBlob: Blob, groupId: string): Promise<TranscribeTaskResponseDTO> => {
+      console.error(
+        `[useVoiceTranscription] uploadAudio called with blob size: ${audioBlob.size}, groupId: ${groupId}`
+      );
+
       // Validate audio blob size (max 25MB as per plan)
       const maxSize = 25 * 1024 * 1024; // 25MB
       if (audioBlob.size > maxSize) {
+        console.error(`[useVoiceTranscription] File too large: ${audioBlob.size} > ${maxSize}`);
         const error = errorHandler.createError("FILE_TOO_LARGE");
         setState((prev) => ({ ...prev, error }));
         errorHandler.handleError(error);
@@ -152,10 +157,12 @@ export function useVoiceTranscription(): UseVoiceTranscriptionResult {
         formData.append("audio", audioBlob, "recording.webm");
         formData.append("group_id", groupId);
 
+        console.error(`[useVoiceTranscription] Sending POST request to /api/expenses/transcribe`);
         const response = await fetch("/api/expenses/transcribe", {
           method: "POST",
           body: formData,
         });
+        console.error(`[useVoiceTranscription] Response status: ${response.status}`);
 
         if (!response.ok) {
           const error = errorHandler.handleHttpError(response.status);

@@ -74,21 +74,28 @@ export function VoiceInputButton({
 
   // ALL HOOKS MUST BE DEFINED BEFORE ANY CONDITIONAL RETURNS
   const handleClick = useCallback(async () => {
+    console.error("[VoiceInputButton] Button clicked");
+
     // Don't allow starting recording if already recording or processing
     if (isRecording || isProcessing) {
+      console.error("[VoiceInputButton] Button disabled - recording or processing");
       return;
     }
 
     // Don't allow starting if disabled
     if (disabled) {
+      console.error("[VoiceInputButton] Button disabled - component disabled");
       return;
     }
 
+    console.error("[VoiceInputButton] Starting recording...");
     try {
       // Start recording
       await startRecording();
+      console.error("[VoiceInputButton] Recording started");
     } catch {
       // Error is handled in the hook
+      console.error("[VoiceInputButton] Recording failed to start");
     }
   }, [isRecording, isProcessing, disabled, startRecording]);
 
