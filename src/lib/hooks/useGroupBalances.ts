@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import type { UseQueryOptions } from "@tanstack/react-query";
 import type { BalancesDTO } from "../../types";
+import { createClient } from "../../db/supabase.client";
 
 interface UseGroupBalancesOptions {
   enabled?: boolean;
@@ -27,8 +28,16 @@ export function useGroupBalances(
   const query = useQuery({
     queryKey: ["group", groupId, "balances"],
     queryFn: async (): Promise<BalancesDTO> => {
+      // Pobierz access token z Supabase
+      const supabase = createClient();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
       const response = await fetch(`/api/groups/${groupId}/balances`, {
-        credentials: "include",
+        headers: {
+          Authorization: `Bearer ${session?.access_token || ""}`,
+        },
       });
 
       if (!response.ok) {

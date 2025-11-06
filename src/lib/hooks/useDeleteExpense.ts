@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { createClient } from "../../db/supabase.client";
 
 /**
  * Hook for deleting an expense
@@ -9,9 +10,17 @@ export function useDeleteExpense() {
 
   return useMutation({
     mutationFn: async ({ expenseId, groupId: _groupId }: { expenseId: string; groupId: string }) => {
+      // Pobierz access token z Supabase
+      const supabase = createClient();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
       const response = await fetch(`/api/expenses/${expenseId}`, {
         method: "DELETE",
-        credentials: "include",
+        headers: {
+          Authorization: `Bearer ${session?.access_token || ""}`,
+        },
       });
 
       if (!response.ok) {

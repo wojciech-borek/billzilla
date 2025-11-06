@@ -1,6 +1,7 @@
 import { useQuery, useInfiniteQuery } from "@tanstack/react-query";
 import type { UseQueryOptions, UseInfiniteQueryOptions } from "@tanstack/react-query";
 import type { PaginatedResponse, ExpenseListItemDTO } from "../../types";
+import { createClient } from "../../db/supabase.client";
 
 interface UseGroupExpensesOptions {
   limit?: number;
@@ -33,6 +34,12 @@ export function useGroupExpenses(
   const query = useQuery({
     queryKey: ["group", groupId, "expenses", { limit, offset, sort, order }],
     queryFn: async (): Promise<PaginatedResponse<ExpenseListItemDTO>> => {
+      // Pobierz access token z Supabase
+      const supabase = createClient();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
       const params = new URLSearchParams({
         limit: limit.toString(),
         offset: offset.toString(),
@@ -41,7 +48,9 @@ export function useGroupExpenses(
       });
 
       const response = await fetch(`/api/groups/${groupId}/expenses?${params}`, {
-        credentials: "include",
+        headers: {
+          Authorization: `Bearer ${session?.access_token || ""}`,
+        },
       });
 
       if (!response.ok) {
@@ -100,6 +109,12 @@ export function useInfiniteExpenses(
   const query = useInfiniteQuery({
     queryKey: ["group", groupId, "expenses", "infinite", { limit, sort, order }],
     queryFn: async ({ pageParam = 0 }): Promise<PaginatedResponse<ExpenseListItemDTO>> => {
+      // Pobierz access token z Supabase
+      const supabase = createClient();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
       const params = new URLSearchParams({
         limit: limit.toString(),
         offset: pageParam.toString(),
@@ -108,7 +123,9 @@ export function useInfiniteExpenses(
       });
 
       const response = await fetch(`/api/groups/${groupId}/expenses?${params}`, {
-        credentials: "include",
+        headers: {
+          Authorization: `Bearer ${session?.access_token || ""}`,
+        },
       });
 
       if (!response.ok) {

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import type { InvitationDTO } from "@/types";
 import type { InvitationCardVM, InvitationsQueryState } from "../types";
+import { createClient } from "@/db/supabase.client";
 
 interface InvitationActionResult {
   success: boolean;
@@ -26,12 +27,18 @@ export function useInvitationsList(): InvitationsQueryState & {
     setState((prev) => ({ ...prev, loading: true, error: null }));
 
     try {
+      // Pobierz access token z Supabase
+      const supabase = createClient();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
       const response = await fetch("/api/invitations", {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${session?.access_token || ""}`,
         },
-        credentials: "include",
       });
 
       if (response.status === 401) {
@@ -71,12 +78,18 @@ export function useInvitationsList(): InvitationsQueryState & {
 
   const accept = useCallback(async (id: string): Promise<InvitationActionResult> => {
     try {
+      // Pobierz access token z Supabase
+      const supabase = createClient();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
       const response = await fetch(`/api/invitations/${id}/accept`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${session?.access_token || ""}`,
         },
-        credentials: "include",
       });
 
       if (response.status === 401) {
@@ -106,12 +119,18 @@ export function useInvitationsList(): InvitationsQueryState & {
 
   const decline = useCallback(async (id: string): Promise<InvitationActionResult> => {
     try {
+      // Pobierz access token z Supabase
+      const supabase = createClient();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
       const response = await fetch(`/api/invitations/${id}/decline`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${session?.access_token || ""}`,
         },
-        credentials: "include",
       });
 
       if (response.status === 401) {

@@ -1,4 +1,5 @@
 import type { TranscribeTaskResponseDTO, TranscribeTaskStatusDTO, TranscriptionErrorDTO, ApiError } from "../../types";
+import { createClient } from "../../db/supabase.client";
 
 /**
  * Service for handling expense transcription API calls
@@ -40,6 +41,16 @@ export async function uploadAudioForTranscription(
   }
 
   try {
+    // Pobierz access token z Supabase
+    const supabase = createClient();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    if (!session?.access_token) {
+      throw new Error("Authentication required - no access token available");
+    }
+
     const formData = new FormData();
     formData.append("audio", audioBlob, "recording.webm");
     formData.append("group_id", groupId);
@@ -47,7 +58,9 @@ export async function uploadAudioForTranscription(
     const response = await fetch("/api/expenses/transcribe", {
       method: "POST",
       body: formData,
-      credentials: "include",
+      headers: {
+        Authorization: `Bearer ${session.access_token}`,
+      },
     });
 
     if (!response.ok) {
@@ -104,8 +117,20 @@ export async function getTranscriptionTaskStatus(taskId: string): Promise<Transc
   }
 
   try {
+    // Pobierz access token z Supabase zamiast używać cookies
+    const supabase = createClient();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    if (!session?.access_token) {
+      throw new Error("Authentication required - no access token available");
+    }
+
     const response = await fetch(`/api/expenses/transcribe/${taskId}`, {
-      credentials: "include",
+      headers: {
+        Authorization: `Bearer ${session.access_token}`,
+      },
     });
 
     if (!response.ok) {

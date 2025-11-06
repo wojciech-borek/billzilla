@@ -20,13 +20,55 @@ function isPublicRoute(pathname: string): boolean {
 }
 
 export const onRequest = async (context: APIContext, next: () => Promise<Response>) => {
+  const pathname = context.url.pathname;
+
+  // Log only for API routes to avoid spam
+  if (pathname.startsWith("/api/")) {
+    console.error(`[Middleware] ${context.request.method} ${pathname}`);
+  }
+
   const supabase = createSupabaseServerClientFromCookieHeader(context.request.headers.get("cookie"));
   context.locals.supabase = supabase;
+
+  // Handle Authorization header for API routes (fallback for CF Pages Functions)
+  if (pathname.startsWith("/api/")) {
+    const authHeader = context.request.headers.get("authorization");
+    if (authHeader?.startsWith("Bearer ")) {
+      const token = authHeader.substring(7);
+      console.error(`[Middleware] Found Bearer token, attempting to set session`);
+
+      try {
+        const { data, error } = await supabase.auth.getUser(token);
+        if (data.user && !error) {
+          console.error(`[Middleware] Successfully authenticated user via Bearer token: ${data.user.id}`);
+
+          // Get profile data
+          const { data: profile, error: profileError } = await supabase
+            .from("profiles")
+            .select("id, email, full_name, avatar_url")
+            .eq("id", data.user.id)
+            .single();
+
+          if (!profileError && profile) {
+            context.locals.user = profile;
+          }
+        } else {
+          console.error(`[Middleware] Bearer token auth failed: ${error?.message}`);
+        }
+      } catch (err) {
+        console.error(`[Middleware] Error with Bearer token auth: ${err}`);
+      }
+    }
+  }
 
   const {
     data: { user: authUser },
     error: authError,
   } = await supabase.auth.getUser();
+
+  if (pathname.startsWith("/api/")) {
+    console.error(`[Middleware] Auth check - user: ${authUser?.id || "null"}, error: ${authError?.message || "none"}`);
+  }
 
   if (authUser && !authError) {
     try {
@@ -47,8 +89,6 @@ export const onRequest = async (context: APIContext, next: () => Promise<Respons
   } else {
     context.locals.user = null;
   }
-
-  const pathname = context.url.pathname;
 
   if (isPublicRoute(pathname) || pathname.startsWith("/_") || pathname.includes(".")) {
     return next();

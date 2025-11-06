@@ -173,7 +173,13 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const openaiApiKey = import.meta.env.OPENAI_API_KEY;
     const openrouterApiKey = import.meta.env.OPENROUTER_API_KEY;
 
+    console.error(`[TranscribeAPI] API Keys available - OpenAI: ${!!openaiApiKey}, OpenRouter: ${!!openrouterApiKey}`);
+    console.error(`[TranscribeAPI] User authenticated: ${!!locals.user}`);
+
     if (!openaiApiKey || !openrouterApiKey) {
+      console.error(
+        `[TranscribeAPI] CRITICAL: API keys not configured! OpenAI: ${!!openaiApiKey}, OpenRouter: ${!!openrouterApiKey}`
+      );
       const errorResponse: ErrorResponseDTO = {
         error: {
           code: "SERVICE_CONFIGURATION_ERROR",

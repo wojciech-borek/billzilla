@@ -2,6 +2,7 @@ import { useCallback } from "react";
 import type { CreateExpenseCommand, ExpenseDTO, GroupMemberSummaryDTO, GroupCurrencyDTO } from "../../types";
 import { filterValidSplits } from "../utils/expenseValidationUtils";
 import { handleExpenseError, ExpenseFormError } from "../utils/errorHandling";
+import { createClient } from "../../db/supabase.client";
 
 export interface ExpenseSubmissionOptions {
   storedMode: string;
@@ -37,12 +38,20 @@ export function useExpenseSubmission(options: ExpenseSubmissionOptions) {
         const url = isEdit ? `/api/expenses/${storedExpenseId}` : `/api/groups/${groupId}/expenses`;
         const method = isEdit ? "PATCH" : "POST";
 
+        // Pobierz access token z Supabase
+        const supabase = createClient();
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+
         // Make the request
         const response = await fetch(url, {
           method,
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session?.access_token || ""}`,
+          },
           body: JSON.stringify(command),
-          credentials: "include",
         });
 
         if (!response.ok) {

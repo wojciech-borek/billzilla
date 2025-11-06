@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { toast } from "sonner";
 import type { GroupMemberSummaryDTO, GroupCurrencyDTO } from "@/types";
+import { createClient } from "@/db/supabase.client";
 
 interface UseExpenseModalDataProps {
   groupId: string;
@@ -80,8 +81,16 @@ export function useExpenseModalData({
     setError(null);
 
     try {
+      // Pobierz access token z Supabase
+      const supabase = createClient();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
       const response = await fetch(`/api/groups/${groupId}`, {
-        credentials: "include",
+        headers: {
+          Authorization: `Bearer ${session?.access_token || ""}`,
+        },
       });
       if (!response.ok) {
         throw new Error("Nie udało się załadować danych grupy");

@@ -1,6 +1,7 @@
 import { useState, useCallback } from "react";
 import type { CreateGroupCommand, CreateGroupResponseDTO } from "../../types";
 import type { CreateGroupFormValues } from "../schemas/groupSchemas";
+import { createClient } from "../../db/supabase.client";
 
 interface MutationState {
   isLoading: boolean;
@@ -38,13 +39,19 @@ export function useCreateGroupMutation(): UseCreateGroupMutationResult {
             : undefined,
       };
 
+      // Pobierz access token z Supabase
+      const supabase = createClient();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
       const response = await fetch("/api/groups", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${session?.access_token || ""}`,
         },
         body: JSON.stringify(command),
-        credentials: "include",
       });
 
       if (!response.ok) {

@@ -2,6 +2,7 @@ import { useState, useCallback } from "react";
 import type { TranscriptionErrorDTO, TranscribeTaskResponseDTO } from "../../types";
 import { useAudioRecorder } from "./useAudioRecorder";
 import { useTranscriptionErrorHandler } from "./useTranscriptionErrorHandler";
+import { createClient } from "../../db/supabase.client";
 
 /**
  * Internal state for voice transcription management
@@ -153,6 +154,12 @@ export function useVoiceTranscription(): UseVoiceTranscriptionResult {
       setState((prev) => ({ ...prev, isProcessing: true, error: null }));
 
       try {
+        // Pobierz access token z Supabase
+        const supabase = createClient();
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+
         const formData = new FormData();
         formData.append("audio", audioBlob, "recording.webm");
         formData.append("group_id", groupId);
@@ -161,7 +168,9 @@ export function useVoiceTranscription(): UseVoiceTranscriptionResult {
         const response = await fetch("/api/expenses/transcribe", {
           method: "POST",
           body: formData,
-          credentials: "include",
+          headers: {
+            Authorization: `Bearer ${session?.access_token || ""}`,
+          },
         });
         console.error(`[useVoiceTranscription] Response status: ${response.status}`);
 

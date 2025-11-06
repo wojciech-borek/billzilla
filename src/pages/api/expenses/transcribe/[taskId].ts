@@ -76,12 +76,20 @@ export const GET: APIRoute = async ({ params, locals }) => {
       });
     }
 
+    console.error(`[TranscribeAPI] GET task status - Task ID: ${taskId}`);
+    console.error(`[TranscribeAPI] GET task status - User authenticated: ${locals.user.id}`);
+
     // Step 3: Initialize service with API keys from astro:env
     // Using astro:env ensures safe access in both local and Cloudflare environments
     const openaiApiKey = import.meta.env.OPENAI_API_KEY;
     const openrouterApiKey = import.meta.env.OPENROUTER_API_KEY;
 
+    console.error(
+      `[TranscribeAPI] GET task status - API Keys available: OpenAI: ${!!openaiApiKey}, OpenRouter: ${!!openrouterApiKey}`
+    );
+
     if (!openaiApiKey || !openrouterApiKey) {
+      console.error(`[TranscribeAPI] GET task status - CRITICAL: API keys not configured!`);
       const errorResponse: ErrorResponseDTO = {
         error: {
           code: "SERVICE_CONFIGURATION_ERROR",
