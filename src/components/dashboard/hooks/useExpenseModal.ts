@@ -28,7 +28,9 @@ export function useExpenseModal(onExpenseCreated?: () => Promise<void>) {
 
     try {
       // Load group details
-      const response = await fetch(`/api/groups/${groupId}`);
+      const response = await fetch(`/api/groups/${groupId}`, {
+        credentials: "include",
+      });
       if (!response.ok) {
         throw new Error("Nie udało się załadować danych grupy");
       }

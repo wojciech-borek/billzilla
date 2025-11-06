@@ -31,6 +31,7 @@ export function useInvitationsList(): InvitationsQueryState & {
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: "include",
       });
 
       if (response.status === 401) {
@@ -75,6 +76,7 @@ export function useInvitationsList(): InvitationsQueryState & {
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: "include",
       });
 
       if (response.status === 401) {
@@ -109,6 +111,7 @@ export function useInvitationsList(): InvitationsQueryState & {
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: "include",
       });
 
       if (response.status === 401) {

@@ -47,6 +47,7 @@ export async function uploadAudioForTranscription(
     const response = await fetch("/api/expenses/transcribe", {
       method: "POST",
       body: formData,
+      credentials: "include",
     });
 
     if (!response.ok) {
@@ -103,7 +104,9 @@ export async function getTranscriptionTaskStatus(taskId: string): Promise<Transc
   }
 
   try {
-    const response = await fetch(`/api/expenses/transcribe/${taskId}`);
+    const response = await fetch(`/api/expenses/transcribe/${taskId}`, {
+      credentials: "include",
+    });
 
     if (!response.ok) {
       let errorMessage = "Failed to get task status";

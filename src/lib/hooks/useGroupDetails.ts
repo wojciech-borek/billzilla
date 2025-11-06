@@ -16,6 +16,7 @@ export function useGroupDetails(groupId: string, options: UseGroupDetailsOptions
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: "include",
       });
 
       if (!response.ok) {

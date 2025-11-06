@@ -161,6 +161,7 @@ export function useVoiceTranscription(): UseVoiceTranscriptionResult {
         const response = await fetch("/api/expenses/transcribe", {
           method: "POST",
           body: formData,
+          credentials: "include",
         });
         console.error(`[useVoiceTranscription] Response status: ${response.status}`);
 

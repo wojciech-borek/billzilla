@@ -42,6 +42,7 @@ export function useExpenseSubmission(options: ExpenseSubmissionOptions) {
           method,
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(command),
+          credentials: "include",
         });
 
         if (!response.ok) {

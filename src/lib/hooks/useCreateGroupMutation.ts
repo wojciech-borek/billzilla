@@ -44,6 +44,7 @@ export function useCreateGroupMutation(): UseCreateGroupMutationResult {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(command),
+        credentials: "include",
       });
 
       if (!response.ok) {
