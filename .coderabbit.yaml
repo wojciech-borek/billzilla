@@ -245,13 +245,19 @@ knowledge_base:
   code_guidelines:
     enabled: true
     filePatterns:
-      - ".ai/planning/product/prd.md"
       - ".ai/architecture/frontend/tech-stack.md"
-      - ".ai/architecture/api/api-plan.md"
       - ".ai/testing/plans/test-plan.md"
       - ".cursor/rules/shared.mdc"
-      - ".ai/security/auth/auth-spec.md"
       - "README.md"
+      - ".ai/architecture/database/db-plan.md"
+      - ".ai/architecture/ai-services/openrouter-service-implementation-plan.md"
+      - ".cursor/rules/astro.mdc"
+      - ".cursor/rules/backend.mdc"
+      - ".cursor/rules/frontend.mdc"
+      - ".cursor/rules/react.mdc"
+      - ".cursor/rules/bllzilla-ui-guidelines.md"
+      - ".cursor/rules/db-supabase-migrations.mdc"
+      - ".ai/implementation/ui/ui-plan.md"
   learnings:
     scope: auto
   issues:
