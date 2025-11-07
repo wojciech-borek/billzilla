@@ -1,17 +1,17 @@
 # CodeRabbit Configuration for Billzilla
 
 knowledge_base:
-  - path: ".ai/prd.md"
+  - path: ".ai/planning/product/prd.md"
     description: "Product Requirements Document - główne wymagania funkcjonalne"
-  - path: ".ai/tech-stack.md"
+  - path: ".ai/architecture/frontend/tech-stack.md"
     description: "Szczegółowy opis stosu technologicznego"
-  - path: ".ai/api-plan.md"
+  - path: ".ai/architecture/api/api-plan.md"
     description: "Plan API REST z endpointami i schematami"
-  - path: ".ai/test-plan.md"
+  - path: ".ai/testing/plans/test-plan.md"
     description: "Kompleksowy plan testów i wymagań jakościowych"
   - path: ".cursor/rules/shared.mdc"
     description: "Wspólne reguły projektu i struktura katalogów"
-  - path: ".ai/auth-spec.md"
+  - path: ".ai/security/auth/auth-spec.md"
     description: "Specyfikacja systemu uwierzytelniania"
   - path: "README.md"
     description: "Ogólny opis projektu i instrukcje setup"
