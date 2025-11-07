@@ -3,7 +3,7 @@
  * These types are used for presentation layer, mapped from DTOs
  */
 
-import type { GroupRole } from "@/types";
+import type { GroupRole, InvitationType } from "@/types";
 
 export interface AvatarVM {
   profileId: string;
@@ -22,8 +22,6 @@ export interface GroupCardVM {
   avatars: AvatarVM[];
   creatorProfileId?: string; // Profile ID of the group creator
 }
-
-export type InvitationType = "existing_user" | "new_user";
 
 export interface InvitationCardVM {
   id: string;

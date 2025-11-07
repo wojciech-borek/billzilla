@@ -39,6 +39,7 @@ export type GroupRole = Enums<"group_role">;
 export type GroupMemberStatus = Enums<"group_member_status">;
 export type GroupStatus = Enums<"group_status">;
 export type InvitationStatus = Enums<"invitation_status">;
+export type InvitationType = "existing_user" | "new_user";
 
 // ============================================================================
 // Common Utility Types

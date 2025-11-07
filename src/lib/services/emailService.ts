@@ -5,6 +5,7 @@
 
 import { createClient } from "@/db/supabase.client";
 import type { SupabaseClient } from "../../db/supabase.client";
+import type { InvitationType } from "@/types";
 
 /**
  * Custom errors for email operations
@@ -26,7 +27,6 @@ export class EmailTemplateNotFoundError extends EmailOperationError {
 /**
  * Email template types
  */
-export type InvitationType = "existing_user" | "new_user";
 
 /**
  * Template variables for existing user invitations
@@ -149,7 +149,13 @@ export async function sendInvitationEmail(
  * @returns Secure token string
  */
 export async function generateInvitationToken(invitationId: string): Promise<string> {
-  const secret = process.env.INVITATION_TOKEN_SECRET || "default-secret-change-in-production";
+  const secret = process.env.INVITATION_TOKEN_SECRET;
+  if (!secret) {
+    throw new EmailOperationError(
+      "generate token",
+      "INVITATION_TOKEN_SECRET environment variable is required for secure token generation"
+    );
+  }
   const timestamp = Date.now();
   const data = `${invitationId}:${timestamp}`;
 
@@ -166,7 +172,33 @@ export async function generateInvitationToken(invitationId: string): Promise<str
     .map((b) => b.toString(16).padStart(2, "0"))
     .join("");
 
-  return Buffer.from(`${data}:${signatureHex}`).toString("base64url");
+  // Runtime-agnostic base64url encoding
+  const tokenData = `${data}:${signatureHex}`;
+
+  // Check if Buffer with base64url support is available (Node.js)
+  if (typeof Buffer !== "undefined" && typeof Buffer.from === "function") {
+    try {
+      return Buffer.from(tokenData).toString("base64url");
+    } catch {
+      // Fallback if base64url is not supported
+    }
+  }
+
+  // Fallback implementation for environments without Buffer base64url support
+  const textEncoder = new TextEncoder();
+  const bytes = textEncoder.encode(tokenData);
+
+  // Convert bytes to binary string
+  let binary = "";
+  for (let i = 0; i < bytes.length; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+
+  // Convert to base64
+  const base64 = globalThis.btoa(binary);
+
+  // Convert to base64url: replace +, / with -, _ and strip =
+  return base64.replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
 }
 
 /**
@@ -176,8 +208,15 @@ export async function generateInvitationToken(invitationId: string): Promise<str
  * @returns Invitation ID if valid, null if invalid or expired
  */
 export function verifyInvitationToken(token: string): string | null {
+  const _secret = process.env.INVITATION_TOKEN_SECRET;
+  if (!_secret) {
+    throw new EmailOperationError(
+      "verify token",
+      "INVITATION_TOKEN_SECRET environment variable is required for secure token verification"
+    );
+  }
+
   try {
-    const _secret = process.env.INVITATION_TOKEN_SECRET || "default-secret-change-in-production";
     const decoded = Buffer.from(token, "base64url").toString();
     const [invitationId, timestamp, _signature] = decoded.split(":");
 

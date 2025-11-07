@@ -90,6 +90,32 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
       throw membershipError;
     }
 
+    // Fetch group name for email templates
+    const { data: groupData, error: groupError } = await supabase
+      .from("groups")
+      .select("name")
+      .eq("id", groupId)
+      .single();
+
+    if (groupError) {
+      if (groupError.code === "PGRST116") {
+        // Group not found
+        const errorResponse: ErrorResponseDTO = {
+          error: {
+            code: "NOT_FOUND",
+            message: "Group not found",
+          },
+        };
+        return new Response(JSON.stringify(errorResponse), {
+          status: 404,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+      throw groupError;
+    }
+
+    const groupName = groupData.name;
+
     // Parse request body
     let body;
     try {
@@ -147,7 +173,7 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
           await sendInvitationEmail(supabase, email, groupId, "existing_user", {
             user_name: "Użytkowniku", // Will be replaced with actual name in email service
             inviter_name: user.full_name || "Użytkownik Billzilla",
-            group_name: "", // Will be fetched in email service
+            group_name: groupName,
             accept_url: `${process.env.APP_URL || "http://localhost:4321"}/invitations/${invitation.id}/accept`,
             decline_url: `${process.env.APP_URL || "http://localhost:4321"}/invitations/${invitation.id}/decline`,
           });
@@ -163,7 +189,7 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
 
           await sendInvitationEmail(supabase, email, groupId, "new_user", {
             inviter_name: user.full_name || "Użytkownik Billzilla",
-            group_name: "", // Will be fetched in email service
+            group_name: groupName,
             signup_url: `${process.env.APP_URL || "http://localhost:4321"}/signup?invitation=${invitationToken}`,
             invitation_token: invitationToken,
           });
