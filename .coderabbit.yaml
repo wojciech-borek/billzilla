@@ -12,43 +12,24 @@ early_access: false
 enable_free_tier: true
 
 reviews:
-
   profile: chill
-
   request_changes_workflow: false
-
   high_level_summary: true
-
   high_level_summary_placeholder: "@coderabbitai summary"
-
   high_level_summary_in_walkthrough: false
-
   auto_title_placeholder: "@coderabbitai"
-
   auto_title_instructions: ""
-
   review_status: true
-
   commit_status: true
-
   fail_commit_status: false
-
   collapse_walkthrough: false
-
   changed_files_summary: true
-
   sequence_diagrams: true
-
   estimate_code_review_effort: true
-
   assess_linked_issues: true
-
   related_issues: true
-
   related_prs: true
-
   suggested_labels: true
-
   labeling_instructions:
     - label: "🐛 bug"
       instructions: "For bug fixes and error corrections"
@@ -66,345 +47,230 @@ reviews:
       instructions: "For UI and styling changes"
     - label: "⚙️ chore"
       instructions: "For maintenance and configuration"
-
   auto_apply_labels: false
-
   suggested_reviewers: true
-
   auto_assign_reviewers: false
-
   in_progress_fortune: true
-
   poem: true
-
   path_filters: []
-
   path_instructions:
-
     - path: "**/*"
-
       instructions: |
-
         ## Ogólne Wytyczne Recenzji dla Billzilla
 
         ### Kontekst Projektu
-
         - Tech Stack: Astro 5, React 19, TypeScript 5, Tailwind 4, Shadcn/ui, Supabase
-
         - Architektura: Astro Islands, React dla interaktywnych komponentów, Supabase jako backend
-
         - Główne Funkcje: Zarządzanie grupowymi wydatkami, dodawanie przez głos, rozliczenia sald
-
         - Bezpieczeństwo: Wszystkie dane wrażliwe obsługiwane przez Supabase RLS
 
         ### Wymagania Jakościowe (z test-plan.md)
-
         - Testy obowiązkowe: Wszystkie nowe funkcje wymagają testów jednostkowych
-
         - Pokrycie kodu: >80% dla krytycznych ścieżek, >75% średnio dla projektu
-
         - Testy E2E: Wymagane dla wszystkich kluczowych scenariuszy użytkownika
-
         - Cross-browser: Chrome, Firefox, Safari, Edge
 
         ### Zasady Kodowania (z .cursor/rules/shared.mdc)
-
         - Priorytet: obsługa błędów i edge cases na początku funkcji
-
         - Happy path jako ostatni w funkcji
-
         - Używaj guard clauses zamiast głębokich if-else
-
         - Preferuj if-return pattern
-
         - Implementuj custom error types i logging
 
         ### Specyficzne Wymagania
-
         - TypeScript: Strict mode obowiązkowy
-
         - Zod Schemas: Walidacja frontend + backend
-
         - Error Handling: User-friendly komunikaty błędów
-
         - Accessibility: Semantic HTML, ARIA labels dla komponentów interaktywnych
 
-        ## Knowledge / pliki referencyjne
-
-        - .ai/planning/product/prd.md
-
-        - .ai/architecture/frontend/tech-stack.md
-
-        - .ai/architecture/api/api-plan.md
-
-        - .ai/testing/plans/test-plan.md
-
-        - .cursor/rules/shared.mdc
-
-        - .ai/security/auth/auth-spec.md
-
-        - README.md
-
     - path: "src/components/**/*.tsx"
-
       instructions: |
-
         ## Komponenty React/UI
-
         - Używaj Shadcn/ui komponentów zgodnie z wytycznymi wizualnymi (.cursor/rules/bllzilla-ui-guidelines.md)
-
         - Kolory: primary (#49A067), secondary (#6DBE83), accent (#F49B7A)
-
         - Zaokrąglone rogi (rounded-2xl), duże marginesy
-
         - Dostępność (accessibility) - semantic HTML i ARIA labels obowiązkowe
-
         - Testuj z React Testing Library - fokus na user behavior (>70% pokrycia)
-
         - Responsywność: mobile-first approach
 
     - path: "src/lib/services/**/*.ts"
-
       instructions: |
-
         ## Serwisy Biznesowe
-
         - Obsługa błędów na początku funkcji (zgodnie z clean code guidelines)
-
         - Walidacja inputów z Zod schemas
-
         - TypeScript strict mode
-
         - Izolacja logiki biznesowej od UI
-
         - Wymagane testy: >90% pokrycia kodu (krytyczna logika biznesowa)
-
         - Error logging i user-friendly komunikaty
 
     - path: "src/lib/schemas/**/*.ts"
-
       instructions: |
-
         ## Schematy Walidacji (Zod)
-
         - Frontend + backend validation
-
         - Szczegółowe error messages dla user experience
-
         - Type safety - inferred types z schemas
-
         - Wymagane testy: 100% pokrycia (każda reguła walidacji)
-
         - Testuj edge cases i błędne inputy
 
     - path: "src/pages/api/**/*.ts"
-
       instructions: |
-
         ## API Routes (Astro)
-
         - Supabase RLS security - wszystkie query z auth context
-
         - Error handling z user-friendly messages
-
         - TypeScript dla request/response types
-
         - Input validation obowiązkowa
-
         - Rate limiting considerations dla AI endpoints
-
         - Wymagane testy: Integration tests z API testing
 
     - path: "src/db/**/*.ts"
-
       instructions: |
-
         ## Supabase Integration
-
         - Row Level Security (RLS) dla wszystkich operacji
-
         - Type-safe queries z generated types
-
         - Realtime subscriptions gdzie potrzebne
-
         - Connection pooling i error handling
-
         - Wymagane testy: Mockowanie dla izolacji
 
     - path: "src/__tests__/**/*.ts"
-
       instructions: |
-
         ## Testy Jednostkowe (Vitest)
-
         - Testuj behavior, nie implementation details
-
         - AAA pattern: Arrange, Act, Assert
-
         - Izolacja testów - niezależne mocki
-
         - React Testing Library: user-centric queries (getByRole, getByLabelText)
-
         - MSW dla mockowania API calls
 
     - path: "e2e/**/*.spec.ts"
-
       instructions: |
-
         ## Testy E2E (Playwright)
-
         - Page Object Model obowiązkowy
-
         - Cross-browser: Chromium, Firefox, WebKit
-
         - Izolacja przez browser contexts
-
         - User-oriented locators (getByRole, getByText)
-
         - Testy krytycznych user flows z test-plan.md
 
     - path: "supabase/migrations/**/*.sql"
-
       instructions: |
-
         ## Migracje Bazy Danych
-
         - Row Level Security (RLS) policies dla wszystkich tabel
-
         - Indexes dla performance
-
         - Constraints i foreign keys
-
         - Type safety z generated types
-
         - Wymagane testy: Migration tests dla bezpieczeństwa
 
     - path: "**/*.sql"
-
       instructions: |
-
         ## Pliki SQL
-
         - Sprawdzaj Row Level Security (RLS) policies
-
         - Upewnij się że indeksy są optymalne
-
         - Waliduj constraints i foreign keys
-
         - Sprawdzaj wydajność zapytań
 
     - path: "**/*.md"
-
       instructions: |
-
         ## Dokumentacja
-
         - Sprawdzaj poprawność formatowania Markdown
-
         - Upewnij się że linki działają
-
         - Waliduj spójność terminologii
-
         - Sprawdzaj kompletność opisów
 
     - path: "package.json"
-
       instructions: |
-
         ## Zależności Node.js
-
         - Sprawdzaj czy nowe zależności są konieczne
-
         - Waliduj wersje pod kątem bezpieczeństwa
-
         - Upewnij się że nie ma konfliktów wersji
-
         - Sprawdzaj licencje open source
 
     - path: ".env*"
-
       instructions: |
-
         ## Pliki konfiguracyjne
-
         - Upewnij się że wrażliwe dane nie są committowane
-
         - Sprawdzaj poprawność nazw zmiennych środowiskowych
-
         - Waliduj format wartości konfiguracyjnych
 
   abort_on_close: true
-
   disable_cache: false
-
   auto_review:
-
     enabled: true
-
     auto_incremental_review: true
-
-    ignore_title_keywords: ["WIP", "work in progress", "draft", "[DRAFT]"]
-
+    ignore_title_keywords:
+      - "WIP"
+      - "work in progress"
+      - "draft"
+      - "[DRAFT]"
     labels: []
-
     drafts: false
-
-    base_branches: ["main", "develop"]
-
-    ignore_usernames: ["dependabot", "renovate"]
+    base_branches:
+      - main
+      - develop
+    ignore_usernames:
+      - dependabot
+      - renovate
 
   finishing_touches:
-
     docstrings:
-
       enabled: true
-
     unit_tests:
-
       enabled: true
 
   pre_merge_checks:
-
     docstrings:
-
       mode: warning
-
       threshold: 80
-
     title:
-
       mode: warning
-
       requirements: ""
-
     description:
-
       mode: warning
-
     issue_assessment:
-
       mode: warning
-
     custom_checks: []
 
   tools:
-
     ast-grep:
-
       rule_dirs: []
-
       util_dirs: []
-
       essential_rules: true
-
       packages: []
-
     shellcheck:
-
+      enabled: true
+    eslint:
       enabled: true
 
-    eslint: 
+knowledge_base:
+  opt_out: false
+  web_search:
+    enabled: true
+  code_guidelines:
+    enabled: true
+    filePatterns:
+      - ".ai/planning/product/prd.md"
+      - ".ai/architecture/frontend/tech-stack.md"
+      - ".ai/architecture/api/api-plan.md"
+      - ".ai/testing/plans/test-plan.md"
+      - ".cursor/rules/shared.mdc"
+      - ".ai/security/auth/auth-spec.md"
+      - "README.md"
+  learnings:
+    scope: auto
+  issues:
+    scope: auto
+  jira:
+    usage: auto
+    project_keys: []
+  linear:
+    usage: auto
+    team_keys: []
+  pull_requests:
+    scope: auto
+  mcp:
+    usage: auto
+    disabled_servers: []
 
-      enabled: true
-
-knowledge_base: {}
+code_generation:
+  docstrings:
+    language: pl-PL
+    path_instructions: []
+  unit_tests:
+    path_instructions: []
