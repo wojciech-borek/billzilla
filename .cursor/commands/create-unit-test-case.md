@@ -23,6 +23,6 @@ Wejście: podaj nazwę pliku
 - **Edge cases**
 - **Notatki / uwagi**
 
-Wyjście: zapisz plik markdown w jezyku polskim w folderze @.ai/test-case z nazwa generowanego serwisu test cases pogrupowaną według modułów (Markdown). Daj też krótkie (1–2 zdania) podsumowanie w języku polskim, które moduły są najważniejsze do pokrycia unit testami.
+Wyjście: zapisz plik markdown w jezyku polskim w folderze @.ai/testing/unit z nazwa generowanego serwisu test cases pogrupowaną według modułów (Markdown). Daj też krótkie (1–2 zdania) podsumowanie w języku polskim, które moduły są najważniejsze do pokrycia unit testami.
 
 Uwaga: Nie dodawaj ogólnych zasad testowania — skup się wyłącznie na generowaniu konkretnych test case’ów i ich danych/oczekiwanych rezultatach.
