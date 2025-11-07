@@ -1,7 +1,7 @@
 # Przypadki testowe - Nowa logika zaproszeń
 
 ## Data: 2025-11-06
-## Status: Planowanie
+## Status: Zaimplementowane ✅
 
 ## 1. Testy jednostkowe - Backend
 

@@ -1,7 +1,7 @@
 # Plan migracji bazy danych - Poprawa prywatności zaproszeń
 
 ## Data: 2025-11-06
-## Status: Planowanie
+## Status: Zaimplementowane ✅
 
 ## 1. Cele migracji
 
@@ -131,8 +131,8 @@ AND invitee_profile_id IS NOT NULL;
 
 2. **Uruchomienie migracji**
    ```sql
-   -- W pliku migracji Supabase
-   -- supabase/migrations/20251106_invitation_privacy_fix.sql
+   -- Migracja została wykonana w pliku:
+   -- supabase/migrations/20251025000000_add_accept_invitation_function.sql
    ```
 
 3. **Weryfikacja danych**

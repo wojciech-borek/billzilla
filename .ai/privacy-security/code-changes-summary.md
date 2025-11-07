@@ -1,14 +1,14 @@
 # Lista zmian w kodzie - Poprawa prywatności zaproszeń
 
 ## Data: 2025-11-06
-## Status: Planowanie
+## Status: Zaimplementowane ✅
 
 ## 1. Backend - Zmiany w API
 
 ### 1.1 Nowe/modyfikowane pliki
 
 #### `src/pages/api/groups/[groupId]/members/invite.ts`
-**Status:** ❌ Nie istnieje - trzeba utworzyć
+**Status:** ✅ Istnieje - zaimplementowane
 **Zmiany:**
 - Zmienić logikę: wszyscy użytkownicy (istniejący + nowi) otrzymują status "pending"
 - Dodać `invitee_profile_id` dla istniejących użytkowników
@@ -119,7 +119,7 @@ export async function sendInvitationEmail(
 ```
 
 #### `src/lib/services/invitationService.ts`
-**Status:** ❌ Nie istnieje - trzeba utworzyć
+**Status:** ✅ Istnieje - zaimplementowane
 **Nowe funkcje:**
 - `createInvitationForExistingUser()`
 - `createInvitationForNewUser()`
@@ -177,7 +177,7 @@ export function useInvitationsList() {
 
 ### 3.1 Nowa migracja Supabase
 
-#### `supabase/migrations/20251106_invitation_privacy_fix.sql`
+#### `supabase/migrations/20251025000000_add_accept_invitation_function.sql`
 ```sql
 -- Dodanie nowej kolumny
 ALTER TABLE invitations
@@ -222,7 +222,7 @@ AND gm.role = 'member';
 ### 4.1 Testy jednostkowe
 
 #### `src/__tests__/services/invitationService.test.ts`
-**Status:** ❌ Nie istnieje - trzeba utworzyć
+**Status:** ✅ Istnieje - zaimplementowane
 **Zawartość:** Testy dla wszystkich funkcji invitationService
 
 #### `src/__tests__/services/emailService.test.ts`
@@ -232,7 +232,7 @@ AND gm.role = 'member';
 ### 4.2 Testy integracyjne
 
 #### `e2e/invitation-privacy.spec.ts`
-**Status:** ❌ Nie istnieje - trzeba utworzyć
+**Status:** ❌ Nie istnieje - wymaga utworzenia (priorytet niski)
 **Scenariusze:**
 - Zapraszanie istniejącego użytkownika
 - Zapraszanie nowego użytkownika
@@ -249,12 +249,12 @@ AND gm.role = 'member';
 - `INVITATION_TOKEN_EXPIRY` - czas ważności tokenów (domyślnie 30 dni)
 
 ### 5.2 Szablony e-maili
-**Status:** ❌ Nie istnieją - trzeba utworzyć
-**Pliki do utworzenia:**
-- `src/templates/emails/existing-user-invitation.html`
-- `src/templates/emails/new-user-invitation.html`
-- `src/templates/emails/existing-user-invitation.txt`
-- `src/templates/emails/new-user-invitation.txt`
+**Status:** ✅ Istnieją - zaimplementowane
+**Pliki utworzone:**
+- `src/templates/emails/existing-user-invitation.html` ✅
+- `src/templates/emails/new-user-invitation.html` ✅
+- `src/templates/emails/existing-user-invitation.txt` ✅
+- `src/templates/emails/new-user-invitation.txt` ✅
 
 ## 6. Dokumentacja - Aktualizacje
 
@@ -310,6 +310,6 @@ AND gm.role = 'member';
 
 ---
 
-**Szacowany czas implementacji:** 7-10 dni roboczych
+**Czas implementacji:** Zakończono w 2025-11-07
 **Zespół:** 1 backend developer + 1 frontend developer
-**Priorytet:** Wysoki (bezpieczeństwo prywatności)
+**Priorytet:** Wysoki (bezpieczeństwo prywatności) - ✅ WYKONANE
