@@ -137,3 +137,199 @@ create policy "allow_delete_for_group_creators" on public.group_members for dele
       and profile_id != (select auth.uid())  -- Cannot delete themselves
     )
   );
+
+
+-- =============================================
+-- Invitation privacy improvements
+-- =============================================
+-- comment: Add support for existing user invitations requiring acceptance
+
+-- Add new column for existing user invitations (only if not exists)
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'invitations' AND column_name = 'invitee_profile_id'
+  ) THEN
+    ALTER TABLE invitations
+    ADD COLUMN invitee_profile_id UUID REFERENCES profiles(id);
+  END IF;
+END $$;
+
+-- Create indexes for performance optimization
+-- Index for quick lookup of invitations for existing users
+CREATE INDEX idx_invitations_invitee_profile_id ON invitations(invitee_profile_id)
+WHERE invitee_profile_id IS NOT NULL;
+
+-- Index for pending invitations of existing users
+CREATE INDEX idx_invitations_pending_invitee ON invitations(status, invitee_profile_id)
+WHERE status = 'pending' AND invitee_profile_id IS NOT NULL;
+
+-- Index for email-based invitations (all invitations)
+CREATE INDEX idx_invitations_email ON invitations(email);
+
+-- Index for pending invitations by email (new users)
+CREATE INDEX idx_invitations_pending_email ON invitations(status, email)
+WHERE status = 'pending';
+
+-- Compound index for email + profile_id optimization
+CREATE INDEX idx_invitations_email_profile ON invitations(email, invitee_profile_id);
+
+-- Migrate existing group memberships to "accepted" invitations
+-- This creates historical invitations for users who were previously auto-added to groups
+-- Only create if invitation doesn't already exist for this user-group combination
+INSERT INTO invitations (
+  id,
+  email,
+  group_id,
+  invitee_profile_id,
+  status,
+  created_at
+)
+SELECT
+  gen_random_uuid(),  -- Generate new UUID for each invitation
+  p.email,
+  gm.group_id,
+  gm.profile_id,      -- ID of existing user
+  'accepted',         -- Status: accepted (historical)
+  gm.joined_at        -- Use joined_at as invitation creation date
+FROM group_members gm
+JOIN profiles p ON p.id = gm.profile_id
+WHERE gm.status = 'active'
+AND gm.role = 'member'  -- Skip creators, they "create" the group
+AND gm.joined_at IS NOT NULL
+-- Only insert if no invitation already exists for this user-group combination
+AND NOT EXISTS (
+  SELECT 1 FROM invitations i
+  WHERE i.invitee_profile_id = gm.profile_id
+  AND i.group_id = gm.group_id
+  AND i.status = 'accepted'
+);
+
+
+-- Create function for sending invitation emails
+-- Uses Supabase's Send Email Auth Hook approach for custom emails
+CREATE OR REPLACE FUNCTION send_invitation_email(
+  to_email TEXT,
+  email_subject TEXT,
+  html_content TEXT,
+  text_content TEXT
+)
+RETURNS JSON
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  hook_url TEXT;
+  hook_payload JSON;
+  response JSON;
+BEGIN
+  -- For production: configure Send Email Auth Hook in Supabase Dashboard
+  -- Go to Authentication > Hooks > Send Email Hook
+  -- Set webhook URL to your email service endpoint
+
+  -- Get webhook URL from auth hook configuration (if configured)
+  SELECT value::TEXT INTO hook_url
+  FROM auth.hook_config
+  WHERE type = 'send_email' AND enabled = true
+  LIMIT 1;
+
+  -- If hook is configured, send via webhook
+  IF hook_url IS NOT NULL THEN
+    hook_payload := json_build_object(
+      'type', 'send_email',
+      'record', json_build_object(
+        'email', to_email,
+        'subject', email_subject,
+        'html_content', html_content,
+        'text_content', text_content
+      )
+    );
+
+    -- Send to webhook (requires pg_net extension)
+    SELECT net.http_post(
+      url := hook_url,
+      headers := json_build_object('Content-Type', 'application/json'),
+      body := hook_payload
+    ) INTO response;
+
+    RETURN json_build_object(
+      'success', true,
+      'message', 'Email sent via auth hook',
+      'recipient', to_email,
+      'hook_url', hook_url
+    );
+  END IF;
+
+  -- Fallback: log email for manual processing
+  RAISE LOG 'Invitation email (no hook configured): to=%, subject=%, html_len=%',
+    to_email, email_subject, length(html_content);
+
+  RETURN json_build_object(
+    'success', false,
+    'message', 'Email logged (configure Send Email Auth Hook for sending)',
+    'recipient', to_email,
+    'subject', email_subject,
+    'needs_hook_setup', true
+  );
+EXCEPTION
+  WHEN OTHERS THEN
+    -- Return error information
+    RETURN json_build_object(
+      'error', SQLERRM,
+      'detail', SQLSTATE,
+      'recipient', to_email
+    );
+END;
+$$;
+
+-- Create function to safely find user by email (bypasses RLS)
+CREATE OR REPLACE FUNCTION find_user_by_email_safe(
+  email_to_find TEXT
+)
+RETURNS UUID
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  user_id UUID;
+BEGIN
+  -- Find user by email, bypassing RLS since this is SECURITY DEFINER
+  SELECT id INTO user_id
+  FROM profiles
+  WHERE email = email_to_find;
+
+  RETURN user_id;
+EXCEPTION
+  WHEN NO_DATA_FOUND THEN
+    RETURN NULL;
+END;
+$$;
+
+-- Grant execute permission to authenticated users
+GRANT EXECUTE ON FUNCTION find_user_by_email_safe(TEXT) TO authenticated;
+
+-- Fix RLS policy for invitations table
+-- Allow group members to create invitations for their groups
+CREATE POLICY "allow_insert_for_group_members" ON public.invitations
+  FOR INSERT TO authenticated
+  WITH CHECK (is_group_member(group_id, auth.uid()));
+
+-- Allow users to update their own invitations (accept/decline)
+CREATE POLICY "allow_update_for_invited_users" ON public.invitations
+  FOR UPDATE TO authenticated
+  USING (
+    -- Allow users to update invitations where their email matches
+    email = (SELECT p.email FROM public.profiles p WHERE p.id = auth.uid())
+    OR
+    -- Allow users to update invitations where they are the invitee_profile_id
+    invitee_profile_id = auth.uid()
+  )
+  WITH CHECK (
+    -- Allow users to update invitations where their email matches
+    email = (SELECT p.email FROM public.profiles p WHERE p.id = auth.uid())
+    OR
+    -- Allow users to update invitations where they are the invitee_profile_id
+    invitee_profile_id = auth.uid()
+  );

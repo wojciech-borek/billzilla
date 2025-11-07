@@ -4,7 +4,8 @@
  */
 
 import type { APIRoute } from "astro";
-import type { AcceptInvitationResponseDTO, ErrorResponseDTO } from "../../../../types";
+import type { ErrorResponseDTO } from "../../../../types";
+import { acceptInvitation } from "../../../../lib/services/invitationService";
 
 export const prerender = false;
 
@@ -53,101 +54,64 @@ export const POST: APIRoute = async ({ params, locals }) => {
 
     const supabase = locals.supabase;
 
-    // First, verify the invitation exists and belongs to the user
-    const { data: invitation, error: fetchError } = await supabase
-      .from("invitations")
-      .select(
-        `
-        id,
-        email,
-        status,
-        group_id,
-        group:groups (
-          id,
-          name
-        )
-      `
-      )
-      .eq("id", invitationId)
-      .single();
+    // Use the invitation service to accept the invitation
+    // This handles all validation and business logic
+    const result = await acceptInvitation(supabase, invitationId, user.id);
 
-    if (fetchError || !invitation) {
-      const errorResponse: ErrorResponseDTO = {
-        error: {
-          code: "INVITATION_NOT_FOUND",
-          message: "Invitation not found",
-        },
-      };
-      return new Response(JSON.stringify(errorResponse), {
-        status: 404,
-        headers: { "Content-Type": "application/json" },
-      });
-    }
-
-    // Check if the invitation belongs to the current user
-    if (invitation.email !== user.email) {
-      const errorResponse: ErrorResponseDTO = {
-        error: {
-          code: "FORBIDDEN",
-          message: "You are not authorized to accept this invitation",
-        },
-      };
-      return new Response(JSON.stringify(errorResponse), {
-        status: 403,
-        headers: { "Content-Type": "application/json" },
-      });
-    }
-
-    // Check if invitation is still pending
-    if (invitation.status !== "pending") {
-      const errorResponse: ErrorResponseDTO = {
-        error: {
-          code: "INVALID_STATUS",
-          message: `Invitation is already ${invitation.status}`,
-        },
-      };
-      return new Response(JSON.stringify(errorResponse), {
-        status: 400,
-        headers: { "Content-Type": "application/json" },
-      });
-    }
-
-    // Use the atomic function to accept invitation and add user to group
-    const { data: result, error: functionError } = await supabase.rpc("accept_invitation_transaction", {
-      p_invitation_id: invitationId,
-      p_user_id: user.id,
-    });
-
-    if (functionError) {
-      const errorResponse: ErrorResponseDTO = {
-        error: {
-          code: "DATABASE_ERROR",
-          message: "Failed to accept invitation",
-          details: { message: functionError.message, code: functionError.code },
-        },
-      };
-      return new Response(JSON.stringify(errorResponse), {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
-      });
-    }
-
-    const response: AcceptInvitationResponseDTO = {
-      message: "Invitation accepted successfully",
-      invitation_id: result[0].invitation_id,
-      group_id: result[0].group_id,
-      group_name: result[0].group_name,
-    };
-
-    return new Response(JSON.stringify(response), {
+    return new Response(JSON.stringify(result), {
       status: 200,
       headers: { "Content-Type": "application/json" },
     });
-  } catch {
+  } catch (error) {
+    console.error("Error accepting invitation:", error);
+
+    // Handle specific invitation service errors
+    if (error instanceof Error) {
+      if (error.message.includes("not found")) {
+        const errorResponse: ErrorResponseDTO = {
+          error: {
+            code: "INVITATION_NOT_FOUND",
+            message: "Invitation not found",
+          },
+        };
+        return new Response(JSON.stringify(errorResponse), {
+          status: 404,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+
+      if (error.message.includes("not authorized") || error.message.includes("does not have access")) {
+        const errorResponse: ErrorResponseDTO = {
+          error: {
+            code: "FORBIDDEN",
+            message: "You are not authorized to accept this invitation",
+          },
+        };
+        return new Response(JSON.stringify(errorResponse), {
+          status: 403,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+
+      if (error.message.includes("already")) {
+        const errorResponse: ErrorResponseDTO = {
+          error: {
+            code: "INVALID_STATUS",
+            message: error.message,
+          },
+        };
+        return new Response(JSON.stringify(errorResponse), {
+          status: 400,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+    }
+
+    // Generic error response
     const errorResponse: ErrorResponseDTO = {
       error: {
         code: "INTERNAL_ERROR",
-        message: "An unexpected error occurred",
+        message: "An unexpected error occurred while accepting the invitation",
       },
     };
     return new Response(JSON.stringify(errorResponse), {

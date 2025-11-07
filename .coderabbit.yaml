@@ -1,0 +1,142 @@
+# CodeRabbit Configuration for Billzilla
+
+knowledge_base:
+  - path: ".ai/prd.md"
+    description: "Product Requirements Document - główne wymagania funkcjonalne"
+  - path: ".ai/tech-stack.md"
+    description: "Szczegółowy opis stosu technologicznego"
+  - path: ".ai/api-plan.md"
+    description: "Plan API REST z endpointami i schematami"
+  - path: ".ai/test-plan.md"
+    description: "Kompleksowy plan testów i wymagań jakościowych"
+  - path: ".cursor/rules/shared.mdc"
+    description: "Wspólne reguły projektu i struktura katalogów"
+  - path: ".ai/auth-spec.md"
+    description: "Specyfikacja systemu uwierzytelniania"
+  - path: "README.md"
+    description: "Ogólny opis projektu i instrukcje setup"
+
+review_instructions: |
+  ## Ogólne Wytyczne Recenzji dla Billzilla
+
+  ### Kontekst Projektu
+  - **Tech Stack**: Astro 5, React 19, TypeScript 5, Tailwind 4, Shadcn/ui, Supabase
+  - **Architektura**: Astro Islands, React dla interaktywnych komponentów, Supabase jako backend
+  - **Główne Funkcje**: Zarządzanie grupowymi wydatkami, dodawanie przez głos, rozliczenia sald
+  - **Bezpieczeństwo**: Wszystkie dane wrażliwe obsługiwane przez Supabase RLS
+
+  ### Wymagania Jakościowe (z test-plan.md)
+  - **Testy obowiązkowe**: Wszystkie nowe funkcje wymagają testów jednostkowych
+  - **Pokrycie kodu**: >80% dla krytycznych ścieżek, >75% średnio dla projektu
+  - **Testy E2E**: Wymagane dla wszystkich kluczowych scenariuszy użytkownika
+  - **Cross-browser**: Chrome, Firefox, Safari, Edge
+
+  ### Zasady Kodowania (z .cursor/rules/shared.mdc)
+  - Priorytet: obsługa błędów i edge cases na początku funkcji
+  - Happy path jako ostatni w funkcji
+  - Używaj guard clauses zamiast głębokich if-else
+  - Preferuj if-return pattern
+  - Implementuj custom error types i logging
+
+  ### Specyficzne Wymagania
+  - **TypeScript**: Strict mode obowiązkowy
+  - **Zod Schemas**: Walidacja frontend + backend
+  - **Error Handling**: User-friendly komunikaty błędów
+  - **Accessibility**: Semantic HTML, ARIA labels dla komponentów interaktywnych
+
+path_instructions:
+  - path: "src/components/**/*.tsx"
+    instructions: |
+      ## Komponenty React/UI
+      - Używaj Shadcn/ui komponentów zgodnie z wytycznymi wizualnymi (.cursor/rules/bllzilla-ui-guidelines.md)
+      - Kolory: primary (#49A067), secondary (#6DBE83), accent (#F49B7A)
+      - Zaokrąglone rogi (rounded-2xl), duże marginesy
+      - Dostępność (accessibility) - semantic HTML i ARIA labels obowiązkowe
+      - Testuj z React Testing Library - fokus na user behavior (>70% pokrycia)
+      - Responsywność: mobile-first approach
+
+  - path: "src/lib/services/**/*.ts"
+    instructions: |
+      ## Serwisy Biznesowe
+      - Obsługa błędów na początku funkcji (zgodnie z clean code guidelines)
+      - Walidacja inputów z Zod schemas
+      - TypeScript strict mode
+      - Izolacja logiki biznesowej od UI
+      - **Wymagane testy**: >90% pokrycia kodu (krytyczna logika biznesowa)
+      - Error logging i user-friendly komunikaty
+
+  - path: "src/lib/schemas/**/*.ts"
+    instructions: |
+      ## Schematy Walidacji (Zod)
+      - Frontend + backend validation
+      - Szczegółowe error messages dla user experience
+      - Type safety - inferred types z schemas
+      - **Wymagane testy**: 100% pokrycia (każda reguła walidacji)
+      - Testuj edge cases i błędne inputy
+
+  - path: "src/pages/api/**/*.ts"
+    instructions: |
+      ## API Routes (Astro)
+      - Supabase RLS security - wszystkie query z auth context
+      - Error handling z user-friendly messages
+      - TypeScript dla request/response types
+      - Input validation obowiązkowa
+      - Rate limiting considerations dla AI endpoints
+      - **Wymagane testy**: Integration tests z API testing
+
+  - path: "src/db/**/*.ts"
+    instructions: |
+      ## Supabase Integration
+      - Row Level Security (RLS) dla wszystkich operacji
+      - Type-safe queries z generated types
+      - Realtime subscriptions gdzie potrzebne
+      - Connection pooling i error handling
+      - **Wymagane testy**: Mockowanie dla izolacji
+
+  - path: "src/__tests__/**/*.ts"
+    instructions: |
+      ## Testy Jednostkowe (Vitest)
+      - Testuj behavior, nie implementation details
+      - AAA pattern: Arrange, Act, Assert
+      - Izolacja testów - niezależne mocki
+      - React Testing Library: user-centric queries (getByRole, getByLabelText)
+      - MSW dla mockowania API calls
+
+  - path: "e2e/**/*.spec.ts"
+    instructions: |
+      ## Testy E2E (Playwright)
+      - Page Object Model obowiązkowy
+      - Cross-browser: Chromium, Firefox, WebKit
+      - Izolacja przez browser contexts
+      - User-oriented locators (getByRole, getByText)
+      - Testy krytycznych user flows z test-plan.md
+
+  - path: "supabase/migrations/**/*.sql"
+    instructions: |
+      ## Migracje Bazy Danych
+      - Row Level Security (RLS) policies dla wszystkich tabel
+      - Indexes dla performance
+      - Constraints i foreign keys
+      - Type safety z generated types
+      - **Wymagane testy**: Migration tests dla bezpieczeństwa
+
+reviews:
+  # Konfiguracja narzędzi do sprawdzania jakości
+  tools:
+    - eslint
+    - typescript
+    - vitest
+    - playwright
+
+  # Dodatkowe wymagania dla recenzji
+  high_level_summary: true
+  pull_request_description: true
+  collapse_walkthrough: false
+  auto_review: true
+
+  # Konfiguracja komentarzy i feedbacku
+  comment:
+    - "Jeśli zmieniasz logikę finansową, upewnij się że testy pokrywają >90% kodu"
+    - "Dla schematów Zod wymagane jest 100% pokrycie testami"
+    - "Sprawdź czy nowe komponenty są responsywne i dostępne"
+    - "AI-related code wymaga testów dla edge cases (timeout, błędy API)"

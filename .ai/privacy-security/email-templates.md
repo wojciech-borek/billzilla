@@ -1,7 +1,7 @@
 # Szablony e-maili - System zaproszeń
 
 ## Data: 2025-11-06
-## Status: Planowanie
+## Status: Zaimplementowane ✅
 
 ## 1. Rodzaje e-maili
 

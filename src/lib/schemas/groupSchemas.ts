@@ -38,6 +38,19 @@ export const listGroupsQuerySchema = z.object({
 
 export type ListGroupsQuery = z.infer<typeof listGroupsQuerySchema>;
 
+/**
+ * Schema for inviting members to a group (Backend API)
+ * Used in: POST /api/groups/:groupId/members/invite
+ */
+export const inviteMembersCommandSchema = z.object({
+  emails: z
+    .array(z.string().email("Invalid email address").toLowerCase())
+    .min(1, "At least one email is required")
+    .max(20, "Cannot invite more than 20 people at once"),
+});
+
+export type InviteMembersCommand = z.infer<typeof inviteMembersCommandSchema>;
+
 // ============================================================================
 // Frontend Schemas (Form validation - Polish messages)
 // ============================================================================

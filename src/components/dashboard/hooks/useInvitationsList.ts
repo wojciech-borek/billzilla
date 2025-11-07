@@ -59,6 +59,7 @@ export function useInvitationsList(): InvitationsQueryState & {
         id: invitation.id,
         groupId: invitation.group.id,
         groupName: invitation.group.name,
+        invitationType: invitation.invitee_profile_id ? "existing_user" : "new_user",
         createdAt: invitation.created_at,
       }));
 

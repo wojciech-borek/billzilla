@@ -3,7 +3,7 @@
  * These types are used for presentation layer, mapped from DTOs
  */
 
-import type { GroupRole } from "@/types";
+import type { GroupRole, InvitationType } from "@/types";
 
 export interface AvatarVM {
   profileId: string;
@@ -27,6 +27,7 @@ export interface InvitationCardVM {
   id: string;
   groupId: string;
   groupName: string;
+  invitationType: InvitationType;
   createdAt?: string;
   invitedByName?: string | null;
 }

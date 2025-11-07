@@ -29,7 +29,9 @@ export default function InvitationCardContent({ invitation }: InvitationCardCont
       <div className="flex-1 min-w-0">
         <h3 className="truncate text-sm font-medium text-foreground">{invitation.groupName}</h3>
         <p className="text-xs text-muted-foreground">
-          Zaproszenie do grupy
+          {invitation.invitationType === "existing_user"
+            ? "Zaproszenie do dołączenia do grupy"
+            : "Zaproszenie do rejestracji i dołączenia do grupy"}
           {formattedDate && <span className="ml-1">• {formattedDate}</span>}
         </p>
       </div>

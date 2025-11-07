@@ -181,16 +181,78 @@ export const POST: APIRoute = async ({ request, locals }) => {
       sanitizedEmails = Array.from(emailSet);
     }
 
-    // Prepare command
+    // Prepare command (without invite_emails - will handle separately)
     const command: CreateGroupCommand = {
       name: validatedData.name,
       base_currency_code: validatedData.base_currency_code,
-      invite_emails: sanitizedEmails,
+      // invite_emails removed - will create invitations after group creation
     };
 
     // Call service to create group
     const supabase = locals.supabase;
     const result: CreateGroupResponseDTO = await createGroup(supabase, command, user.id);
+    console.log(`DEBUG: createGroup result:`, { id: result.id, name: result.name, role: result.role });
+
+    // Handle invitations separately (create invitations instead of direct membership)
+    if (sanitizedEmails && sanitizedEmails.length > 0) {
+      const { createInvitationForExistingUser, createInvitationForNewUser, findUserByEmail } = await import(
+        "../../../lib/services/invitationService"
+      );
+
+      const { sendInvitationEmail } = await import("../../../lib/services/emailService");
+
+      // Create invitations for each email
+      const createdInvitations: { id: string; email: string; status: string }[] = [];
+      for (const email of sanitizedEmails) {
+        try {
+          const existingUserId = await findUserByEmail(supabase, email);
+
+          let invitation;
+          if (existingUserId) {
+            // Create invitation for existing user
+            invitation = await createInvitationForExistingUser(supabase, result.id, email, existingUserId);
+
+            // Send email to existing user
+            await sendInvitationEmail(supabase, email, result.id, "existing_user", {
+              user_name: "Użytkowniku",
+              inviter_name: user.full_name || "Użytkownik Billzilla",
+              group_name: result.name || command.name,
+              accept_url: `${process.env.APP_URL || "http://localhost:4321"}/invitations/${invitation.id}/accept`,
+              decline_url: `${process.env.APP_URL || "http://localhost:4321"}/invitations/${invitation.id}/decline`,
+            });
+          } else {
+            // Create invitation for new user
+            invitation = await createInvitationForNewUser(supabase, result.id, email);
+
+            // Send email to new user
+            const { generateInvitationToken } = await import("../../../lib/services/emailService");
+            const invitationToken = await generateInvitationToken(invitation.id);
+
+            await sendInvitationEmail(supabase, email, result.id, "new_user", {
+              inviter_name: user.full_name || "Użytkownik Billzilla",
+              group_name: result.name || command.name,
+              signup_url: `${process.env.APP_URL || "http://localhost:4321"}/signup?invitation=${invitationToken}`,
+              invitation_token: invitationToken,
+            });
+          }
+
+          createdInvitations.push({
+            id: invitation.id,
+            email: invitation.email,
+            status: invitation.status,
+          });
+        } catch (error) {
+          // Log error but continue with other invitations
+          console.error(`Failed to create invitation for ${email}:`, error);
+        }
+      }
+
+      // Update the result to include created invitations instead of added members
+      result.invitations = {
+        added_members: [], // No members are directly added anymore
+        created_invitations: createdInvitations,
+      };
+    }
 
     // Return success response
     return new Response(JSON.stringify(result), {

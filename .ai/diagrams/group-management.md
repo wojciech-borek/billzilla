@@ -149,3 +149,80 @@ sequenceDiagram
     S-->>I: Sukces
     I->>D: Ukryj zaproszenie
 ```
+
+## Diagram Sekwencji Zapraszania Użytkowników
+
+```mermaid
+sequenceDiagram
+    participant User as Group Admin
+    participant API as POST /groups/:groupId/members/invite
+    participant InvSvc as invitationService
+    participant EmailSvc as emailService
+    participant DB as Database
+    participant Email as Email Provider
+
+    User->>API: POST invite emails
+    API->>API: Validate authentication & membership
+    API->>API: Parse & validate emails
+
+    loop For each email
+        API->>InvSvc: Determine if user exists
+        alt Existing User
+            InvSvc->>DB: Create invitation (invitee_profile_id set)
+            DB-->>InvSvc: Invitation created
+            API->>EmailSvc: sendInvitationEmail (existing_user)
+            EmailSvc->>DB: send_invitation_email() RPC
+            DB->>Email: POST webhook
+            Email-->>User: Accept/Decline email sent
+        else New User
+            InvSvc->>DB: Create invitation (invitee_profile_id null)
+            DB-->>InvSvc: Invitation created
+            API->>EmailSvc: generateInvitationToken()
+            EmailSvc-->>API: Token (base64url)
+            API->>EmailSvc: sendInvitationEmail (new_user)
+            EmailSvc->>DB: send_invitation_email() RPC
+            DB->>Email: POST webhook
+            Email-->>User: Signup + Invite email sent
+        end
+        API->>API: Aggregate created invitations
+    end
+
+    API-->>User: 200 { created_invitations: [...], added_members: [] }
+```
+
+## Diagram Sekwencji Akceptacji Zaproszeń
+
+```mermaid
+sequenceDiagram
+    participant Invitee as Invited User
+    participant Accept as POST /invitations/:id/accept
+    participant InvSvc as invitationService
+    participant DB as Database
+    participant Group as Group Members
+
+    Invitee->>Accept: POST accept invitation
+    Accept->>Accept: Authenticate user
+    Accept->>InvSvc: acceptInvitation(invitationId, userId)
+
+    InvSvc->>DB: Fetch invitation
+    DB-->>InvSvc: Invitation + status
+
+    alt Invitation valid & pending
+        InvSvc->>DB: Check not already member
+        DB-->>InvSvc: Member status
+        alt Not a member
+            InvSvc->>DB: RPC: Add to group + mark accepted
+            DB->>Group: Insert into group_members
+            DB->>DB: Update invitation status = accepted
+            DB-->>InvSvc: Success
+            InvSvc-->>Accept: AcceptInvitationResponseDTO
+            Accept-->>Invitee: 200 { invitation_id, group_id, ... }
+        else Already member
+            InvSvc-->>Accept: InvitationAlreadyProcessedError
+            Accept-->>Invitee: 400 Bad Request
+        end
+    else Not found or not pending
+        InvSvc-->>Accept: InvitationNotFoundError / InvitationAccessError
+        Accept-->>Invitee: 404 / 403 Forbidden
+    end
+```
