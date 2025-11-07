@@ -128,8 +128,6 @@ export async function sendInvitationEmail(
       console.log("Email sending failed, logging instead:", {
         to: email,
         subject,
-        htmlContent: htmlContent.substring(0, 200) + "...",
-        textContent: textContent.substring(0, 200) + "...",
         error: emailError.message,
       });
       throw new EmailOperationError("send email", emailError.message);

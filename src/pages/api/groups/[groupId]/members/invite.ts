@@ -160,14 +160,10 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
         // Check if user already exists
         const existingUserId = await findUserByEmail(supabase, email);
 
-        console.log(`DEBUG: Inviting ${email}, existingUserId:`, existingUserId);
-
         let invitation;
         if (existingUserId) {
-          console.log(`DEBUG: Creating invitation for existing user ${email} with ID ${existingUserId}`);
           // Create invitation for existing user
           invitation = await createInvitationForExistingUser(supabase, groupId, email, existingUserId);
-          console.log(`DEBUG: Invitation created for existing user:`, invitation);
 
           // Send email to existing user
           await sendInvitationEmail(supabase, email, groupId, "existing_user", {
@@ -178,10 +174,8 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
             decline_url: `${process.env.APP_URL || "http://localhost:4321"}/invitations/${invitation.id}/decline`,
           });
         } else {
-          console.log(`DEBUG: Creating invitation for new user ${email}`);
           // Create invitation for new user
           invitation = await createInvitationForNewUser(supabase, groupId, email);
-          console.log(`DEBUG: Invitation created for new user:`, invitation);
 
           // Send email to new user
           const { generateInvitationToken } = await import("@/lib/services/emailService");
@@ -203,8 +197,6 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
       } catch (_error) {
         // If invitation creation fails for this email, continue with others
         // In production, you might want to collect errors and return them
-        console.error(`Failed to invite ${email}:`, _error);
-
         // For now, we'll continue processing other emails
         // TODO: Consider collecting errors and returning partial success
       }
