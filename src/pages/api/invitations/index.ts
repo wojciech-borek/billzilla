@@ -4,7 +4,8 @@
  */
 
 import type { APIRoute } from "astro";
-import type { InvitationDTO, ErrorResponseDTO } from "../../../types";
+import type { ErrorResponseDTO } from "../../../types";
+import { getUserInvitations } from "../../../lib/services/invitationService";
 
 export const prerender = false;
 
@@ -12,7 +13,7 @@ export const prerender = false;
  * GET /api/invitations
  * Lists pending invitations for the authenticated user
  *
- * Returns:
+ * Returns invitations for both existing users (by profile_id) and new users (by email)
  * - 200: List of pending invitations with group info
  * - 401: User not authenticated
  * - 500: Internal server error
@@ -36,85 +37,18 @@ export const GET: APIRoute = async ({ locals }) => {
 
     const supabase = locals.supabase;
 
-    // Fetch pending invitations for the user's email with group_id
-    const { data: invitations, error } = await supabase
-      .from("invitations")
-      .select("id, email, status, created_at, group_id")
-      .eq("email", user.email.toLowerCase())
-      .eq("status", "pending")
-      .order("created_at", { ascending: false });
+    // Use the invitation service to get all invitations for the user
+    // This combines invitations for existing users (by invitee_profile_id)
+    // and new users (by email where invitee_profile_id is null)
+    const invitations = await getUserInvitations(supabase, user.id, user.email.toLowerCase());
 
-    if (error) {
-      const errorResponse: ErrorResponseDTO = {
-        error: {
-          code: "DATABASE_ERROR",
-          message: "Failed to fetch invitations",
-        },
-      };
-      return new Response(JSON.stringify(errorResponse), {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
-      });
-    }
-
-    // If no invitations, return empty array
-    if (!invitations || invitations.length === 0) {
-      return new Response(JSON.stringify([]), {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-      });
-    }
-
-    // Get unique group IDs
-    const groupIds = [...new Set(invitations.map((inv) => inv.group_id))];
-
-    // Fetch group data for these invitations
-    const { data: groups, error: groupsError } = await supabase.from("groups").select("id, name").in("id", groupIds);
-
-    if (groupsError) {
-      const errorResponse: ErrorResponseDTO = {
-        error: {
-          code: "DATABASE_ERROR",
-          message: "Failed to fetch group information",
-        },
-      };
-      return new Response(JSON.stringify(errorResponse), {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
-      });
-    }
-
-    // Create a map of group data
-    const groupMap = new Map(groups?.map((g) => [g.id, g]) || []);
-
-    // Map to DTO format, filtering out invitations with missing groups
-    const invitationDTOs: InvitationDTO[] = invitations
-      .filter((inv) => {
-        const group = groupMap.get(inv.group_id);
-        return group !== undefined;
-      })
-      .map((inv) => {
-        const group = groupMap.get(inv.group_id);
-        if (!group) {
-          throw new Error("Group should exist after filtering");
-        }
-        return {
-          id: inv.id,
-          email: inv.email,
-          status: inv.status,
-          created_at: inv.created_at,
-          group: {
-            id: group.id,
-            name: group.name,
-          },
-        };
-      });
-
-    return new Response(JSON.stringify(invitationDTOs), {
+    return new Response(JSON.stringify(invitations), {
       status: 200,
       headers: { "Content-Type": "application/json" },
     });
   } catch (error) {
+    console.error("Error fetching invitations:", error);
+
     const errorResponse: ErrorResponseDTO = {
       error: {
         code: "INTERNAL_ERROR",

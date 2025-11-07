@@ -23,10 +23,13 @@ export interface GroupCardVM {
   creatorProfileId?: string; // Profile ID of the group creator
 }
 
+export type InvitationType = "existing_user" | "new_user";
+
 export interface InvitationCardVM {
   id: string;
   groupId: string;
   groupName: string;
+  invitationType: InvitationType;
   createdAt?: string;
   invitedByName?: string | null;
 }

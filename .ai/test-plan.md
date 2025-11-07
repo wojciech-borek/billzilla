@@ -112,9 +112,11 @@ Poniżej przedstawiono przykładowe scenariusze testowe dla najważniejszych obs
 | ID         | Scenariusz                                                                | Oczekiwany rezultat                                                                                        |   Priorytet   |
 | :--------- | :------------------------------------------------------------------------ | :--------------------------------------------------------------------------------------------------------- | :-----------: |
 | **GRP-01** | Utworzenie nowej grupy bez zapraszania członków.                          | Grupa zostaje utworzona, a twórca jest jej jedynym członkiem z rolą "creator".                             | **Krytyczny** |
-| **GRP-02** | Utworzenie nowej grupy z zaproszeniem istniejących i nowych użytkowników. | Grupa zostaje utworzona, istniejący użytkownicy są dodani, a nowi otrzymują zaproszenia.                   |  **Wysoki**   |
-| **GRP-03** | Akceptacja zaproszenia do grupy.                                          | Użytkownik staje się członkiem grupy, a zaproszenie znika z jego panelu. Grupa pojawia się na liście grup. |  **Wysoki**   |
+| **GRP-02** | Utworzenie nowej grupy z zaproszeniem istniejących użytkowników.           | Grupa zostaje utworzona, istniejący użytkownicy otrzymują zaproszenia wymagające akceptacji.             |  **Wysoki**   |
+| **GRP-03** | Akceptacja zaproszenia do grupy przez istniejącego użytkownika.            | Użytkownik staje się członkiem grupy po akceptacji zaproszenia, zaproszenie znika z jego panelu.           |  **Wysoki**   |
 | **GRP-04** | Odrzucenie zaproszenia do grupy.                                          | Zaproszenie znika z panelu użytkownika. Użytkownik nie zostaje członkiem grupy.                            |  **Średni**   |
+| **GRP-05** | Zapraszanie istniejącego użytkownika do istniejącej grupy.                 | Istniejący użytkownik otrzymuje zaproszenie wymagające akceptacji (nie jest dodawany automatycznie).       |  **Wysoki**   |
+| **GRP-06** | Zapraszanie nowego użytkownika do istniejącej grupy.                       | Nowy użytkownik otrzymuje zaproszenie wymagające rejestracji i akceptacji.                                 |  **Wysoki**   |
 
 ### 4.3. Zarządzanie Wydatkami (Formularz Manualny)
 

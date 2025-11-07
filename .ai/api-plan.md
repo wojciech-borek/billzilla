@@ -589,7 +589,7 @@ Poniżej lista głównych zasobów API wraz z odpowiadającymi im tabelami bazy 
 
 #### POST /api/groups/:groupId/members/invite
 
-**Opis:** Zaprasza użytkowników do grupy po adresie e-mail. Jeśli użytkownik istnieje, jest dodawany automatycznie. Jeśli nie, tworzone jest zaproszenie.
+**Opis:** Zaprasza użytkowników do grupy po adresie e-mail. Wszyscy zaproszeni użytkownicy (zarówno istniejący jak i nowi) otrzymują zaproszenia wymagające akceptacji.
 
 **Wymagane nagłówki:**
 
@@ -612,18 +612,19 @@ Poniżej lista głównych zasobów API wraz z odpowiadającymi im tabelami bazy 
 
 ```json
 {
-  "added_members": [
-    {
-      "profile_id": "uuid",
-      "email": "user1@example.com",
-      "full_name": "Użytkownik Jeden",
-      "status": "active"
-    }
-  ],
   "created_invitations": [
     {
       "id": "uuid",
+      "email": "user1@example.com",
+      "invitee_profile_id": "uuid", // NULL dla nowych użytkowników
+      "invitation_type": "existing_user", // lub "new_user"
+      "status": "pending"
+    },
+    {
+      "id": "uuid",
       "email": "user2@example.com",
+      "invitee_profile_id": null,
+      "invitation_type": "new_user",
       "status": "pending"
     }
   ]
@@ -1581,7 +1582,7 @@ Poniżej lista głównych zasobów API wraz z odpowiadającymi im tabelami bazy 
 
 #### GET /api/invitations
 
-**Opis:** Pobiera listę zaproszeń dla zalogowanego użytkownika (po adresie e-mail).
+**Opis:** Pobiera listę zaproszeń dla zalogowanego użytkownika. Łączy zaproszenia dla istniejących użytkowników (po `invitee_profile_id`) oraz zaproszenia dla nowych użytkowników (po `email`).
 
 **Wymagane nagłówki:**
 
@@ -1603,6 +1604,8 @@ Poniżej lista głównych zasobów API wraz z odpowiadającymi im tabelami bazy 
         "name": "Wyjazd do Zakopanego"
       },
       "email": "user@example.com",
+      "invitee_profile_id": "uuid", // NULL dla nowych użytkowników
+      "invitation_type": "existing_user", // lub "new_user"
       "status": "pending",
       "created_at": "2025-01-10T15:00:00Z"
     }
@@ -1836,6 +1839,7 @@ Autoryzacja opiera się na **Row-Level Security (RLS)** w PostgreSQL:
 
 - `email` - wymagane, prawidłowy format e-mail
 - `group_id` - wymagane, musi istnieć
+- `invitee_profile_id` - opcjonalne, UUID, odnosi się do istniejącego użytkownika (NULL dla nowych użytkowników)
 - `status` - domyślnie `pending`, wartości: `pending`, `accepted`, `declined`
 
 #### Expenses
@@ -1893,9 +1897,10 @@ Autoryzacja opiera się na **Row-Level Security (RLS)** w PostgreSQL:
 1. Walidacja: czy użytkownik jest członkiem grupy
 2. Dla każdego adresu e-mail:
    - Sprawdzenie, czy użytkownik istnieje w systemie (tabela `profiles`)
-   - **Jeśli istnieje:** dodanie bezpośrednio do `group_members` z rolą `member` i statusem `active`
-   - **Jeśli nie istnieje:** utworzenie zaproszenia w tabeli `invitations` ze statusem `pending`
-3. Zwrócenie listy dodanych członków i utworzonych zaproszeń
+   - **Jeśli istnieje:** utworzenie zaproszenia w tabeli `invitations` z `invitee_profile_id` ustawionym na ID użytkownika i wysłanie e-maila typu "existing_user"
+   - **Jeśli nie istnieje:** utworzenie zaproszenia w tabeli `invitations` z `invitee_profile_id = NULL` i wysłanie e-maila typu "new_user"
+3. Wszyscy zaproszeni użytkownicy otrzymują status `pending` i muszą zaakceptować zaproszenie
+4. Zwrócenie listy utworzonych zaproszeń z informacją o typie zaproszenia
 
 **Transakcja:** Tak (dla spójności danych)
 

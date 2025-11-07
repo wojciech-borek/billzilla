@@ -26,7 +26,7 @@ Billzilla adresuje te problemy, oferując proste, zautomatyzowane i scentralizow
 - F-001c: Wszystkie strony aplikacji wymagają uwierzytelnienia, z wyjątkiem: strony logowania, rejestracji, resetowania hasła i strony "O aplikacji" (/about).
 - F-002: Użytkownicy mogą tworzyć nowe grupy i nadawać im nazwy.
 - F-003: Użytkownicy mogą zapraszać inne osoby do grup poprzez podanie ich adresu e-mail.
-- F-004: Jeśli zaproszona osoba posiada już konto w Billzilla, jest automatycznie dodawana do grupy.
+- F-004: Jeśli zaproszona osoba posiada już konto w Billzilla, otrzymuje zaproszenie wymagające akceptacji.
 - F-005: Jeśli zaproszona osoba nie posiada konta, w systemie tworzone jest dla niej zaproszenie ze statusem "oczekujące".
 - F-006: Użytkownik może opuścić grupę w dowolnym momencie.
 - F-007: Po opuszczeniu grupy, użytkownik otrzymuje w niej status "Nieaktywny", a jego dane finansowe i salda pozostają w historii grupy w celu umożliwienia końcowych rozliczeń.
@@ -64,7 +64,6 @@ Następujące funkcje i cechy są świadomie wyłączone z zakresu wersji MVP (M
 - Brak powiadomień push o nowych wydatkach czy zmianach salda.
 - Brak funkcji eksportu danych.
 - Brak możliwości dodawania zdjęć/paragonów do wydatków.
-- Zaproszenia do grup dla istniejących użytkowników nie wymagają akceptacji.
 - Brak możliwości usunięcia konta użytkownika.
 - Brak możliwości trwałego usunięcia grupy, jeśli zawiera ona transakcje (dostępna będzie opcja archiwizacji).
 
@@ -128,7 +127,7 @@ Następujące funkcje i cechy są świadomie wyłączone z zakresu wersji MVP (M
 - Kryteria akceptacji:
   - W widoku grupy dostępna jest opcja zapraszania nowych członków.
   - Użytkownik może wpisać jeden lub więcej adresów e-mail.
-  - Jeśli zaproszony użytkownik istnieje w systemie, jest od razu dodawany do grupy.
+  - Jeśli zaproszony użytkownik istnieje w systemie, otrzymuje zaproszenie wymagające akceptacji.
   - Jeśli zaproszony użytkownik nie istnieje, otrzymuje status "oczekujący" na liście członków grupy (jako zaproszenie).
 
 - ID: US-004

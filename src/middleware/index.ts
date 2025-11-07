@@ -1,4 +1,5 @@
 import type { APIContext } from "astro";
+import { createClient } from "@supabase/supabase-js";
 import { isValidRedirectUrl } from "../lib/utils/redirectValidation";
 import { createSupabaseServerClientFromCookieHeader } from "../db/supabase.server";
 
@@ -25,14 +26,20 @@ export const onRequest = async (context: APIContext, next: () => Promise<Respons
   const supabase = createSupabaseServerClientFromCookieHeader(context.request.headers.get("cookie"));
   context.locals.supabase = supabase;
 
-  // Handle Authorization header for API routes (fallback for CF Pages Functions)
+  // Handle Authorization header for API routes
   if (pathname.startsWith("/api/")) {
     const authHeader = context.request.headers.get("authorization");
     if (authHeader?.startsWith("Bearer ")) {
       const token = authHeader.substring(7);
 
       try {
-        const { data, error } = await supabase.auth.getUser(token);
+        // Create a separate client for token auth to avoid interfering with session auth
+        const tokenSupabase = createClient(
+          import.meta.env.PUBLIC_SUPABASE_URL,
+          import.meta.env.PUBLIC_SUPABASE_ANON_KEY
+        );
+
+        const { data, error } = await tokenSupabase.auth.getUser(token);
         if (data.user && !error) {
           // Get profile data
           const { data: profile, error: profileError } = await supabase
@@ -43,6 +50,8 @@ export const onRequest = async (context: APIContext, next: () => Promise<Respons
 
           if (!profileError && profile) {
             context.locals.user = profile;
+            // Skip session auth since we already authenticated via token
+            return next();
           }
         }
       } catch (_err) {

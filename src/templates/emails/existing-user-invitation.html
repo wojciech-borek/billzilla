@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zaproszenie do grupy w Billzilla</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2563eb;
+            margin-bottom: 10px;
+        }
+        .title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #1f2937;
+            margin: 20px 0;
+        }
+        .content {
+            margin: 20px 0;
+        }
+        .group-info {
+            background-color: #f3f4f6;
+            padding: 20px;
+            border-radius: 6px;
+            margin: 20px 0;
+            border-left: 4px solid #2563eb;
+        }
+        .group-name {
+            font-weight: 600;
+            color: #1f2937;
+            font-size: 18px;
+        }
+        .inviter-info {
+            color: #6b7280;
+            margin-top: 8px;
+        }
+        .actions {
+            text-align: center;
+            margin: 30px 0;
+        }
+        .button {
+            display: inline-block;
+            padding: 12px 24px;
+            background-color: #2563eb;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 500;
+            margin: 0 10px 10px 0;
+            border: 1px solid #2563eb;
+        }
+        .button:hover {
+            background-color: #1d4ed8;
+        }
+        .button.secondary {
+            background-color: white;
+            color: #6b7280;
+            border: 1px solid #d1d5db;
+        }
+        .button.secondary:hover {
+            background-color: #f9fafb;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e5e7eb;
+            font-size: 14px;
+            color: #6b7280;
+            text-align: center;
+        }
+        .privacy-note {
+            background-color: #fef3c7;
+            border: 1px solid #f59e0b;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 20px 0;
+            font-size: 14px;
+        }
+        .privacy-note strong {
+            color: #92400e;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">Billzilla</div>
+            <h1 class="title">Zaproszenie do grupy</h1>
+        </div>
+
+        <div class="content">
+            <p>Cześć{{#if user_name}}, {{user_name}}{{/if}}!</p>
+
+            <p><strong>{{inviter_name}}</strong> zaprasza Cię do dołączenia do grupy w aplikacji Billzilla.</p>
+
+            <div class="group-info">
+                <div class="group-name">{{group_name}}</div>
+                <div class="inviter-info">Zaproszenie od: {{inviter_name}}</div>
+            </div>
+
+            <div class="privacy-note">
+                <strong>Informacja o prywatności:</strong> Dołączenie do grupy oznacza, że inni członkowie będą mogli zobaczyć Twoje imię oraz historię wydatków w tej grupie. Możesz opuścić grupę w dowolnym momencie.
+            </div>
+
+            <p>Aby dołączyć do grupy, kliknij przycisk "Akceptuj zaproszenie". Jeśli nie chcesz dołączyć, możesz zignorować tę wiadomość lub kliknąć "Odrzuć zaproszenie".</p>
+        </div>
+
+        <div class="actions">
+            <a href="{{accept_url}}" class="button">Akceptuj zaproszenie</a>
+            <a href="{{decline_url}}" class="button secondary">Odrzuć zaproszenie</a>
+        </div>
+
+        <div class="footer">
+            <p>Ta wiadomość została wysłana automatycznie przez aplikację Billzilla.</p>
+            <p>Jeśli nie masz konta w Billzilla, możesz je utworzyć na stronie <a href="{{signup_url}}" style="color: #2563eb;">rejestracji</a>.</p>
+        </div>
+    </div>
+</body>
+</html>
