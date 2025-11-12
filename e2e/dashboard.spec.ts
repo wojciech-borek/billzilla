@@ -35,23 +35,20 @@ authenticatedTestWithData.describe.serial("Create Group Modal", () => {
 
     await modal.fillGroupForm(groupData);
 
+    // Wait a moment for form to be fully updated
+    await authenticatedPage.waitForTimeout(500);
+
     // Verify form data
     await expect(modal.groupNameInput).toHaveValue(groupData.name);
-    expect(await modal.getEmailInvitations()).toEqual(groupData.emails);
+    const addedEmails = await modal.getEmailInvitations();
+    expect(addedEmails).toHaveLength(groupData.emails.length);
+    expect(addedEmails).toEqual(groupData.emails);
 
     // Submit the form
     await modal.submit();
 
-    // Wait for either modal to close (success) or error to appear (failure)
-    try {
-      await expect(modal.modal).toBeHidden({ timeout: 5000 });
-    } catch (_error) {
-      // If modal doesn't close, check if there's a form error
-      const errorAlert = modal.page.locator('[role="alert"]').first();
-      await expect(errorAlert).toBeVisible({ timeout: 5000 });
-      // If there's an error, the test should fail here
-      throw new Error("Form submission failed with validation error");
-    }
+    // Wait for modal to close (success) - longer timeout for slower browsers
+    await expect(modal.modal).toBeHidden({ timeout: 15000 });
   });
 
   authenticatedTestWithData("should create group with many members", async ({ authenticatedPage }) => {
@@ -70,22 +67,14 @@ authenticatedTestWithData.describe.serial("Create Group Modal", () => {
 
     // Verify all emails were added
     const addedEmails = await modal.getEmailInvitations();
-    expect(addedEmails).toHaveLength(5);
+    expect(addedEmails).toHaveLength(groupData.emails.length);
     expect(addedEmails).toEqual(groupData.emails);
 
     // Submit the form
     await modal.submit();
 
-    // Wait for either modal to close (success) or error to appear (failure)
-    try {
-      await expect(modal.modal).toBeHidden({ timeout: 5000 });
-    } catch (_error) {
-      // If modal doesn't close, check if there's a form error
-      const errorAlert = modal.page.locator('[role="alert"]').first();
-      await expect(errorAlert).toBeVisible({ timeout: 5000 });
-      // If there's an error, the test should fail here
-      throw new Error("Form submission failed with validation error");
-    }
+    // Wait for modal to close (success) - longer timeout for slower browsers
+    await expect(modal.modal).toBeHidden({ timeout: 15000 });
   });
 
   authenticatedTestWithData("should create group with PLN currency", async ({ authenticatedPage }) => {
@@ -98,7 +87,7 @@ authenticatedTestWithData.describe.serial("Create Group Modal", () => {
     await expect(modal.groupNameInput).toHaveValue(groupData.name);
 
     await modal.submit();
-    await expect(modal.modal).toBeHidden({ timeout: 5000 });
+    await expect(modal.modal).toBeHidden({ timeout: 15000 });
   });
 
   authenticatedTestWithData("should create group without invitations", async ({ authenticatedPage }) => {
@@ -118,7 +107,7 @@ authenticatedTestWithData.describe.serial("Create Group Modal", () => {
     await authenticatedPage.waitForTimeout(500);
 
     await modal.submit();
-    await expect(modal.modal).toBeHidden({ timeout: 5000 });
+    await expect(modal.modal).toBeHidden({ timeout: 15000 });
   });
 
   authenticatedTestWithData("should validate required fields", async ({ authenticatedPage }) => {

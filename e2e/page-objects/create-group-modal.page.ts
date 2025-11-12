@@ -118,6 +118,8 @@ export class CreateGroupModal {
   async addEmailInvitations(emails: string[]) {
     for (const email of emails) {
       await this.addEmailInvitation(email);
+      // Small delay between adding emails to allow state updates
+      await this.page.waitForTimeout(100);
     }
   }
 
@@ -127,12 +129,15 @@ export class CreateGroupModal {
   async fillGroupForm(groupData: { name: string; currency?: string; emails?: string[] }) {
     await this.fillGroupName(groupData.name);
 
-    if (groupData.currency) {
-      await this.selectBaseCurrency(groupData.currency);
-    }
-
     if (groupData.emails && groupData.emails.length > 0) {
       await this.addEmailInvitations(groupData.emails);
+      // Wait for emails to be processed - longer for many emails
+      const waitTime = groupData.emails.length > 2 ? 2000 : 500;
+      await this.page.waitForTimeout(waitTime);
+    }
+
+    if (groupData.currency) {
+      await this.selectBaseCurrency(groupData.currency);
     }
   }
 

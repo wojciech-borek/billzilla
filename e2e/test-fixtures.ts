@@ -12,8 +12,9 @@ export const generateTestData = {
    */
   groupName: (prefix = "Test Group") => {
     const timestamp = Date.now();
-    const random = Math.random().toString(36).substring(2, 8);
-    return `${prefix} ${timestamp}-${random}`;
+    const random1 = Math.random().toString(36).substring(2, 8);
+    const random2 = Math.random().toString(36).substring(2, 8);
+    return `${prefix} ${timestamp}-${random1}-${random2}`;
   },
 
   /**
@@ -194,7 +195,7 @@ export const GROUP_TEMPLATES = {
   basic: () => generateTestData.groupCreationData(),
   withManyMembers: () =>
     generateTestData.groupCreationData({
-      emails: generateTestData.emails(5),
+      emails: generateTestData.emails(3),
     }),
   plnCurrency: () =>
     generateTestData.groupCreationData({

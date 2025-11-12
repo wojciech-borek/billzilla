@@ -76,6 +76,7 @@ jobs:
         env:
           PUBLIC_SUPABASE_URL: ${{ secrets.PUBLIC_SUPABASE_URL }}
           PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.PUBLIC_SUPABASE_ANON_KEY }}
+          INVITATION_TOKEN_SECRET: ${{ secrets.INVITATION_TOKEN_SECRET }}
 
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/wrangler-action@v3
