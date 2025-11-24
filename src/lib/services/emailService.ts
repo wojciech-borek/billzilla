@@ -72,8 +72,6 @@ export async function sendInvitationEmail(
   variables: InvitationVariables
 ): Promise<void> {
   try {
-    console.log(`DEBUG: sendInvitationEmail called with groupId: ${groupId}, email: ${email}`);
-
     // Get group information
     const { data: group, error: groupError } = await supabase
       .from("groups")
@@ -81,14 +79,9 @@ export async function sendInvitationEmail(
       .eq("id", groupId)
       .single();
 
-    console.log(`DEBUG: Group query result:`, { group, groupError });
-
     if (groupError) {
-      console.error(`DEBUG: Group error details:`, groupError);
       throw new EmailOperationError("get group info", groupError.message);
     }
-
-    console.log(`DEBUG: Found group:`, group);
 
     // Inviter information is passed via variables.inviter_name
 
@@ -243,8 +236,6 @@ export function verifyInvitationToken(token: string): string | null {
  * @throws {EmailTemplateNotFoundError} If template doesn't exist
  */
 async function loadEmailTemplate(templateName: string): Promise<string> {
-  console.log(`DEBUG: Loading template: ${templateName}`);
-
   // For development, use inline templates until proper file loading is configured
   const templates: Record<string, string> = {
     "existing_user-invitation.html": `<!DOCTYPE html>
@@ -337,11 +328,9 @@ Dołącz do grupy: {{signup_url}}
 
   const template = templates[templateName];
   if (!template) {
-    console.error(`DEBUG: Template ${templateName} not found in inline templates`);
     throw new EmailTemplateNotFoundError(templateName);
   }
 
-  console.log(`DEBUG: Template loaded successfully: ${templateName}`);
   return template;
 }
 
