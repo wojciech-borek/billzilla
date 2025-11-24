@@ -399,28 +399,18 @@ async function getUserEmail(supabase: SupabaseClient, userId: string): Promise<s
  * @returns Profile ID if user exists, null otherwise
  */
 export async function findUserByEmail(supabase: SupabaseClient, email: string): Promise<string | null> {
-  console.log(`DEBUG: findUserByEmail called with: "${email}"`);
+  // Use RPC function that bypasses RLS to find user by email
+  const { data: userId, error } = await supabase.rpc("find_user_by_email_safe", {
+    email_to_find: email,
+  });
 
-  try {
-    // Use RPC function that bypasses RLS to find user by email
-    const { data: userId, error } = await supabase.rpc("find_user_by_email_safe", {
-      email_to_find: email,
-    });
+  if (error) {
+    throw new InvitationOperationError("find user by email", error.message);
+  }
 
-    if (error) {
-      console.log(`DEBUG: RPC error:`, error);
-      throw new InvitationOperationError("find user by email", error.message);
-    }
-
-    if (userId) {
-      console.log(`DEBUG: Found user with ID:`, userId);
-      return userId;
-    } else {
-      console.log(`DEBUG: No user found for email: "${email}"`);
-      return null;
-    }
-  } catch (error) {
-    console.log(`DEBUG: Error in findUserByEmail:`, error);
-    throw error;
+  if (userId) {
+    return userId;
+  } else {
+    return null;
   }
 }

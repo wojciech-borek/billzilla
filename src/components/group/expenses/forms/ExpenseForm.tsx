@@ -47,8 +47,6 @@ export function ExpenseForm({
   mode = "create",
   expenseId,
 }: ExpenseFormProps) {
-  console.log("ExpenseForm - called with mode:", mode, "expenseId:", expenseId);
-
   const {
     form,
     validation,

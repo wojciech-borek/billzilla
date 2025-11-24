@@ -191,7 +191,6 @@ export const POST: APIRoute = async ({ request, locals }) => {
     // Call service to create group
     const supabase = locals.supabase;
     const result: CreateGroupResponseDTO = await createGroup(supabase, command, user.id);
-    console.log(`DEBUG: createGroup result:`, { id: result.id, name: result.name, role: result.role });
 
     // Handle invitations separately (create invitations instead of direct membership)
     if (sanitizedEmails && sanitizedEmails.length > 0) {
@@ -202,7 +201,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       const { sendInvitationEmail } = await import("../../../lib/services/emailService");
 
       // Create invitations for each email
-      const createdInvitations: { id: string; email: string; status: string }[] = [];
+      const createdInvitations: { id: string; email: string; status: "pending" | "accepted" | "declined" }[] = [];
       for (const email of sanitizedEmails) {
         try {
           const existingUserId = await findUserByEmail(supabase, email);
