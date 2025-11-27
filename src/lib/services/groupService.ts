@@ -4,7 +4,8 @@
  */
 
 import type { SupabaseClient } from "../../db/supabase.client";
-import { calculateUserBalances } from "./balanceService";
+import { BalanceService } from "./balanceService";
+import { BalanceRepository } from "./repositories/BalanceRepository";
 import { fetchGroupMembers, getGroupMemberDetails } from "./memberService";
 import type {
   CreateGroupCommand,
@@ -151,9 +152,10 @@ export async function listGroups(
     const groupIds = userGroups.map((g) => g.id);
 
     // Fetch group members and balances in parallel
+    const balanceService = new BalanceService(new BalanceRepository(supabase));
     const [membersByGroup, balancesByGroup] = await Promise.all([
       fetchGroupMembers(supabase, groupIds),
-      calculateUserBalances(supabase, userId, groupIds),
+      balanceService.calculateUserBalances(userId, groupIds),
     ]);
 
     // Compose final response using Builder pattern
