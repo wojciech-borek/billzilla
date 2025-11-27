@@ -3,7 +3,8 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { calculateUserBalances } from "../../lib/services/balanceService";
+import { BalanceService } from "../../lib/services/balanceService";
+import { BalanceRepository } from "../../lib/services/repositories/BalanceRepository";
 import type { SupabaseClient } from "../../db/supabase.client";
 
 interface TestData {
@@ -115,7 +116,8 @@ describe("calculateUserBalances", () => {
       ],
     });
 
-    const result = await calculateUserBalances(mockSupabase, userId, [groupId]);
+    const balanceService = new BalanceService(new BalanceRepository(mockSupabase));
+    const result = await balanceService.calculateUserBalances(userId, [groupId]);
     const balance = result.get(groupId);
 
     // A paid 100 but owes 33.33, so balance should be 100 - 33.33 = 66.67
@@ -154,7 +156,8 @@ describe("calculateUserBalances", () => {
       ],
     });
 
-    const result = await calculateUserBalances(mockSupabase, userId, [groupId]);
+    const balanceService = new BalanceService(new BalanceRepository(mockSupabase));
+    const result = await balanceService.calculateUserBalances(userId, [groupId]);
     const balance = result.get(groupId);
 
     // A paid 100 EUR = 85 USD, owes 50 EUR = 42.5 USD
@@ -162,32 +165,52 @@ describe("calculateUserBalances", () => {
     expect(balance).toBeCloseTo(42.5, 2);
   });
 
-  it("should handle settlements correctly", async () => {
+  it("should reduce balance when settlements pay down debt", async () => {
     const userId = "user-a";
     const groupId = "group-1";
 
     const mockSupabase = createMockSupabase({
+      expenses: [
+        {
+          group_id: groupId,
+          amount: 100,
+          currency_code: "USD",
+          payer_id: "user-b",
+        },
+      ],
+      expense_splits: [
+        {
+          profile_id: userId,
+          amount: 100,
+          expenses: {
+            group_id: groupId,
+            currency_code: "USD",
+          },
+        },
+      ],
       settlements: [
         {
           group_id: groupId,
-          amount: 50,
-          payer_id: userId, // A paid B 50
+          amount: 100,
+          payer_id: userId, // user-a pays user-b to settle
           payee_id: "user-b",
         },
+      ],
+      group_currencies: [
         {
           group_id: groupId,
-          amount: 25,
-          payer_id: "user-c", // C paid A 25
-          payee_id: userId,
+          currency_code: "USD",
+          exchange_rate: 1.0,
         },
       ],
     });
 
-    const result = await calculateUserBalances(mockSupabase, userId, [groupId]);
+    const balanceService = new BalanceService(new BalanceRepository(mockSupabase));
+    const result = await balanceService.calculateUserBalances(userId, [groupId]);
     const balance = result.get(groupId);
 
-    // A paid 50 (settlement) but received 25, so balance: +25 - 50 = -25
-    expect(balance).toBeCloseTo(-25, 2);
+    // user-a owed 100 but settled 100, so balance should return to 0
+    expect(balance).toBeCloseTo(0, 2);
   });
 
   it("should handle multiple currencies in the same group", async () => {
@@ -241,7 +264,8 @@ describe("calculateUserBalances", () => {
       ],
     });
 
-    const result = await calculateUserBalances(mockSupabase, userId, [groupId]);
+    const balanceService = new BalanceService(new BalanceRepository(mockSupabase));
+    const result = await balanceService.calculateUserBalances(userId, [groupId]);
     const balance = result.get(groupId);
 
     // A paid 100 EUR = 85 USD, owes 50 EUR = 42.5 USD

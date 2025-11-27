@@ -1,16 +1,18 @@
 import React, { useCallback, useState } from "react";
 import { useInfiniteExpenses } from "@/lib/hooks/useGroupExpenses";
 import { useGroupBalances } from "@/lib/hooks/useGroupBalances";
+import { useGroupSettlements } from "@/lib/hooks/useGroupSettlements";
 import { QueryProvider } from "@/components/QueryProvider";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import { useDeleteExpense } from "@/lib/hooks/useDeleteExpense";
 import { ExpenseList } from "./ExpenseList";
-import { Plus, TrendingUp, Users, CreditCard, ArrowRight, HandCoins, Scale } from "lucide-react";
-import type { ExpenseListItemDTO, GroupRole, ExpenseDTO } from "@/types";
+import { Plus, TrendingUp, Users, CreditCard, ArrowRight, HandCoins, Scale, ChevronDown, ChevronUp } from "lucide-react";
+import type { ExpenseListItemDTO, GroupRole, ExpenseDTO, SettlementDTO, SuggestedSettlementDTO } from "@/types";
 import { GroupSettingsCards } from "./GroupSettingsCards";
 import { useExpenseModal } from "@/components/dashboard/hooks/useExpenseModal";
 import { AddExpenseModal } from "./expenses/AddExpenseModal";
 import { EditExpenseModal } from "./expenses/EditExpenseModal";
+import { SettleBalanceDialog } from "./settlements/SettleBalanceDialog";
 
 export interface DashboardTabProps {
   groupId: string;
@@ -40,6 +42,11 @@ const DashboardTabContent: React.FC<DashboardTabProps> = ({ groupId, userId, use
     error: balancesErrorObj,
     refetch: refetchBalances,
   } = useGroupBalances(groupId);
+
+  const {
+    settlements: historySettlements,
+    refetch: refetchSettlements,
+  } = useGroupSettlements(groupId, { limit: 50 });
 
   const memberBalances = balances?.member_balances || [];
   const suggestedSettlements = balances?.suggested_settlements || [];
@@ -73,6 +80,22 @@ const DashboardTabContent: React.FC<DashboardTabProps> = ({ groupId, userId, use
     isOpen: false,
     expense: null,
   });
+
+  // Settlement dialog state
+  const [settlementDialog, setSettlementDialog] = useState<{
+    isOpen: boolean;
+    prefillData: {
+      payerId: string;
+      payeeId: string;
+      amount: number;
+    } | null;
+  }>({
+    isOpen: false,
+    prefillData: null,
+  });
+
+  // Expand settlements history
+  const [showAllSettlements, setShowAllSettlements] = useState(false);
 
   // Delete expense mutation
   const deleteExpenseMutation = useDeleteExpense();
@@ -121,6 +144,23 @@ const DashboardTabContent: React.FC<DashboardTabProps> = ({ groupId, userId, use
   const handleAddExpense = useCallback(async () => {
     await expenseModal.openModal(groupId);
   }, [expenseModal, groupId]);
+
+  // Handle open settlement dialog
+  const handleOpenSettlement = useCallback((suggested?: SuggestedSettlementDTO) => {
+    setSettlementDialog({
+      isOpen: true,
+      prefillData: suggested ? {
+        payerId: suggested.from.profile_id,
+        payeeId: suggested.to.profile_id,
+        amount: suggested.amount,
+      } : null,
+    });
+  }, []);
+
+  // Handle settlement created
+  const handleSettlementCreated = useCallback(async (_settlement: SettlementDTO) => {
+    await Promise.all([refetchBalances(), refetchSettlements()]);
+  }, [refetchBalances, refetchSettlements]);
 
   // Handle loading state
   if (isLoading) {
@@ -220,13 +260,12 @@ const DashboardTabContent: React.FC<DashboardTabProps> = ({ groupId, userId, use
             <div>
               <p className="text-sm font-medium text-muted-foreground">Twoje saldo</p>
               <p
-                className={`text-2xl font-bold ${
-                  currentUserBalance?.balance && currentUserBalance.balance > 0
-                    ? "text-green-600"
-                    : currentUserBalance?.balance && currentUserBalance.balance < 0
-                      ? "text-red-600"
-                      : "text-muted-foreground"
-                }`}
+                className={`text-2xl font-bold ${currentUserBalance?.balance && currentUserBalance.balance > 0
+                  ? "text-green-600"
+                  : currentUserBalance?.balance && currentUserBalance.balance < 0
+                    ? "text-red-600"
+                    : "text-muted-foreground"
+                  }`}
               >
                 {currentUserBalance?.balance ? currentUserBalance.balance.toFixed(2) : "0.00"} {baseCurrencyCode}
               </p>
@@ -323,13 +362,12 @@ const DashboardTabContent: React.FC<DashboardTabProps> = ({ groupId, userId, use
                     </div>
                   </div>
                   <span
-                    className={`font-semibold ${
-                      currentUserBalance.balance > 0
-                        ? "text-green-600"
-                        : currentUserBalance.balance < 0
-                          ? "text-red-600"
-                          : "text-muted-foreground"
-                    }`}
+                    className={`font-semibold ${currentUserBalance.balance > 0
+                      ? "text-green-600"
+                      : currentUserBalance.balance < 0
+                        ? "text-red-600"
+                        : "text-muted-foreground"
+                      }`}
                   >
                     {currentUserBalance.balance >= 0 ? "+" : ""}
                     {currentUserBalance.balance.toFixed(2)} {baseCurrencyCode}
@@ -349,13 +387,12 @@ const DashboardTabContent: React.FC<DashboardTabProps> = ({ groupId, userId, use
                       <span className="font-medium text-foreground">{member.full_name || "Użytkownik"}</span>
                     </div>
                     <span
-                      className={`font-semibold ${
-                        member.balance > 0
-                          ? "text-green-600"
-                          : member.balance < 0
-                            ? "text-red-600"
-                            : "text-muted-foreground"
-                      }`}
+                      className={`font-semibold ${member.balance > 0
+                        ? "text-green-600"
+                        : member.balance < 0
+                          ? "text-red-600"
+                          : "text-muted-foreground"
+                        }`}
                     >
                       {member.balance >= 0 ? "+" : ""}
                       {member.balance.toFixed(2)} {baseCurrencyCode}
@@ -372,7 +409,7 @@ const DashboardTabContent: React.FC<DashboardTabProps> = ({ groupId, userId, use
                       <h3 className="text-sm font-medium text-foreground">Sugerowane rozliczenia</h3>
                     </div>
                     <div className="space-y-2">
-                      {suggestedSettlements.slice(0, 3).map((settlement, index) => (
+                      {suggestedSettlements.map((settlement, index) => (
                         <div key={index} className="flex items-center justify-between p-3 rounded-xl bg-muted/20">
                           <div className="flex items-center gap-3">
                             <div className="flex items-center gap-2">
@@ -406,23 +443,68 @@ const DashboardTabContent: React.FC<DashboardTabProps> = ({ groupId, userId, use
                                 {settlement.amount.toFixed(2)} {baseCurrencyCode}
                               </div>
                             </div>
-                            <button
-                              className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 text-muted-foreground hover:text-foreground hover:bg-accent h-7 w-7"
-                              aria-label={`Rozlicz ${settlement.from.full_name || "Użytkownik"} do ${settlement.to.full_name || "Użytkownik"}`}
-                            >
-                              <HandCoins className="h-4 w-4" />
-                            </button>
+
+                            {(settlement.from.profile_id === userId || settlement.to.profile_id === userId) && (
+                              <button
+                                onClick={() => handleOpenSettlement(settlement)}
+                                className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 text-primary hover:text-primary/80 hover:bg-primary/10 h-7 w-7"
+                                aria-label={`Rozlicz ${settlement.from.full_name || "Użytkownik"} do ${settlement.to.full_name || "Użytkownik"}`}
+                              >
+                                <HandCoins className="h-4 w-4" />
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* History of Settlements */}
+              {historySettlements.length > 0 && (
+                <>
+                  <div className="border-t border-border my-4"></div>
+                  <div>
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="text-sm font-medium text-foreground">Historia rozliczeń</h3>
+                    </div>
+                    <div className="space-y-2">
+                      {(showAllSettlements ? historySettlements : historySettlements.slice(0, 5)).map((settlement) => (
+                        <div key={settlement.id} className="flex items-center justify-between p-3 rounded-xl bg-muted/10">
+                          <div className="flex items-center gap-3">
+                            <div className="flex flex-col">
+                              <div className="flex items-center gap-2 text-sm">
+                                <span className="font-medium">{settlement.payer.full_name}</span>
+                                <ArrowRight className="h-3 w-3 text-muted-foreground" />
+                                <span className="font-medium">{settlement.payee.full_name}</span>
+                              </div>
+                              <span className="text-xs text-muted-foreground">
+                                {new Date(settlement.settled_at).toLocaleDateString()}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="text-sm font-semibold text-foreground">
+                            {settlement.amount.toFixed(2)} {baseCurrencyCode}
                           </div>
                         </div>
                       ))}
 
-                      {suggestedSettlements.length > 3 && (
+                      {historySettlements.length > 5 && (
                         <div className="text-center pt-2">
                           <button
-                            onClick={() => (window.location.href = `/groups/${groupId}/balances`)}
-                            className="text-xs text-primary hover:text-primary/80 font-medium"
+                            onClick={() => setShowAllSettlements(!showAllSettlements)}
+                            className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground font-medium"
                           >
-                            Zobacz wszystkie ({suggestedSettlements.length})
+                            {showAllSettlements ? (
+                              <>
+                                Zwiń <ChevronUp className="h-3 w-3" />
+                              </>
+                            ) : (
+                              <>
+                                Zobacz wszystkie ({historySettlements.length}) <ChevronDown className="h-3 w-3" />
+                              </>
+                            )}
                           </button>
                         </div>
                       )}
@@ -436,7 +518,7 @@ const DashboardTabContent: React.FC<DashboardTabProps> = ({ groupId, userId, use
       </div>
 
       {/* Group Settings */}
-      <GroupSettingsCards groupId={groupId} userId={userId} userRole={userRole} />
+      <GroupSettingsCards groupId={groupId} userRole={userRole} />
 
       {/* Delete Confirmation Dialog */}
       <ConfirmationDialog
@@ -478,6 +560,22 @@ const DashboardTabContent: React.FC<DashboardTabProps> = ({ groupId, userId, use
           isLoading={expenseModal.isLoading}
         />
       )}
+
+      {/* Settle Balance Dialog */}
+      <SettleBalanceDialog
+        isOpen={settlementDialog.isOpen}
+        onClose={() => setSettlementDialog({ isOpen: false, prefillData: null })}
+        groupId={groupId}
+        baseCurrencyCode={baseCurrencyCode}
+        prefillData={settlementDialog.prefillData}
+        groupMembers={memberBalances.map(m => ({
+          profile_id: m.profile_id,
+          full_name: m.full_name,
+          avatar_url: m.avatar_url,
+          status: m.status
+        }))}
+        onSettlementCreated={handleSettlementCreated}
+      />
     </div>
   );
 };

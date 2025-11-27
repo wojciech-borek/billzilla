@@ -4,7 +4,8 @@
  */
 
 import type { APIRoute } from "astro";
-import { getGroupBalances } from "../../../../../lib/services/balanceService";
+import { BalanceService } from "../../../../../lib/services/balanceService";
+import { BalanceRepository } from "../../../../../lib/services/repositories/BalanceRepository";
 import type { ErrorResponseDTO } from "../../../../../types";
 
 export const prerender = false;
@@ -53,7 +54,8 @@ export const GET: APIRoute = async ({ locals, params }) => {
     }
 
     // Step 3: Call service to get group balances
-    const balancesDTO = await getGroupBalances(locals.supabase, groupId, locals.user.id);
+    const balanceService = new BalanceService(new BalanceRepository(locals.supabase));
+    const balancesDTO = await balanceService.getGroupBalances(groupId, locals.user.id);
 
     // Step 4: Return success response
     return new Response(JSON.stringify(balancesDTO), {
