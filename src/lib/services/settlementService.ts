@@ -83,10 +83,19 @@ export class SettlementService {
    * since settlements represent actual cash transfers between group members.
    */
   async createSettlement(groupId: string, command: CreateSettlementCommand): Promise<SettlementDTO> {
-    // 1. Verify group membership for payer and payee
+    // 1. Defensive guard checks
+    if (command.amount <= 0) {
+      throw new SettlementError("Settlement amount must be positive", "INVALID_AMOUNT");
+    }
+
+    if (command.payer_id === command.payee_id) {
+      throw new SettlementError("Payer and payee cannot be the same person", "SAME_PAYER_PAYEE");
+    }
+
+    // 2. Verify group membership for payer and payee
     await this.settlementRepository.verifyGroupMembers(groupId, [command.payer_id, command.payee_id]);
 
-    // 2. Validate settlement possibility (business rules)
+    // 3. Validate settlement possibility (business rules)
     await this.validateSettlementPossibility(groupId, command.payer_id, command.payee_id, command.amount);
 
     // 3. Create settlement

@@ -272,6 +272,66 @@ describe("settlementService", () => {
         "Settlement amount cannot exceed outstanding debt of 10.00"
       );
     });
+
+    it("should throw error when amount is zero", async () => {
+      const mockSupabase = createMockSupabase({
+        group_members: [{ profile_id: "user-a" }, { profile_id: "user-b" }],
+      });
+
+      const command = {
+        payer_id: "user-a",
+        payee_id: "user-b",
+        amount: 0,
+      };
+
+      const settlementService = new SettlementService(
+        new SettlementRepository(mockSupabase),
+        new BalanceRepository(mockSupabase)
+      );
+      await expect(settlementService.createSettlement("group-1", command)).rejects.toThrow(
+        "Settlement amount must be positive"
+      );
+    });
+
+    it("should throw error when amount is negative", async () => {
+      const mockSupabase = createMockSupabase({
+        group_members: [{ profile_id: "user-a" }, { profile_id: "user-b" }],
+      });
+
+      const command = {
+        payer_id: "user-a",
+        payee_id: "user-b",
+        amount: -10,
+      };
+
+      const settlementService = new SettlementService(
+        new SettlementRepository(mockSupabase),
+        new BalanceRepository(mockSupabase)
+      );
+      await expect(settlementService.createSettlement("group-1", command)).rejects.toThrow(
+        "Settlement amount must be positive"
+      );
+    });
+
+    it("should throw error when payer and payee are the same", async () => {
+      const mockSupabase = createMockSupabase({
+        group_members: [{ profile_id: "user-a" }],
+      });
+
+      const command = {
+        payer_id: "user-a",
+        payee_id: "user-a",
+        amount: 25,
+      };
+
+      const settlementService = new SettlementService(
+        new SettlementRepository(mockSupabase),
+        new BalanceRepository(mockSupabase)
+      );
+      await expect(settlementService.createSettlement("group-1", command)).rejects.toThrow(
+        "Payer and payee cannot be the same person"
+      );
+    });
   });
 
   describe("listSettlements", () => {
