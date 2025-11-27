@@ -6,7 +6,17 @@ import { QueryProvider } from "@/components/QueryProvider";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import { useDeleteExpense } from "@/lib/hooks/useDeleteExpense";
 import { ExpenseList } from "./ExpenseList";
-import { Plus, TrendingUp, Users, CreditCard, ArrowRight, HandCoins, Scale, ChevronDown, ChevronUp } from "lucide-react";
+import {
+  Plus,
+  TrendingUp,
+  Users,
+  CreditCard,
+  ArrowRight,
+  HandCoins,
+  Scale,
+  ChevronDown,
+  ChevronUp,
+} from "lucide-react";
 import type { ExpenseListItemDTO, GroupRole, ExpenseDTO, SettlementDTO, SuggestedSettlementDTO } from "@/types";
 import { GroupSettingsCards } from "./GroupSettingsCards";
 import { useExpenseModal } from "@/components/dashboard/hooks/useExpenseModal";
@@ -43,10 +53,7 @@ const DashboardTabContent: React.FC<DashboardTabProps> = ({ groupId, userId, use
     refetch: refetchBalances,
   } = useGroupBalances(groupId);
 
-  const {
-    settlements: historySettlements,
-    refetch: refetchSettlements,
-  } = useGroupSettlements(groupId, { limit: 50 });
+  const { settlements: historySettlements, refetch: refetchSettlements } = useGroupSettlements(groupId, { limit: 50 });
 
   const memberBalances = balances?.member_balances || [];
   const suggestedSettlements = balances?.suggested_settlements || [];
@@ -149,18 +156,23 @@ const DashboardTabContent: React.FC<DashboardTabProps> = ({ groupId, userId, use
   const handleOpenSettlement = useCallback((suggested?: SuggestedSettlementDTO) => {
     setSettlementDialog({
       isOpen: true,
-      prefillData: suggested ? {
-        payerId: suggested.from.profile_id,
-        payeeId: suggested.to.profile_id,
-        amount: suggested.amount,
-      } : null,
+      prefillData: suggested
+        ? {
+            payerId: suggested.from.profile_id,
+            payeeId: suggested.to.profile_id,
+            amount: suggested.amount,
+          }
+        : null,
     });
   }, []);
 
   // Handle settlement created
-  const handleSettlementCreated = useCallback(async (_settlement: SettlementDTO) => {
-    await Promise.all([refetchBalances(), refetchSettlements()]);
-  }, [refetchBalances, refetchSettlements]);
+  const handleSettlementCreated = useCallback(
+    async (_settlement: SettlementDTO) => {
+      await Promise.all([refetchBalances(), refetchSettlements()]);
+    },
+    [refetchBalances, refetchSettlements]
+  );
 
   // Handle loading state
   if (isLoading) {
@@ -260,12 +272,13 @@ const DashboardTabContent: React.FC<DashboardTabProps> = ({ groupId, userId, use
             <div>
               <p className="text-sm font-medium text-muted-foreground">Twoje saldo</p>
               <p
-                className={`text-2xl font-bold ${currentUserBalance?.balance && currentUserBalance.balance > 0
-                  ? "text-green-600"
-                  : currentUserBalance?.balance && currentUserBalance.balance < 0
-                    ? "text-red-600"
-                    : "text-muted-foreground"
-                  }`}
+                className={`text-2xl font-bold ${
+                  currentUserBalance?.balance && currentUserBalance.balance > 0
+                    ? "text-green-600"
+                    : currentUserBalance?.balance && currentUserBalance.balance < 0
+                      ? "text-red-600"
+                      : "text-muted-foreground"
+                }`}
               >
                 {currentUserBalance?.balance ? currentUserBalance.balance.toFixed(2) : "0.00"} {baseCurrencyCode}
               </p>
@@ -362,12 +375,13 @@ const DashboardTabContent: React.FC<DashboardTabProps> = ({ groupId, userId, use
                     </div>
                   </div>
                   <span
-                    className={`font-semibold ${currentUserBalance.balance > 0
-                      ? "text-green-600"
-                      : currentUserBalance.balance < 0
-                        ? "text-red-600"
-                        : "text-muted-foreground"
-                      }`}
+                    className={`font-semibold ${
+                      currentUserBalance.balance > 0
+                        ? "text-green-600"
+                        : currentUserBalance.balance < 0
+                          ? "text-red-600"
+                          : "text-muted-foreground"
+                    }`}
                   >
                     {currentUserBalance.balance >= 0 ? "+" : ""}
                     {currentUserBalance.balance.toFixed(2)} {baseCurrencyCode}
@@ -387,12 +401,13 @@ const DashboardTabContent: React.FC<DashboardTabProps> = ({ groupId, userId, use
                       <span className="font-medium text-foreground">{member.full_name || "Użytkownik"}</span>
                     </div>
                     <span
-                      className={`font-semibold ${member.balance > 0
-                        ? "text-green-600"
-                        : member.balance < 0
-                          ? "text-red-600"
-                          : "text-muted-foreground"
-                        }`}
+                      className={`font-semibold ${
+                        member.balance > 0
+                          ? "text-green-600"
+                          : member.balance < 0
+                            ? "text-red-600"
+                            : "text-muted-foreground"
+                      }`}
                     >
                       {member.balance >= 0 ? "+" : ""}
                       {member.balance.toFixed(2)} {baseCurrencyCode}
@@ -471,7 +486,10 @@ const DashboardTabContent: React.FC<DashboardTabProps> = ({ groupId, userId, use
                     </div>
                     <div className="space-y-2">
                       {(showAllSettlements ? historySettlements : historySettlements.slice(0, 5)).map((settlement) => (
-                        <div key={settlement.id} className="flex items-center justify-between p-3 rounded-xl bg-muted/10">
+                        <div
+                          key={settlement.id}
+                          className="flex items-center justify-between p-3 rounded-xl bg-muted/10"
+                        >
                           <div className="flex items-center gap-3">
                             <div className="flex flex-col">
                               <div className="flex items-center gap-2 text-sm">
@@ -568,11 +586,11 @@ const DashboardTabContent: React.FC<DashboardTabProps> = ({ groupId, userId, use
         groupId={groupId}
         baseCurrencyCode={baseCurrencyCode}
         prefillData={settlementDialog.prefillData}
-        groupMembers={memberBalances.map(m => ({
+        groupMembers={memberBalances.map((m) => ({
           profile_id: m.profile_id,
           full_name: m.full_name,
           avatar_url: m.avatar_url,
-          status: m.status
+          status: m.status,
         }))}
         onSettlementCreated={handleSettlementCreated}
       />

@@ -3,14 +3,16 @@ import { z } from "zod";
 /**
  * Schema for creating a new settlement
  */
-export const createSettlementSchema = z.object({
-  payer_id: z.string().uuid("Invalid payer ID"),
-  payee_id: z.string().uuid("Invalid payee ID"),
-  amount: z.number().positive("Amount must be positive").max(1000000, "Amount too large"),
-}).refine((data) => data.payer_id !== data.payee_id, {
-  message: "Payer and payee cannot be the same person",
-  path: ["payee_id"],
-});
+export const createSettlementSchema = z
+  .object({
+    payer_id: z.string().uuid("Invalid payer ID"),
+    payee_id: z.string().uuid("Invalid payee ID"),
+    amount: z.number().positive("Amount must be positive").max(1000000, "Amount too large"),
+  })
+  .refine((data) => data.payer_id !== data.payee_id, {
+    message: "Payer and payee cannot be the same person",
+    path: ["payee_id"],
+  });
 
 /**
  * Schema for listing settlements query parameters

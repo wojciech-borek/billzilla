@@ -1,9 +1,5 @@
 import type { SupabaseClient } from "../../../db/supabase.client";
-import type {
-  CreateSettlementCommand,
-  SettlementDTO,
-  PaginatedResponse
-} from "../../../types";
+import type { SettlementDTO, PaginatedResponse } from "../../../types";
 
 interface CreateSettlementData {
   group_id: string;
@@ -22,6 +18,17 @@ interface ListOptions {
  * Repository pattern for settlement-related database operations
  * Encapsulates all data access logic for settlements
  */
+interface DbSettlementRecord {
+  id: string;
+  group_id: string;
+  amount: number;
+  settled_at: string;
+  payer_id: string;
+  payee_id: string;
+  payer?: SettlementDTO["payer"] | SettlementDTO["payer"][];
+  payee?: SettlementDTO["payer"] | SettlementDTO["payer"][];
+}
+
 export class SettlementRepository {
   constructor(private supabase: SupabaseClient) {}
 
@@ -37,7 +44,8 @@ export class SettlementRepository {
         payee_id: settlementData.payee_id,
         amount: settlementData.amount,
       })
-      .select(`
+      .select(
+        `
         *,
         payer:payer_id (
           id,
@@ -49,7 +57,8 @@ export class SettlementRepository {
           full_name,
           avatar_url
         )
-      `)
+      `
+      )
       .single();
 
     if (createError) {
@@ -62,18 +71,20 @@ export class SettlementRepository {
   /**
    * List settlements for a group with pagination
    */
-  async listSettlements(
-    groupId: string,
-    options: ListOptions = {}
-  ): Promise<PaginatedResponse<SettlementDTO>> {
+  async listSettlements(groupId: string, options: ListOptions = {}): Promise<PaginatedResponse<SettlementDTO>> {
     const limit = options.limit || 50;
     const offset = options.offset || 0;
     const sortAsc = options.sort === "date_asc";
 
     // Get data with count in single query
-    const { data, error: fetchError, count } = await this.supabase
+    const {
+      data,
+      error: fetchError,
+      count,
+    } = await this.supabase
       .from("settlements")
-      .select(`
+      .select(
+        `
         *,
         payer:payer_id (
           id,
@@ -85,7 +96,9 @@ export class SettlementRepository {
           full_name,
           avatar_url
         )
-      `, { count: "exact" })
+      `,
+        { count: "exact" }
+      )
       .eq("group_id", groupId)
       .order("settled_at", { ascending: sortAsc })
       .range(offset, offset + limit - 1);
@@ -118,7 +131,7 @@ export class SettlementRepository {
       throw new Error("Failed to verify members");
     }
 
-    const foundMemberIds = new Set(members?.map(m => m.profile_id));
+    const foundMemberIds = new Set(members?.map((m) => m.profile_id));
     for (const memberId of memberIds) {
       if (!foundMemberIds.has(memberId)) {
         throw new Error(`User ${memberId} is not a member of this group`);
@@ -129,7 +142,7 @@ export class SettlementRepository {
   /**
    * Helper to map DB result to DTO
    */
-  private mapToSettlementDTO(dbRecord: any): SettlementDTO {
+  private mapToSettlementDTO(dbRecord: DbSettlementRecord): SettlementDTO {
     // Handle potential array response from joins (though .single() or 1:1 should prevent it)
     const payer = Array.isArray(dbRecord.payer) ? dbRecord.payer[0] : dbRecord.payer;
     const payee = Array.isArray(dbRecord.payee) ? dbRecord.payee[0] : dbRecord.payee;

@@ -3,8 +3,6 @@ import { createSettlementSchema, listSettlementsQuerySchema } from "../../../../
 import { SettlementService, SettlementError } from "../../../../../lib/services/settlementService";
 import { SettlementRepository } from "../../../../../lib/services/repositories/SettlementRepository";
 import { BalanceRepository } from "../../../../../lib/services/repositories/BalanceRepository";
-import type { ErrorResponseDTO, PaginatedResponse, SettlementDTO } from "../../../../../types";
-
 export const prerender = false;
 
 /**
@@ -56,16 +54,19 @@ export const GET: APIRoute = async ({ params, url, locals }) => {
 
     const validationResult = listSettlementsQuerySchema.safeParse(queryParams);
     if (!validationResult.success) {
-      return new Response(JSON.stringify({ 
-        error: { 
-          code: "VALIDATION_ERROR", 
-          message: "Invalid query parameters",
-          details: validationResult.error.flatten() 
-        } 
-      }), {
-        status: 400,
-        headers: { "Content-Type": "application/json" },
-      });
+      return new Response(
+        JSON.stringify({
+          error: {
+            code: "VALIDATION_ERROR",
+            message: "Invalid query parameters",
+            details: validationResult.error.flatten(),
+          },
+        }),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
     }
 
     const settlementService = new SettlementService(
@@ -78,12 +79,10 @@ export const GET: APIRoute = async ({ params, url, locals }) => {
       status: 200,
       headers: { "Content-Type": "application/json" },
     });
-
   } catch (error) {
-    console.error("Error listing settlements:", error);
     const status = error instanceof SettlementError ? 400 : 500;
     const message = error instanceof Error ? error.message : "Internal server error";
-    
+
     return new Response(JSON.stringify({ error: { code: "INTERNAL_ERROR", message } }), {
       status,
       headers: { "Content-Type": "application/json" },
@@ -145,16 +144,19 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
     // Validate body
     const validationResult = createSettlementSchema.safeParse(body);
     if (!validationResult.success) {
-      return new Response(JSON.stringify({ 
-        error: { 
-          code: "VALIDATION_ERROR", 
-          message: "Invalid request data",
-          details: validationResult.error.flatten() 
-        } 
-      }), {
-        status: 400,
-        headers: { "Content-Type": "application/json" },
-      });
+      return new Response(
+        JSON.stringify({
+          error: {
+            code: "VALIDATION_ERROR",
+            message: "Invalid request data",
+            details: validationResult.error.flatten(),
+          },
+        }),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
     }
 
     const settlementService = new SettlementService(
@@ -167,12 +169,10 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
       status: 201,
       headers: { "Content-Type": "application/json" },
     });
-
   } catch (error) {
-    console.error("Error creating settlement:", error);
     const status = error instanceof SettlementError ? 400 : 500;
     const message = error instanceof Error ? error.message : "Internal server error";
-    
+
     return new Response(JSON.stringify({ error: { code: "INTERNAL_ERROR", message } }), {
       status,
       headers: { "Content-Type": "application/json" },

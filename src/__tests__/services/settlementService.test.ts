@@ -3,8 +3,7 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { SettlementService, SettlementError } from "../../lib/services/settlementService";
-import { BalanceService } from "../../lib/services/balanceService";
+import { SettlementService } from "../../lib/services/settlementService";
 import { BalanceRepository } from "../../lib/services/repositories/BalanceRepository";
 import { SettlementRepository } from "../../lib/services/repositories/SettlementRepository";
 import type { SupabaseClient } from "../../db/supabase.client";
@@ -47,7 +46,7 @@ const createMockSupabase = (testData: TestData = {}) => {
       }
 
       const result = {
-        eq: vi.fn((field: string, value: unknown) => ({
+        eq: vi.fn((_field: string, _value: unknown) => ({
           in: vi.fn(() => ({
             data: queryResult,
             error: null,
@@ -142,10 +141,7 @@ describe("settlementService", () => {
       };
 
       const mockSupabase = createMockSupabase({
-        group_members: [
-          { profile_id: "user-a" },
-          { profile_id: "user-b" },
-        ],
+        group_members: [{ profile_id: "user-a" }, { profile_id: "user-b" }],
       });
 
       const command = {
@@ -182,7 +178,9 @@ describe("settlementService", () => {
         new SettlementRepository(mockSupabase),
         new BalanceRepository(mockSupabase)
       );
-      await expect(settlementService.createSettlement("group-1", command)).rejects.toThrow("User user-a is not a member of this group");
+      await expect(settlementService.createSettlement("group-1", command)).rejects.toThrow(
+        "User user-a is not a member of this group"
+      );
     });
 
     it("should throw error when payee is not a member", async () => {
@@ -200,7 +198,9 @@ describe("settlementService", () => {
         new SettlementRepository(mockSupabase),
         new BalanceRepository(mockSupabase)
       );
-      await expect(settlementService.createSettlement("group-1", command)).rejects.toThrow("User user-b is not a member of this group");
+      await expect(settlementService.createSettlement("group-1", command)).rejects.toThrow(
+        "User user-b is not a member of this group"
+      );
     });
 
     it("should throw error when no outstanding debt", async () => {
@@ -219,10 +219,7 @@ describe("settlementService", () => {
       };
 
       const mockSupabase = createMockSupabase({
-        group_members: [
-          { profile_id: "user-a" },
-          { profile_id: "user-b" },
-        ],
+        group_members: [{ profile_id: "user-a" }, { profile_id: "user-b" }],
       });
 
       const command = {
@@ -236,7 +233,9 @@ describe("settlementService", () => {
         new BalanceRepository(mockSupabase),
         mockBalanceService as any
       );
-      await expect(settlementService.createSettlement("group-1", command)).rejects.toThrow("No outstanding debt found between these users");
+      await expect(settlementService.createSettlement("group-1", command)).rejects.toThrow(
+        "No outstanding debt found between these users"
+      );
     });
 
     it("should throw error when amount exceeds debt", async () => {
@@ -255,10 +254,7 @@ describe("settlementService", () => {
       };
 
       const mockSupabase = createMockSupabase({
-        group_members: [
-          { profile_id: "user-a" },
-          { profile_id: "user-b" },
-        ],
+        group_members: [{ profile_id: "user-a" }, { profile_id: "user-b" }],
       });
 
       const command = {
@@ -272,7 +268,9 @@ describe("settlementService", () => {
         new BalanceRepository(mockSupabase),
         mockBalanceService as any
       );
-      await expect(settlementService.createSettlement("group-1", command)).rejects.toThrow("Settlement amount cannot exceed outstanding debt of 10.00");
+      await expect(settlementService.createSettlement("group-1", command)).rejects.toThrow(
+        "Settlement amount cannot exceed outstanding debt of 10.00"
+      );
     });
   });
 

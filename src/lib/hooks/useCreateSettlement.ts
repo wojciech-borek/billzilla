@@ -40,7 +40,7 @@ export function useCreateSettlement(groupId: string, options: UseCreateSettlemen
       // Invalidate relevant queries
       queryClient.invalidateQueries({ queryKey: ["group", groupId, "settlements"] });
       queryClient.invalidateQueries({ queryKey: ["group", groupId, "balances"] });
-      
+
       options.onSuccess?.(data);
     },
     onError: (error) => {

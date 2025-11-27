@@ -1,14 +1,13 @@
-import type {
-  CreateSettlementCommand,
-  SettlementDTO,
-  PaginatedResponse
-} from "../../types";
+import type { CreateSettlementCommand, SettlementDTO, PaginatedResponse } from "../../types";
 import { BalanceRepository } from "./repositories/BalanceRepository";
 import { SettlementRepository } from "./repositories/SettlementRepository";
 import type { BalanceService } from "./balanceService";
 
 export class SettlementError extends Error {
-  constructor(message: string, public code: string = "SETTLEMENT_ERROR") {
+  constructor(
+    message: string,
+    public code = "SETTLEMENT_ERROR"
+  ) {
     super(message);
     this.name = "SettlementError";
   }
@@ -49,8 +48,8 @@ export class SettlementService {
     // Get group balances to check current debt relationship
     const groupBalances = await this.balanceService.getGroupBalances(groupId, payerId);
 
-    const payerBalance = groupBalances.member_balances.find(b => b.profile_id === payerId)?.balance || 0;
-    const payeeBalance = groupBalances.member_balances.find(b => b.profile_id === payeeId)?.balance || 0;
+    const payerBalance = groupBalances.member_balances.find((b) => b.profile_id === payerId)?.balance || 0;
+    const payeeBalance = groupBalances.member_balances.find((b) => b.profile_id === payeeId)?.balance || 0;
 
     // Calculate the debt from payer to payee
     // If payer balance is negative and payee balance is positive, payer owes payee
