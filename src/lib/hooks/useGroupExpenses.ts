@@ -29,7 +29,7 @@ export function useGroupExpenses(
   options: UseGroupExpensesOptions = {},
   queryOptions?: Partial<UseQueryOptions<PaginatedResponse<ExpenseListItemDTO>>>
 ): UseGroupExpensesReturn {
-  const { limit = 20, offset = 0, sort = "created_at", order = "desc", enabled = true } = options;
+  const { limit = 20, offset = 0, sort = "expense_date", order = "desc", enabled = true } = options;
 
   const query = useQuery({
     queryKey: ["group", groupId, "expenses", { limit, offset, sort, order }],
@@ -104,7 +104,7 @@ export function useInfiniteExpenses(
   options: UseInfiniteExpensesOptions = {},
   queryOptions?: Partial<UseInfiniteQueryOptions<PaginatedResponse<ExpenseListItemDTO>>>
 ): UseInfiniteExpensesReturn {
-  const { limit = 20, sort = "created_at", order = "desc", enabled = true } = options;
+  const { limit = 20, sort = "expense_date", order = "desc", enabled = true } = options;
 
   const query = useInfiniteQuery({
     queryKey: ["group", groupId, "expenses", "infinite", { limit, sort, order }],
