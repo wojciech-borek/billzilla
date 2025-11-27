@@ -1,8 +1,9 @@
 # Przepływ Rozliczeń
 
+## Diagram Sekwencji Rozliczeń
+
+```mermaid
 sequenceDiagram
-
-
 
     participant UI as SettleBalanceDialog
 
@@ -65,3 +66,4 @@ sequenceDiagram
         Hook->>UI: show error
 
     end
+```
