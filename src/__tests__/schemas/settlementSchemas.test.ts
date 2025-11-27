@@ -97,6 +97,28 @@ describe("createSettlementSchema", () => {
         );
       }
     });
+
+    it("should reject non-string payer_id", () => {
+      const invalidData = {
+        payer_id: 123,
+        payee_id: "550e8400-e29b-41d4-a716-446655440001",
+        amount: 50.25,
+      } as unknown as Record<string, unknown>;
+
+      const result = createSettlementSchema.safeParse(invalidData);
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.issues).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({
+              path: ["payer_id"],
+              message: "Expected string, received number",
+            }),
+          ])
+        );
+      }
+    });
   });
 
   describe("payee_id validation", () => {
@@ -138,6 +160,28 @@ describe("createSettlementSchema", () => {
             expect.objectContaining({
               path: ["payee_id"],
               message: "Invalid payee ID",
+            }),
+          ])
+        );
+      }
+    });
+
+    it("should reject non-string payee_id", () => {
+      const invalidData = {
+        payer_id: "550e8400-e29b-41d4-a716-446655440000",
+        payee_id: 123,
+        amount: 50.25,
+      } as unknown as Record<string, unknown>;
+
+      const result = createSettlementSchema.safeParse(invalidData);
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.issues).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({
+              path: ["payee_id"],
+              message: "Expected string, received number",
             }),
           ])
         );

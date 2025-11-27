@@ -313,6 +313,42 @@ describe("settlementService", () => {
       );
     });
 
+    it("should throw error when payee is not owed money", async () => {
+      // Payer owes money (-50) but payee also has negative balance (not owed anything)
+      const mockBalanceService = {
+        getGroupBalances: vi.fn().mockResolvedValue({
+          group_id: "group-1",
+          base_currency_code: "PLN",
+          calculated_at: new Date().toISOString(),
+          member_balances: [
+            { profile_id: "user-a", balance: -50, full_name: "User A", avatar_url: null, status: "active" },
+            { profile_id: "user-b", balance: -10, full_name: "User B", avatar_url: null, status: "active" }, // Payee also has debt
+          ],
+          suggested_settlements: [],
+        }),
+      };
+
+      const mockSupabase = createMockSupabase({
+        group_members: [{ profile_id: "user-a" }, { profile_id: "user-b" }],
+      });
+
+      const command = {
+        payer_id: "user-a",
+        payee_id: "user-b",
+        amount: 25,
+      };
+
+      const settlementService = new SettlementService(
+        new SettlementRepository(mockSupabase),
+        new BalanceRepository(mockSupabase),
+        mockBalanceService as any
+      );
+
+      await expect(settlementService.createSettlement("group-1", command)).rejects.toThrow(
+        "Payee is not owed money in this group"
+      );
+    });
+
     it("should throw error when payer and payee are the same", async () => {
       const mockSupabase = createMockSupabase({
         group_members: [{ profile_id: "user-a" }],
