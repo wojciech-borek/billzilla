@@ -35,7 +35,7 @@ export function LoginFormActions({ isLoading, redirectTo }: LoginFormActionsProp
       </div>
 
       {/* Google OAuth */}
-      <GoogleOAuthButton mode="login" redirectTo={redirectTo} />
+      {/* <GoogleOAuthButton mode="login" redirectTo={redirectTo} /> */}
 
       {/* Link do rejestracji */}
       <p className="text-center text-sm text-gray-600">

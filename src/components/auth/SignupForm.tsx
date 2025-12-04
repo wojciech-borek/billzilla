@@ -120,7 +120,7 @@ export const SignupForm = memo(function SignupForm({ successMessage, errorMessag
       </div>
 
       {/* Google OAuth */}
-      <GoogleOAuthButton mode="signup" />
+      {/* <GoogleOAuthButton mode="signup" /> */}
 
       {/* Link do logowania */}
       <p className="text-center text-sm text-gray-600">
