@@ -1,13 +1,13 @@
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { GoogleOAuthButton } from "./GoogleOAuthButton";
+// import { GoogleOAuthButton } from "./GoogleOAuthButton";
 
 interface LoginFormActionsProps {
   isLoading: boolean;
   redirectTo: string;
 }
 
-export function LoginFormActions({ isLoading, redirectTo }: LoginFormActionsProps) {
+export function LoginFormActions({ isLoading }: LoginFormActionsProps) {
   return (
     <>
       {/* Przycisk logowania */}
