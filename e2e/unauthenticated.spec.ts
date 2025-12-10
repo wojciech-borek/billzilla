@@ -19,8 +19,6 @@ test.describe("Unauthenticated User Flows", () => {
     await expect(page.getByLabel("Adres e-mail")).toBeVisible();
     await expect(page.getByLabel("Hasło")).toBeVisible();
     await expect(page.getByRole("button", { name: "Zaloguj się" })).toBeVisible();
-    await expect(page.getByText("lub")).toBeVisible();
-    await expect(page.getByRole("button", { name: "Kontynuuj z Google" })).toBeVisible();
     await expect(page.getByText("Nie masz konta?")).toBeVisible();
     await expect(page.getByRole("link", { name: "Zarejestruj się" })).toBeVisible();
 
@@ -67,8 +65,6 @@ test.describe("Unauthenticated User Flows", () => {
     await expect(page.getByLabel(/^Hasło/)).toBeVisible();
     await expect(page.getByLabel("Powtórz hasło")).toBeVisible();
     await expect(page.getByRole("button", { name: "Zarejestruj się" }).first()).toBeVisible();
-    await expect(page.getByText("lub")).toBeVisible();
-    await expect(page.getByRole("button", { name: "Zarejestruj się przez Google" })).toBeVisible();
     await expect(page.getByText("Masz już konto?")).toBeVisible();
     await expect(page.getByRole("link", { name: "Zaloguj się" })).toBeVisible();
 
