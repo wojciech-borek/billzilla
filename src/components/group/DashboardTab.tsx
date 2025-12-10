@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import { useInfiniteExpenses } from "@/lib/hooks/useGroupExpenses";
 import { useGroupBalances } from "@/lib/hooks/useGroupBalances";
 import { useGroupSettlements } from "@/lib/hooks/useGroupSettlements";
@@ -69,6 +69,28 @@ const DashboardTabContent: React.FC<DashboardTabProps> = ({ groupId, userId, use
   const currentUserBalance = memberBalances.find((member) => member.profile_id === userId);
   const totalMembers = memberBalances.length;
   const outstandingBalances = memberBalances.filter((member) => Math.abs(member.balance) > 0.01).length;
+
+  // Calculate member spending from expense splits
+  const memberSpending = useMemo(() => {
+    const spendingMap = new Map<string, number>();
+
+    expenses.forEach((expense) => {
+      if (!expense.splits || !expense.amount) return;
+
+      const totalInBaseCurrency = expense.amount_in_base_currency ?? expense.amount ?? 0;
+
+      expense.splits.forEach((split) => {
+        if (split.amount <= 0) return;
+
+        // Calculate split amount in base currency proportionally
+        const baseCurrencyAmount = (split.amount / expense.amount) * totalInBaseCurrency;
+        const currentAmount = spendingMap.get(split.profile_id) ?? 0;
+        spendingMap.set(split.profile_id, currentAmount + baseCurrencyAmount);
+      });
+    });
+
+    return spendingMap;
+  }, [expenses]);
 
   // Delete confirmation dialog state
   const [deleteDialogState, setDeleteDialogState] = useState<{
@@ -372,6 +394,10 @@ const DashboardTabContent: React.FC<DashboardTabProps> = ({ groupId, userId, use
                       <span className="ml-2 inline-flex items-center rounded-full bg-primary/20 px-2 py-0.5 text-xs font-medium text-primary">
                         Ty
                       </span>
+                      <div className="text-xs text-muted-foreground">
+                        Łącznie wydał(a): {(memberSpending.get(currentUserBalance.profile_id) || 0).toFixed(2)}{" "}
+                        {baseCurrencyCode}
+                      </div>
                     </div>
                   </div>
                   <span
@@ -398,7 +424,12 @@ const DashboardTabContent: React.FC<DashboardTabProps> = ({ groupId, userId, use
                       <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center">
                         <span className="text-xs font-medium">{member.full_name?.charAt(0).toUpperCase() || "U"}</span>
                       </div>
-                      <span className="font-medium text-foreground">{member.full_name || "Użytkownik"}</span>
+                      <div>
+                        <span className="font-medium text-foreground">{member.full_name || "Użytkownik"}</span>
+                        <div className="text-xs text-muted-foreground">
+                          Łącznie wydał(a): {(memberSpending.get(member.profile_id) || 0).toFixed(2)} {baseCurrencyCode}
+                        </div>
+                      </div>
                     </div>
                     <span
                       className={`font-semibold ${

@@ -1,9 +1,7 @@
 import { useCallback, memo, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import { FormField } from "@/components/ui/form-field";
 import { StatusMessage } from "@/components/ui/status-message";
-// import { GoogleOAuthButton } from "./GoogleOAuthButton";
 import { useAuthForm, useSignup } from "@/lib/hooks";
 import { signupSchema, type SignupFormData } from "@/lib/schemas/authSchemas";
 interface SignupFormProps {
@@ -99,16 +97,7 @@ export const SignupForm = memo(function SignupForm({ successMessage, errorMessag
           )}{" "}
         </Button>{" "}
       </form>{" "}
-      {/* Separator */}{" "}
-      <div className="relative">
-        {" "}
-        <Separator className="bg-gray-200" />{" "}
-        <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-white px-3 text-xs text-gray-500">
-          {" "}
-          lub{" "}
-        </span>{" "}
-      </div>{" "}
-      {/* Google OAuth */} {/* <GoogleOAuthButton mode="signup" /> */} {/* Link do logowania */}{" "}
+      {/* Link do logowania */}{" "}
       <p className="text-center text-sm text-gray-600">
         {" "}
         Masz już konto?{" "}
