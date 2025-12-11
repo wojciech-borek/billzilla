@@ -5,7 +5,7 @@ import { useGroupSettlements } from "@/lib/hooks/useGroupSettlements";
 import { QueryProvider } from "@/components/QueryProvider";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import { useDeleteExpense } from "@/lib/hooks/useDeleteExpense";
-import { ExpenseList } from "./ExpenseList";
+import { ExpenseList, ExpenseListSkeleton } from "./ExpenseList";
 import {
   Plus,
   TrendingUp,
@@ -59,7 +59,7 @@ const DashboardTabContent: React.FC<DashboardTabProps> = ({ groupId, userId, use
   const suggestedSettlements = balances?.suggested_settlements || [];
   const baseCurrencyCode = balances?.base_currency_code || "PLN";
 
-  const isLoading = expensesLoading || balancesLoading;
+  const isInitialLoading = expensesLoading || balancesLoading;
   const hasError = expensesError || balancesError;
 
   // Calculate summary metrics
@@ -196,20 +196,6 @@ const DashboardTabContent: React.FC<DashboardTabProps> = ({ groupId, userId, use
     [refetchBalances, refetchSettlements]
   );
 
-  // Handle loading state
-  if (isLoading) {
-    return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-center py-12">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-            <p className="text-muted-foreground">Ładowanie dashboard...</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   // Handle error state
   if (hasError) {
     return (
@@ -235,6 +221,48 @@ const DashboardTabContent: React.FC<DashboardTabProps> = ({ groupId, userId, use
           >
             Spróbuj ponownie
           </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (isInitialLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, index) => (
+            <div key={index} className="h-28 rounded-2xl border bg-card p-4 shadow-sm">
+              <div className="flex h-full items-center gap-3 animate-pulse">
+                <div className="h-10 w-10 rounded-xl bg-muted" />
+                <div className="flex-1 space-y-3">
+                  <div className="h-3 w-24 rounded-full bg-muted" />
+                  <div className="h-4 w-32 rounded-full bg-muted" />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <div className="bg-card rounded-2xl p-6 border shadow-sm">
+            <div className="mb-4 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-xl bg-muted" />
+                <div className="h-4 w-32 rounded-full bg-muted animate-pulse" />
+              </div>
+              <div className="h-10 w-10 rounded-lg bg-muted animate-pulse" />
+            </div>
+            <ExpenseListSkeleton />
+          </div>
+
+          <div className="bg-card rounded-2xl p-6 border shadow-sm">
+            <div className="mb-4 h-6 w-40 rounded-full bg-muted animate-pulse" />
+            <div className="space-y-3">
+              {Array.from({ length: 4 }).map((_, index) => (
+                <div key={index} className="h-14 rounded-xl bg-muted animate-pulse" />
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -355,7 +383,8 @@ const DashboardTabContent: React.FC<DashboardTabProps> = ({ groupId, userId, use
               onExpenseUpdated={handleExpenseUpdated}
               onLoadMore={fetchNextPage}
               hasMore={hasMore}
-              isLoading={isFetchingNextPage}
+              isLoadingInitial={expensesLoading}
+              isLoadingMore={isFetchingNextPage}
             />
           )}
         </div>

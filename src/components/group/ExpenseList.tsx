@@ -1,4 +1,4 @@
-import React, { useRef, useCallback, useState } from "react";
+import React, { useRef, useCallback, useMemo, useState } from "react";
 import { ExpenseListItem } from "./ExpenseListItem";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import { EditExpenseModal } from "./expenses/EditExpenseModal";
@@ -16,7 +16,8 @@ export interface ExpenseListProps {
   onExpenseUpdated?: (expense: ExpenseDTO) => void;
   onLoadMore: () => void;
   hasMore: boolean;
-  isLoading: boolean;
+  isLoadingInitial: boolean;
+  isLoadingMore: boolean;
 }
 
 export const ExpenseList: React.FC<ExpenseListProps> = ({
@@ -30,7 +31,8 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({
   onExpenseUpdated,
   onLoadMore,
   hasMore,
-  isLoading,
+  isLoadingInitial,
+  isLoadingMore,
 }) => {
   const observerRef = useRef<IntersectionObserver | null>(null);
 
@@ -58,7 +60,7 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({
   // Intersection Observer for infinite scroll
   const lastExpenseRef = useCallback(
     (node: HTMLDivElement) => {
-      if (isLoading) return;
+      if (isLoadingMore) return;
 
       if (observerRef.current) {
         observerRef.current.disconnect();
@@ -80,7 +82,7 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({
         observerRef.current.observe(node);
       }
     },
-    [isLoading, hasMore, onLoadMore]
+    [isLoadingMore, hasMore, onLoadMore]
   );
 
   // Handle delete action
@@ -102,9 +104,9 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({
       });
 
       setDeleteDialogState({ isOpen: false, expense: null });
-    } catch (error) {
+    } catch (_error) {
       // Error is handled by the mutation
-      console.error("Failed to delete expense:", error);
+      return;
     }
   }, [deleteDialogState.expense, deleteExpenseMutation, groupId]);
 
@@ -135,7 +137,48 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({
     [onExpenseUpdated]
   );
 
-  if (expenses.length === 0 && !isLoading) {
+  const groupedExpenses = useMemo(() => {
+    const groups = new Map<
+      string,
+      {
+        label: string;
+        items: ExpenseListItemDTO[];
+      }
+    >();
+
+    expenses.forEach((expense) => {
+      const date = new Date(expense.expense_date);
+      const key = date.toISOString().slice(0, 10);
+
+      if (!groups.has(key)) {
+        const label = date.toLocaleDateString("pl-PL", {
+          weekday: "long",
+          day: "numeric",
+          month: "long",
+          year: "numeric",
+        });
+
+        groups.set(key, {
+          label,
+          items: [],
+        });
+      }
+
+      groups.get(key)?.items.push(expense);
+    });
+
+    return Array.from(groups.entries())
+      .sort(([a], [b]) => (a > b ? -1 : 1))
+      .map(([, value]) => value);
+  }, [expenses]);
+
+  const lastExpenseId = expenses.at(-1)?.id;
+
+  if (isLoadingInitial) {
+    return <ExpenseListSkeleton />;
+  }
+
+  if (expenses.length === 0 && !isLoadingInitial) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center">
         <div className="rounded-full bg-muted p-6 mb-4">
@@ -155,27 +198,57 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({
   }
 
   return (
-    <div className="space-y-4" role="list" aria-label="Lista wydatków">
-      {expenses.map((expense, index) => (
-        <div key={expense.id} ref={index === expenses.length - 1 ? lastExpenseRef : undefined} role="listitem">
-          <ExpenseListItem
-            expense={expense}
-            isOwner={expense.created_by.id === currentUserId}
-            baseCurrencyCode={baseCurrencyCode}
-            onClick={() => onExpenseClick(expense)}
-            onEdit={() => handleEdit(expense)}
-            onDelete={() => handleDelete(expense)}
-          />
-        </div>
+    <div className="relative space-y-4" role="list" aria-label="Lista wydatków">
+      <div className="absolute left-[18px] top-0 bottom-0 w-0.5 bg-border" aria-hidden />
+
+      {groupedExpenses.map((group, groupIndex) => (
+        <section key={group.label} className="relative">
+          {groupIndex > 0 && <div className="border-t border-border/40 my-4" />}
+          <div className="space-y-2">
+            <div className="flex items-center gap-3 pl-8">
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary/8 text-sm font-bold text-primary">
+                {group.items.length}
+              </div>
+              <div className="flex flex-col">
+                <span className="text-[12.5px] font-semibold text-muted-foreground/70 capitalize">{group.label}</span>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              {group.items.map((expense) => {
+                const isLastInList = expense.id === lastExpenseId;
+                return (
+                  <div
+                    key={expense.id}
+                    ref={isLastInList ? lastExpenseRef : undefined}
+                    role="listitem"
+                    className="relative"
+                  >
+                    <ExpenseListItem
+                      expense={expense}
+                      isOwner={expense.created_by.id === currentUserId}
+                      baseCurrencyCode={baseCurrencyCode}
+                      onClick={() => onExpenseClick(expense)}
+                      onEdit={() => handleEdit(expense)}
+                      onDelete={() => handleDelete(expense)}
+                      showConnector={!isLastInList}
+                    />
+                    {hasMore && isLastInList && (
+                      <div className="absolute -left-4 right-0 top-full h-6 bg-gradient-to-b from-transparent to-background pointer-events-none" />
+                    )}
+                    <div className="absolute -left-4 -right-4 top-full h-8 bg-gradient-to-b from-transparent via-background/20 to-background pointer-events-none" />
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </section>
       ))}
 
       {/* Loading indicator for infinite scroll */}
-      {isLoading && hasMore && (
-        <div className="flex justify-center py-6">
-          <div className="flex items-center gap-2 text-muted-foreground">
-            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-current"></div>
-            <span>Ładowanie kolejnych wydatków...</span>
-          </div>
+      {isLoadingMore && hasMore && (
+        <div className="space-y-4">
+          <ExpenseListSkeleton rows={2} showLine />
         </div>
       )}
 
@@ -212,6 +285,40 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({
           onExpenseUpdated={handleExpenseUpdated}
         />
       )}
+    </div>
+  );
+};
+
+interface ExpenseListSkeletonProps {
+  rows?: number;
+  showLine?: boolean;
+}
+
+export const ExpenseListSkeleton: React.FC<ExpenseListSkeletonProps> = ({ rows = 4, showLine = false }) => {
+  return (
+    <div className="relative space-y-4">
+      {showLine && <div className="absolute left-[14px] top-0 bottom-0 w-px bg-border/60" aria-hidden />}
+      {Array.from({ length: rows }).map((_, index) => (
+        <div key={index} className="relative">
+          <div className="absolute left-2 top-4 h-3 w-3 rounded-full bg-muted" aria-hidden />
+          <div className="ml-7 animate-pulse rounded-2xl border bg-card p-4 shadow-sm">
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex-1 space-y-3">
+                <div className="h-3 w-28 rounded-full bg-muted" />
+                <div className="h-4 w-48 rounded-full bg-muted" />
+                <div className="flex gap-2">
+                  <div className="h-6 w-16 rounded-full bg-muted" />
+                  <div className="h-6 w-16 rounded-full bg-muted" />
+                </div>
+              </div>
+              <div className="flex flex-col items-end gap-2">
+                <div className="h-4 w-24 rounded-full bg-muted" />
+                <div className="h-3 w-16 rounded-full bg-muted" />
+              </div>
+            </div>
+          </div>
+        </div>
+      ))}
     </div>
   );
 };

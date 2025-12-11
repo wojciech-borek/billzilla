@@ -5,6 +5,26 @@ import { authenticatedTestWithData, GROUP_TEMPLATES } from "./test-fixtures";
 // Note: Tests for unauthenticated users are moved to unauthenticated.spec.ts
 // These tests assume a logged-in user state
 
+authenticatedTestWithData.describe.serial("Dashboard Visual Regression", () => {
+  authenticatedTestWithData("should display dashboard correctly - visual regression", async ({ authenticatedPage }) => {
+    const dashboard = new DashboardPage(authenticatedPage);
+
+    // Ensure we're on the dashboard and it fully loads
+    await authenticatedPage.waitForURL("**/");
+    await authenticatedPage.waitForLoadState("networkidle");
+
+    // Wait for main dashboard elements to be visible
+    await expect(dashboard.createGroupButton).toBeVisible({ timeout: 10000 });
+
+    // Visual regression test - capture screenshot of the entire dashboard
+    await expect(authenticatedPage).toHaveScreenshot("dashboard-initial-state.png", {
+      fullPage: true,
+      // Allow small pixel differences in CI environment
+      maxDiffPixelRatio: process.env.CI ? 0.02 : 0.01,
+    });
+  });
+});
+
 authenticatedTestWithData.describe.serial("Create Group Modal", () => {
   authenticatedTestWithData.describe.configure({ timeout: 120000 });
   authenticatedTestWithData("should open and close create group modal", async ({ authenticatedPage }) => {
@@ -109,6 +129,33 @@ authenticatedTestWithData.describe.serial("Create Group Modal", () => {
     await modal.submit();
     await expect(modal.modal).toBeHidden({ timeout: 15000 });
   });
+
+  authenticatedTestWithData(
+    "should display create group modal correctly - visual regression",
+    async ({ authenticatedPage }) => {
+      const dashboard = new DashboardPage(authenticatedPage);
+
+      // Open create group modal
+      const modal = await dashboard.openCreateGroupModal();
+
+      // Verify modal is open and fully loaded
+      await expect(modal.modal).toBeVisible();
+      await expect(modal.modalTitle).toHaveText("Utwórz nową grupę");
+
+      // Wait a moment for all animations and content to settle
+      await authenticatedPage.waitForTimeout(500);
+
+      // Visual regression test - capture screenshot of the modal
+      await expect(modal.modal).toHaveScreenshot("create-group-modal-initial-state.png", {
+        // Allow small pixel differences in CI environment
+        maxDiffPixelRatio: process.env.CI ? 0.02 : 0.01,
+      });
+
+      // Close modal
+      await modal.cancel();
+      await expect(modal.modal).toBeHidden();
+    }
+  );
 
   authenticatedTestWithData("should validate required fields", async ({ authenticatedPage }) => {
     const dashboard = new DashboardPage(authenticatedPage);
