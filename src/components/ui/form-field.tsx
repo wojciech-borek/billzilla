@@ -40,7 +40,6 @@ export function FormField({
         placeholder={placeholder}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="rounded-lg border-gray-200 focus:border-primary focus:ring-primary/40"
         disabled={disabled}
         aria-invalid={!!error}
         aria-describedby={error ? `${id}-error` : helperText ? `${id}-helper` : undefined}
@@ -54,7 +53,7 @@ export function FormField({
       )}
 
       {helperText && !error && (
-        <p id={`${id}-helper`} className="text-xs text-gray-500">
+        <p id={`${id}-helper`} className="text-xs text-gray-500 font-normal">
           {helperText}
         </p>
       )}

@@ -199,24 +199,28 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({
 
   return (
     <div className="relative space-y-4" role="list" aria-label="Lista wydatków">
-      <div className="absolute left-[18px] top-0 bottom-0 w-0.5 bg-border" aria-hidden />
+      {/* Main timeline line - consistent throughout the list */}
+      <div className="absolute left-[17px] top-0 bottom-0 w-px bg-gray-200" aria-hidden />
 
       {groupedExpenses.map((group, groupIndex) => (
         <section key={group.label} className="relative">
-          {groupIndex > 0 && <div className="border-t border-border/40 my-4" />}
-          <div className="space-y-2">
-            <div className="flex items-center gap-3 pl-8">
-              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary/8 text-sm font-bold text-primary">
+          {groupIndex > 0 && <div className="border-t border-gray-100 my-6" />}
+          <div className="space-y-3">
+            <div className="flex items-center gap-3 pl-10">
+              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10 text-xs font-bold text-primary">
                 {group.items.length}
               </div>
               <div className="flex flex-col">
-                <span className="text-[12.5px] font-semibold text-muted-foreground/70 capitalize">{group.label}</span>
+                <span className="text-xs font-semibold text-muted-foreground capitalize tracking-wide">
+                  {group.label}
+                </span>
               </div>
             </div>
 
-            <div className="space-y-2">
-              {group.items.map((expense) => {
+            <div className="space-y-3">
+              {group.items.map((expense, index) => {
                 const isLastInList = expense.id === lastExpenseId;
+                const isLastInGroup = index === group.items.length - 1;
                 return (
                   <div
                     key={expense.id}
@@ -228,15 +232,12 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({
                       expense={expense}
                       isOwner={expense.created_by.id === currentUserId}
                       baseCurrencyCode={baseCurrencyCode}
+                      currentUserId={currentUserId}
                       onClick={() => onExpenseClick(expense)}
                       onEdit={() => handleEdit(expense)}
                       onDelete={() => handleDelete(expense)}
-                      showConnector={!isLastInList}
+                      showConnector={!isLastInGroup}
                     />
-                    {hasMore && isLastInList && (
-                      <div className="absolute -left-4 right-0 top-full h-6 bg-gradient-to-b from-transparent to-background pointer-events-none" />
-                    )}
-                    <div className="absolute -left-4 -right-4 top-full h-8 bg-gradient-to-b from-transparent via-background/20 to-background pointer-events-none" />
                   </div>
                 );
               })}
@@ -296,24 +297,27 @@ interface ExpenseListSkeletonProps {
 
 export const ExpenseListSkeleton: React.FC<ExpenseListSkeletonProps> = ({ rows = 4, showLine = false }) => {
   return (
-    <div className="relative space-y-4">
-      {showLine && <div className="absolute left-[14px] top-0 bottom-0 w-px bg-border/60" aria-hidden />}
+    <div className="relative space-y-3">
+      {showLine && <div className="absolute left-[17px] top-0 bottom-0 w-px bg-gray-200" aria-hidden />}
       {Array.from({ length: rows }).map((_, index) => (
         <div key={index} className="relative">
-          <div className="absolute left-2 top-4 h-3 w-3 rounded-full bg-muted" aria-hidden />
-          <div className="ml-7 animate-pulse rounded-2xl border bg-card p-4 shadow-sm">
+          <div className="absolute left-2 top-4 h-3 w-3 rounded-full bg-muted ring-4 ring-muted/20" aria-hidden />
+          <div className="ml-10 animate-pulse rounded-xl border border-gray-100 bg-card p-5 shadow-sm">
             <div className="flex items-start justify-between gap-4">
               <div className="flex-1 space-y-3">
-                <div className="h-3 w-28 rounded-full bg-muted" />
-                <div className="h-4 w-48 rounded-full bg-muted" />
-                <div className="flex gap-2">
-                  <div className="h-6 w-16 rounded-full bg-muted" />
-                  <div className="h-6 w-16 rounded-full bg-muted" />
+                <div className="h-2.5 w-16 rounded-full bg-muted" />
+                <div className="h-4 w-40 rounded-full bg-muted" />
+                <div className="flex gap-2 items-center">
+                  <div className="h-7 w-7 rounded-full bg-muted" />
+                  <div className="h-3 w-3 rounded-full bg-muted/40" />
+                  <div className="h-7 w-7 rounded-full bg-muted" />
+                  <div className="h-7 w-7 rounded-full bg-muted" />
                 </div>
+                <div className="h-3 w-56 rounded-full bg-muted/60" />
               </div>
               <div className="flex flex-col items-end gap-2">
-                <div className="h-4 w-24 rounded-full bg-muted" />
-                <div className="h-3 w-16 rounded-full bg-muted" />
+                <div className="h-6 w-24 rounded-full bg-muted" />
+                <div className="h-3 w-16 rounded-full bg-muted/60" />
               </div>
             </div>
           </div>

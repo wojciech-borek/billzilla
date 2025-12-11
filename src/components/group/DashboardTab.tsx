@@ -55,7 +55,7 @@ const DashboardTabContent: React.FC<DashboardTabProps> = ({ groupId, userId, use
 
   const { settlements: historySettlements, refetch: refetchSettlements } = useGroupSettlements(groupId, { limit: 50 });
 
-  const memberBalances = balances?.member_balances || [];
+  const memberBalances = useMemo(() => balances?.member_balances || [], [balances]);
   const suggestedSettlements = balances?.suggested_settlements || [];
   const baseCurrencyCode = balances?.base_currency_code || "PLN";
 
@@ -91,6 +91,12 @@ const DashboardTabContent: React.FC<DashboardTabProps> = ({ groupId, userId, use
 
     return spendingMap;
   }, [expenses]);
+
+  // Calculate max absolute balance for progress bar scaling
+  const maxAbsoluteBalance = useMemo(() => {
+    if (memberBalances.length === 0) return 0;
+    return Math.max(...memberBalances.map((m) => Math.abs(m.balance)));
+  }, [memberBalances]);
 
   // Delete confirmation dialog state
   const [deleteDialogState, setDeleteDialogState] = useState<{
@@ -273,14 +279,14 @@ const DashboardTabContent: React.FC<DashboardTabProps> = ({ groupId, userId, use
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Total Expenses */}
-        <div className="bg-card rounded-2xl p-6 border shadow-sm">
+        <div className="bg-card rounded-2xl p-4 sm:p-6 border shadow-sm">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-primary/10 rounded-xl">
-              <CreditCard className="h-5 w-5 text-primary" />
+            <div className="p-2 bg-primary/10 rounded-xl flex-shrink-0">
+              <CreditCard className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
             </div>
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">Suma wydatków</p>
-              <p className="text-2xl font-bold text-foreground">
+            <div className="min-w-0 flex-1">
+              <p className="text-xs sm:text-sm font-medium text-muted-foreground">Suma wydatków</p>
+              <p className="text-xl sm:text-2xl font-bold text-foreground truncate">
                 {totalExpenses.toFixed(2)} {baseCurrencyCode}
               </p>
             </div>
@@ -288,45 +294,45 @@ const DashboardTabContent: React.FC<DashboardTabProps> = ({ groupId, userId, use
         </div>
 
         {/* Number of Members */}
-        <div className="bg-card rounded-2xl p-6 border shadow-sm">
+        <div className="bg-card rounded-2xl p-4 sm:p-6 border shadow-sm">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-500/10 rounded-xl">
-              <Users className="h-5 w-5 text-blue-500" />
+            <div className="p-2 bg-blue-500/10 rounded-xl flex-shrink-0">
+              <Users className="h-4 w-4 sm:h-5 sm:w-5 text-blue-500" />
             </div>
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">Uczestnicy</p>
-              <p className="text-2xl font-bold text-foreground">{totalMembers}</p>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs sm:text-sm font-medium text-muted-foreground">Uczestnicy</p>
+              <p className="text-xl sm:text-2xl font-bold text-foreground">{totalMembers}</p>
             </div>
           </div>
         </div>
 
         {/* Outstanding Balances */}
-        <div className="bg-card rounded-2xl p-6 border shadow-sm">
+        <div className="bg-card rounded-2xl p-4 sm:p-6 border shadow-sm">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-orange-500/10 rounded-xl">
-              <TrendingUp className="h-5 w-5 text-orange-500" />
+            <div className="p-2 bg-orange-500/10 rounded-xl flex-shrink-0">
+              <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 text-orange-500" />
             </div>
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">Do rozliczenia</p>
-              <p className="text-2xl font-bold text-foreground">{outstandingBalances}</p>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs sm:text-sm font-medium text-muted-foreground">Do rozliczenia</p>
+              <p className="text-xl sm:text-2xl font-bold text-foreground">{outstandingBalances}</p>
             </div>
           </div>
         </div>
 
         {/* Your Balance */}
-        <div className="bg-card rounded-2xl p-6 border shadow-sm">
+        <div className="bg-card rounded-2xl p-4 sm:p-6 border shadow-sm">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-green-500/10 rounded-xl">
-              <TrendingUp className="h-5 w-5 text-green-500" />
+            <div className="p-2 bg-emerald-500/10 rounded-xl flex-shrink-0">
+              <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-500" />
             </div>
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">Twoje saldo</p>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs sm:text-sm font-medium text-muted-foreground">Twoje saldo</p>
               <p
-                className={`text-2xl font-bold ${
+                className={`text-xl sm:text-2xl font-bold truncate ${
                   currentUserBalance?.balance && currentUserBalance.balance > 0
-                    ? "text-green-600"
+                    ? "text-emerald-600"
                     : currentUserBalance?.balance && currentUserBalance.balance < 0
-                      ? "text-red-600"
+                      ? "text-rose-600"
                       : "text-muted-foreground"
                 }`}
               >
@@ -408,39 +414,61 @@ const DashboardTabContent: React.FC<DashboardTabProps> = ({ groupId, userId, use
               <p className="text-muted-foreground">Brak danych o saldach</p>
             </div>
           ) : (
-            <div className="space-y-3 max-h-96 overflow-y-auto">
+            <div className="space-y-3">
               {/* Current user balance first */}
               {currentUserBalance && (
-                <div className="flex items-center justify-between p-3 rounded-xl bg-primary/5 border border-primary/20">
-                  <div className="flex items-center gap-3">
-                    <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-                      <span className="text-xs font-medium text-primary">
-                        {currentUserBalance.full_name?.charAt(0).toUpperCase() || "T"}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="font-medium text-foreground">{currentUserBalance.full_name || "Ty"}</span>
-                      <span className="ml-2 inline-flex items-center rounded-full bg-primary/20 px-2 py-0.5 text-xs font-medium text-primary">
-                        Ty
-                      </span>
-                      <div className="text-xs text-muted-foreground">
-                        Łącznie wydał(a): {(memberSpending.get(currentUserBalance.profile_id) || 0).toFixed(2)}{" "}
-                        {baseCurrencyCode}
+                <div className="p-4 rounded-xl bg-primary/5 border border-primary/20">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-2">
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                      <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                        <span className="text-xs font-medium text-primary">
+                          {currentUserBalance.full_name?.charAt(0).toUpperCase() || "T"}
+                        </span>
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-medium text-foreground truncate">
+                            {currentUserBalance.full_name || "Ty"}
+                          </span>
+                          <span className="inline-flex items-center rounded-full bg-primary/20 px-2 py-0.5 text-xs font-medium text-primary flex-shrink-0">
+                            Ty
+                          </span>
+                        </div>
+                        <div className="text-xs text-muted-foreground break-words">
+                          Łącznie wydał(a): {(memberSpending.get(currentUserBalance.profile_id) || 0).toFixed(2)}{" "}
+                          {baseCurrencyCode}
+                        </div>
                       </div>
                     </div>
+                    <span
+                      className={`font-semibold text-sm sm:text-base whitespace-nowrap flex-shrink-0 ${
+                        currentUserBalance.balance > 0
+                          ? "text-emerald-600"
+                          : currentUserBalance.balance < 0
+                            ? "text-rose-600"
+                            : "text-muted-foreground"
+                      }`}
+                    >
+                      {currentUserBalance.balance >= 0 ? "+" : ""}
+                      {currentUserBalance.balance.toFixed(2)} {baseCurrencyCode}
+                    </span>
                   </div>
-                  <span
-                    className={`font-semibold ${
-                      currentUserBalance.balance > 0
-                        ? "text-green-600"
-                        : currentUserBalance.balance < 0
-                          ? "text-red-600"
-                          : "text-muted-foreground"
-                    }`}
-                  >
-                    {currentUserBalance.balance >= 0 ? "+" : ""}
-                    {currentUserBalance.balance.toFixed(2)} {baseCurrencyCode}
-                  </span>
+                  {/* Progress bar */}
+                  {Math.abs(currentUserBalance.balance) > 0.01 && maxAbsoluteBalance > 0 && (
+                    <div className="relative h-2 bg-gray-100 rounded-full overflow-hidden">
+                      <div
+                        className={`absolute h-full transition-all duration-300 ${
+                          currentUserBalance.balance > 0 ? "bg-emerald-500 left-1/2" : "bg-rose-500 right-1/2"
+                        }`}
+                        style={{
+                          width: `${(Math.abs(currentUserBalance.balance) / maxAbsoluteBalance) * 50}%`,
+                        }}
+                        aria-label={`Saldo: ${currentUserBalance.balance.toFixed(2)} ${baseCurrencyCode}`}
+                      />
+                      {/* Center line */}
+                      <div className="absolute left-1/2 top-0 bottom-0 w-px bg-gray-300" />
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -448,30 +476,53 @@ const DashboardTabContent: React.FC<DashboardTabProps> = ({ groupId, userId, use
               {memberBalances
                 .filter((member) => member.profile_id !== userId)
                 .map((member) => (
-                  <div key={member.profile_id} className="flex items-center justify-between p-3 rounded-xl bg-muted/30">
-                    <div className="flex items-center gap-3">
-                      <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center">
-                        <span className="text-xs font-medium">{member.full_name?.charAt(0).toUpperCase() || "U"}</span>
-                      </div>
-                      <div>
-                        <span className="font-medium text-foreground">{member.full_name || "Użytkownik"}</span>
-                        <div className="text-xs text-muted-foreground">
-                          Łącznie wydał(a): {(memberSpending.get(member.profile_id) || 0).toFixed(2)} {baseCurrencyCode}
+                  <div key={member.profile_id} className="p-4 rounded-xl bg-muted/30">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-2">
+                      <div className="flex items-center gap-3 min-w-0 flex-1">
+                        <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
+                          <span className="text-xs font-medium">
+                            {member.full_name?.charAt(0).toUpperCase() || "U"}
+                          </span>
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <span className="font-medium text-foreground block truncate">
+                            {member.full_name || "Użytkownik"}
+                          </span>
+                          <div className="text-xs text-muted-foreground break-words">
+                            Łącznie wydał(a): {(memberSpending.get(member.profile_id) || 0).toFixed(2)}{" "}
+                            {baseCurrencyCode}
+                          </div>
                         </div>
                       </div>
+                      <span
+                        className={`font-semibold text-sm sm:text-base whitespace-nowrap flex-shrink-0 ${
+                          member.balance > 0
+                            ? "text-emerald-600"
+                            : member.balance < 0
+                              ? "text-rose-600"
+                              : "text-muted-foreground"
+                        }`}
+                      >
+                        {member.balance >= 0 ? "+" : ""}
+                        {member.balance.toFixed(2)} {baseCurrencyCode}
+                      </span>
                     </div>
-                    <span
-                      className={`font-semibold ${
-                        member.balance > 0
-                          ? "text-green-600"
-                          : member.balance < 0
-                            ? "text-red-600"
-                            : "text-muted-foreground"
-                      }`}
-                    >
-                      {member.balance >= 0 ? "+" : ""}
-                      {member.balance.toFixed(2)} {baseCurrencyCode}
-                    </span>
+                    {/* Progress bar */}
+                    {Math.abs(member.balance) > 0.01 && maxAbsoluteBalance > 0 && (
+                      <div className="relative h-2 bg-gray-100 rounded-full overflow-hidden">
+                        <div
+                          className={`absolute h-full transition-all duration-300 ${
+                            member.balance > 0 ? "bg-emerald-500 left-1/2" : "bg-rose-500 right-1/2"
+                          }`}
+                          style={{
+                            width: `${(Math.abs(member.balance) / maxAbsoluteBalance) * 50}%`,
+                          }}
+                          aria-label={`Saldo: ${member.balance.toFixed(2)} ${baseCurrencyCode}`}
+                        />
+                        {/* Center line */}
+                        <div className="absolute left-1/2 top-0 bottom-0 w-px bg-gray-300" />
+                      </div>
+                    )}
                   </div>
                 ))}
 
@@ -481,53 +532,66 @@ const DashboardTabContent: React.FC<DashboardTabProps> = ({ groupId, userId, use
                   <div className="border-t border-border my-4"></div>
                   <div>
                     <div className="flex items-center justify-between mb-3">
-                      <h3 className="text-sm font-medium text-foreground">Sugerowane rozliczenia</h3>
+                      <div className="flex items-center gap-2">
+                        <HandCoins className="h-4 w-4 text-primary" />
+                        <h3 className="text-sm font-semibold text-foreground">Sugerowane rozliczenia</h3>
+                      </div>
                     </div>
-                    <div className="space-y-2">
+                    <div className="space-y-3">
                       {suggestedSettlements.map((settlement, index) => (
-                        <div key={index} className="flex items-center justify-between p-3 rounded-xl bg-muted/20">
-                          <div className="flex items-center gap-3">
-                            <div className="flex items-center gap-2">
-                              <div className="h-6 w-6 rounded-full bg-muted flex items-center justify-center">
-                                <span className="text-xs font-medium">
-                                  {settlement.from.full_name?.charAt(0).toUpperCase() || "U"}
+                        <div
+                          key={index}
+                          className="group relative p-4 rounded-xl bg-gradient-to-r from-primary/5 to-accent/5 border border-primary/20 hover:border-primary/40 transition-all duration-300 hover:shadow-sm"
+                        >
+                          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                            <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
+                              {/* From user */}
+                              <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-shrink">
+                                <div className="h-7 w-7 sm:h-8 sm:w-8 rounded-full bg-rose-100 flex items-center justify-center ring-2 ring-rose-200 flex-shrink-0">
+                                  <span className="text-xs font-semibold text-rose-700">
+                                    {settlement.from.full_name?.charAt(0).toUpperCase() || "U"}
+                                  </span>
+                                </div>
+                                <span className="text-xs sm:text-sm font-medium text-foreground truncate">
+                                  {settlement.from.full_name || "Użytkownik"}
                                 </span>
                               </div>
-                              <span className="text-sm text-muted-foreground">
-                                {settlement.from.full_name || "Użytkownik"}
-                              </span>
-                            </div>
 
-                            <ArrowRight className="h-3 w-3 text-muted-foreground" />
+                              {/* Arrow icon */}
+                              <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground flex-shrink-0" />
 
-                            <div className="flex items-center gap-2">
-                              <div className="h-6 w-6 rounded-full bg-muted flex items-center justify-center">
-                                <span className="text-xs font-medium">
-                                  {settlement.to.full_name?.charAt(0).toUpperCase() || "U"}
+                              {/* To user */}
+                              <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-shrink">
+                                <div className="h-7 w-7 sm:h-8 sm:w-8 rounded-full bg-emerald-100 flex items-center justify-center ring-2 ring-emerald-200 flex-shrink-0">
+                                  <span className="text-xs font-semibold text-emerald-700">
+                                    {settlement.to.full_name?.charAt(0).toUpperCase() || "U"}
+                                  </span>
+                                </div>
+                                <span className="text-xs sm:text-sm font-medium text-foreground truncate">
+                                  {settlement.to.full_name || "Użytkownik"}
                                 </span>
                               </div>
-                              <span className="text-sm text-muted-foreground">
-                                {settlement.to.full_name || "Użytkownik"}
-                              </span>
                             </div>
-                          </div>
 
-                          <div className="flex items-center gap-2">
-                            <div className="text-right">
-                              <div className="text-sm font-semibold text-foreground">
-                                {settlement.amount.toFixed(2)} {baseCurrencyCode}
+                            {/* Amount and action */}
+                            <div className="flex items-center justify-between sm:justify-end gap-3 sm:flex-shrink-0">
+                              <div className="text-left sm:text-right">
+                                <div className="text-sm sm:text-base font-bold text-foreground whitespace-nowrap">
+                                  {settlement.amount.toFixed(2)} {baseCurrencyCode}
+                                </div>
                               </div>
-                            </div>
 
-                            {(settlement.from.profile_id === userId || settlement.to.profile_id === userId) && (
-                              <button
-                                onClick={() => handleOpenSettlement(settlement)}
-                                className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 text-primary hover:text-primary/80 hover:bg-primary/10 h-7 w-7"
-                                aria-label={`Rozlicz ${settlement.from.full_name || "Użytkownik"} do ${settlement.to.full_name || "Użytkownik"}`}
-                              >
-                                <HandCoins className="h-4 w-4" />
-                              </button>
-                            )}
+                              {(settlement.from.profile_id === userId || settlement.to.profile_id === userId) && (
+                                <button
+                                  onClick={() => handleOpenSettlement(settlement)}
+                                  className="inline-flex items-center justify-center gap-2 rounded-lg text-xs sm:text-sm font-semibold bg-primary text-white hover:bg-primary-dark transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 h-8 sm:h-9 px-3 sm:px-4 shadow-sm whitespace-nowrap"
+                                  aria-label={`Rozlicz ${settlement.from.full_name || "Użytkownik"} do ${settlement.to.full_name || "Użytkownik"}`}
+                                >
+                                  <HandCoins className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                                  <span>Rozlicz</span>
+                                </button>
+                              )}
+                            </div>
                           </div>
                         </div>
                       ))}
@@ -536,57 +600,70 @@ const DashboardTabContent: React.FC<DashboardTabProps> = ({ groupId, userId, use
                 </>
               )}
 
-              {/* History of Settlements */}
+              {/* History of Settlements - Timeline Style */}
               {historySettlements.length > 0 && (
                 <>
                   <div className="border-t border-border my-4"></div>
                   <div>
                     <div className="flex items-center justify-between mb-3">
-                      <h3 className="text-sm font-medium text-foreground">Historia rozliczeń</h3>
+                      <h3 className="text-sm font-semibold text-foreground">Historia rozliczeń</h3>
                     </div>
-                    <div className="space-y-2">
-                      {(showAllSettlements ? historySettlements : historySettlements.slice(0, 5)).map((settlement) => (
-                        <div
-                          key={settlement.id}
-                          className="flex items-center justify-between p-3 rounded-xl bg-muted/10"
-                        >
-                          <div className="flex items-center gap-3">
-                            <div className="flex flex-col">
-                              <div className="flex items-center gap-2 text-sm">
-                                <span className="font-medium">{settlement.payer.full_name}</span>
-                                <ArrowRight className="h-3 w-3 text-muted-foreground" />
-                                <span className="font-medium">{settlement.payee.full_name}</span>
-                              </div>
-                              <span className="text-xs text-muted-foreground">
-                                {new Date(settlement.settled_at).toLocaleDateString()}
-                              </span>
-                            </div>
-                          </div>
-                          <div className="text-sm font-semibold text-foreground">
-                            {settlement.amount.toFixed(2)} {baseCurrencyCode}
-                          </div>
-                        </div>
-                      ))}
+                    <div className="relative max-h-64 overflow-y-auto pr-1">
+                      {/* Timeline line */}
+                      <div className="absolute left-[17px] top-0 bottom-0 w-px bg-gray-200" aria-hidden="true" />
 
-                      {historySettlements.length > 5 && (
-                        <div className="text-center pt-2">
-                          <button
-                            onClick={() => setShowAllSettlements(!showAllSettlements)}
-                            className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground font-medium"
-                          >
-                            {showAllSettlements ? (
-                              <>
-                                Zwiń <ChevronUp className="h-3 w-3" />
-                              </>
-                            ) : (
-                              <>
-                                Zobacz wszystkie ({historySettlements.length}) <ChevronDown className="h-3 w-3" />
-                              </>
-                            )}
-                          </button>
-                        </div>
-                      )}
+                      <div className="space-y-3">
+                        {(showAllSettlements ? historySettlements : historySettlements.slice(0, 5)).map(
+                          (settlement, _index) => (
+                            <div key={settlement.id} className="relative group">
+                              {/* Timeline dot */}
+                              <div
+                                className="absolute left-2 top-3 h-3 w-3 rounded-full bg-primary shadow-sm ring-4 ring-primary/10 transition-all duration-200 group-hover:ring-6 group-hover:ring-primary/20"
+                                aria-hidden="true"
+                              />
+
+                              {/* Settlement card */}
+                              <div className="ml-10 flex items-center justify-between p-3 rounded-xl bg-muted/10 hover:bg-muted/20 transition-colors">
+                                <div className="flex items-center gap-3">
+                                  <div className="flex flex-col">
+                                    <div className="flex items-center gap-2 text-sm">
+                                      <span className="font-medium">{settlement.payer.full_name}</span>
+                                      <ArrowRight className="h-3 w-3 text-muted-foreground" />
+                                      <span className="font-medium">{settlement.payee.full_name}</span>
+                                    </div>
+                                    <span className="text-xs text-muted-foreground">
+                                      {new Date(settlement.settled_at).toLocaleDateString("pl-PL")}
+                                    </span>
+                                  </div>
+                                </div>
+                                <div className="text-sm font-semibold text-foreground">
+                                  {settlement.amount.toFixed(2)} {baseCurrencyCode}
+                                </div>
+                              </div>
+                            </div>
+                          )
+                        )}
+                      </div>
                     </div>
+
+                    {historySettlements.length > 5 && (
+                      <div className="text-center pt-2">
+                        <button
+                          onClick={() => setShowAllSettlements(!showAllSettlements)}
+                          className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground font-medium transition-colors"
+                        >
+                          {showAllSettlements ? (
+                            <>
+                              Zwiń <ChevronUp className="h-3 w-3" />
+                            </>
+                          ) : (
+                            <>
+                              Zobacz wszystkie ({historySettlements.length}) <ChevronDown className="h-3 w-3" />
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </>
               )}

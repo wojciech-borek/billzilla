@@ -1,4 +1,4 @@
-import React, { useRef } from "react";
+import React from "react";
 import type { ExpenseListItemDTO } from "@/types";
 import { cn, formatCurrency, getInitials } from "@/lib/utils";
 
@@ -21,11 +21,6 @@ export const ExpenseListItem: React.FC<ExpenseListItemProps> = ({
   onDelete,
   showConnector = false,
 }) => {
-  const splitsContainerRef = useRef<HTMLDivElement | null>(null);
-  const isDraggingRef = useRef(false);
-  const startXRef = useRef(0);
-  const scrollLeftRef = useRef(0);
-
   const handleCardClick = () => {
     onClick();
   };
@@ -42,102 +37,72 @@ export const ExpenseListItem: React.FC<ExpenseListItemProps> = ({
     hour: "2-digit",
     minute: "2-digit",
   });
-  const handlePointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
-    const container = splitsContainerRef.current;
-    if (!container) return;
-    if (event.pointerType === "mouse" && event.buttons !== 1) return;
-
-    isDraggingRef.current = true;
-    startXRef.current = event.clientX;
-    scrollLeftRef.current = container.scrollLeft;
-    container.setPointerCapture?.(event.pointerId);
-  };
-
-  const handlePointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
-    if (!isDraggingRef.current) return;
-    const container = splitsContainerRef.current;
-    if (!container) return;
-    event.preventDefault();
-    const delta = startXRef.current - event.clientX;
-    container.scrollLeft = scrollLeftRef.current + delta;
-  };
-
-  const handlePointerUp = (event: React.PointerEvent<HTMLDivElement>) => {
-    if (!isDraggingRef.current) return;
-    isDraggingRef.current = false;
-    splitsContainerRef.current?.releasePointerCapture?.(event.pointerId);
-  };
 
   return (
-    <div className="relative">
+    <div className="relative group">
+      {/* Timeline dot - anchored to timeline */}
       <div
-        className="absolute left-2 top-4 h-4 w-4 rounded-full bg-primary/70 shadow-sm ring-4 ring-primary/12"
+        className="absolute left-2 top-4 h-3 w-3 rounded-full bg-primary shadow-sm ring-4 ring-primary/10 transition-all duration-200 group-hover:ring-6 group-hover:ring-primary/20"
         aria-hidden
       />
-      {showConnector && <div className="absolute left-[18px] top-8 bottom-0 w-0.5 bg-border/60" aria-hidden />}
 
+      {/* Timeline connector line */}
+      {showConnector && <div className="absolute left-[17px] top-7 bottom-0 w-px bg-gray-200" aria-hidden />}
+
+      {/* Expense card with increased padding */}
       <div
-        className="ml-8 rounded-xl border border-border/50 bg-card p-3 shadow-[0_10px_30px_-20px_rgba(0,0,0,0.35)] transition-shadow duration-200 hover:shadow-[0_14px_40px_-16px_rgba(0,0,0,0.32)] focus-within:ring-2 focus-within:ring-ring"
+        className="ml-10 rounded-xl border border-gray-100 bg-card p-5 shadow-sm shadow-gray-100/50 transition-all duration-300 ease-out hover:shadow-md hover:shadow-gray-200/60 focus-within:ring-2 focus-within:ring-primary/20"
         onClick={handleCardClick}
         role="button"
         tabIndex={0}
         onKeyDown={handleKeyDown}
         aria-label={`Wydatek: ${expense.description}, kwota: ${formatCurrency(expense.amount_in_base_currency, baseCurrencyCode)}`}
       >
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex-1 min-w-0 space-y-2">
-            <div className="flex flex-col gap-1">
+        <div className="flex items-start justify-between gap-4">
+          {/* Left side: Content */}
+          <div className="flex-1 min-w-0 space-y-3">
+            {/* Time and Title */}
+            <div className="flex flex-col gap-1.5">
               <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground/60 leading-none">
                 {formattedTime}
               </span>
-              <h4 className="text-[16px] font-semibold text-foreground leading-tight">{expense.description}</h4>
+              <h4 className="text-base font-semibold text-foreground leading-tight">{expense.description}</h4>
             </div>
 
-            <div
-              className="mt-2 flex gap-1 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden cursor-grab active:cursor-grabbing select-none touch-pan-x"
-              aria-label="Podział wydatku"
-              role="list"
-              ref={splitsContainerRef}
-              onPointerDown={handlePointerDown}
-              onPointerMove={handlePointerMove}
-              onPointerUp={handlePointerUp}
-              onPointerLeave={handlePointerUp}
-            >
+            {/* Participants with amounts */}
+            <div className="flex items-center gap-3 flex-wrap">
               {expense.splits.map((split) => (
-                <div
-                  key={split.profile_id}
-                  className="min-w-[72px] flex flex-col items-center gap-1 px-2 py-1 text-center"
-                >
+                <div key={split.profile_id} className="flex flex-col items-center gap-1" title={split.full_name}>
                   <div className="relative">
-                    <span
+                    <div
                       className={cn(
-                        "flex h-6 w-6 items-center justify-center rounded-full bg-muted text-[10px] font-semibold text-foreground",
-                        split.profile_id === expense.payer_id && "bg-primary/10 text-primary"
+                        "h-7 w-7 rounded-full flex items-center justify-center ring-2 ring-background",
+                        split.profile_id === expense.payer_id
+                          ? "bg-primary/10 text-primary"
+                          : "bg-muted text-foreground"
                       )}
                     >
-                      {getInitials(split.full_name)}
-                    </span>
+                      <span className="text-xs font-semibold">{getInitials(split.full_name)}</span>
+                    </div>
+                    {/* Payer indicator dot */}
                     {split.profile_id === expense.payer_id && (
                       <span
-                        className="absolute -bottom-0.5 -right-0.5 h-2 w-2 rounded-full bg-primary/70 ring-2 ring-background"
+                        className="absolute -bottom-0.5 -right-0.5 h-2 w-2 rounded-full bg-primary ring-2 ring-background"
                         aria-hidden
                       />
                     )}
                   </div>
-                  <div
-                    className={cn(
-                      "rounded-full bg-primary/5 px-2 py-1 text-[11px] font-semibold text-foreground",
-                      split.profile_id === expense.payer_id && "bg-primary/12 text-primary"
-                    )}
-                  >
+                  <span className="text-[10px] font-medium text-muted-foreground">
                     {formatCurrency(split.amount, expense.currency_code)}
-                  </div>
+                  </span>
                 </div>
               ))}
             </div>
           </div>
 
-          <div className="flex flex-col items-end justify-center gap-1.5 shrink-0 self-stretch">
+          {/* Right side: Amount and Actions */}
+          <div className="flex flex-col items-end justify-between gap-3 shrink-0 self-stretch">
+            {/* Amount */}
             <div className="text-right">
               <div className="text-xl font-bold text-foreground">
                 {formatCurrency(expense.amount_in_base_currency, baseCurrencyCode)}
@@ -149,49 +114,48 @@ export const ExpenseListItem: React.FC<ExpenseListItemProps> = ({
               )}
             </div>
 
-            <div className="flex items-center gap-2 mt-2">
-              {isOwner && (
-                <>
-                  {onEdit && (
-                    <button
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        onEdit();
-                      }}
-                      className="inline-flex h-8 w-8 items-center justify-center rounded-md text-sm font-medium text-muted-foreground/70 transition-colors hover:bg-accent hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                      aria-label="Edytuj wydatek"
-                    >
-                      <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                        />
-                      </svg>
-                    </button>
-                  )}
-
+            {/* Action buttons - always visible */}
+            {isOwner && (
+              <div className="flex items-center gap-1">
+                {onEdit && (
                   <button
                     onClick={(event) => {
                       event.stopPropagation();
-                      onDelete?.();
+                      onEdit();
                     }}
-                    className="inline-flex h-8 w-8 items-center justify-center rounded-md text-sm font-medium text-destructive transition-colors hover:bg-destructive/10 hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                    aria-label="Usuń wydatek"
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-md text-sm font-medium text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                    aria-label="Edytuj wydatek"
                   >
                     <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path
                         strokeLinecap="round"
                         strokeLinejoin="round"
                         strokeWidth={2}
-                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
                       />
                     </svg>
                   </button>
-                </>
-              )}
-            </div>
+                )}
+
+                <button
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    onDelete?.();
+                  }}
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-md text-sm font-medium text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-destructive focus-visible:ring-offset-2"
+                  aria-label="Usuń wydatek"
+                >
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                    />
+                  </svg>
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>

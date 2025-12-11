@@ -4,13 +4,13 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --radius: 0.625rem;
+  --radius: 1rem; /* Zwiększony z 0.625rem do 1rem (rounded-xl jako standard) */
   /* Billzilla Brand Colors - converted to OKLCH */
-  --background: oklch(0.985 0.005 95); /* #F9FAF8 - jasny kremowy */
+  --background: oklch(0.975 0.002 220); /* Jasnoszare tło (#f9fafb / gray-50) zamiast kremowego */
   --foreground: oklch(0.145 0.01 220); /* #0C2231 - ciemny granat */
-  --card: oklch(0.985 0.005 95); /* #F9FAF8 - jasny kremowy */
+  --card: oklch(1 0 0); /* Czysto białe karty dla kontrastu z tłem */
   --card-foreground: oklch(0.145 0.01 220); /* #0C2231 - ciemny granat */
-  --popover: oklch(0.985 0.005 95); /* #F9FAF8 - jasny kremowy */
+  --popover: oklch(1 0 0); /* Czysto białe popover */
   --popover-foreground: oklch(0.145 0.01 220); /* #0C2231 - ciemny granat */
   --primary: oklch(0.62 0.15 145); /* #49A067 - zielony dinozaura */
   --primary-foreground: oklch(0.99 0.005 180); /* #0E2E24 - ciemnozielony kontur */
@@ -21,7 +21,7 @@
   --accent: oklch(0.75 0.08 25); /* #F49B7A - pomarańczowo-różowy język */
   --accent-foreground: oklch(0.145 0.01 220); /* #0C2231 - ciemny granat */
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.92 0.005 95); /* jasny border */
+  --border: oklch(0.96 0.002 220); /* Bardzo jasny border (gray-100) */
   --input: oklch(0.94 0.005 95); /* jasny input */
   --ring: oklch(0.62 0.15 145); /* #49A067 - zielony dinozaura */
   --chart-1: oklch(0.62 0.15 145); /* zielony dinozaura */
@@ -79,6 +79,7 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);

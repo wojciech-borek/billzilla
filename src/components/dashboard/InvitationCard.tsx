@@ -24,7 +24,7 @@ export default function InvitationCard({
 }: InvitationCardProps) {
   return (
     <article
-      className="flex items-center gap-3 rounded-lg border bg-card p-3 transition-colors hover:bg-accent/5"
+      className="flex items-center gap-3 rounded-2xl border border-gray-100 bg-card p-3 shadow-sm shadow-gray-100/50 transition-colors hover:bg-accent/5"
       aria-label={`Zaproszenie do grupy ${invitation.groupName}`}
     >
       <InvitationCardContent invitation={invitation} />
