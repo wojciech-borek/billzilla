@@ -232,7 +232,6 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({
                       expense={expense}
                       isOwner={expense.created_by.id === currentUserId}
                       baseCurrencyCode={baseCurrencyCode}
-                      currentUserId={currentUserId}
                       onClick={() => onExpenseClick(expense)}
                       onEdit={() => handleEdit(expense)}
                       onDelete={() => handleDelete(expense)}
