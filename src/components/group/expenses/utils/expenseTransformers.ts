@@ -24,12 +24,12 @@ export function transformExpenseToFormData(expense: ExpenseDTO): CreateExpenseCo
 export function isValidExpenseForForm(expense: Partial<ExpenseDTO>): expense is ExpenseDTO {
   return Boolean(
     expense.id &&
-      expense.description &&
-      typeof expense.amount === "number" &&
-      expense.currency_code &&
-      expense.expense_date &&
-      expense.payer_id &&
-      Array.isArray(expense.splits) &&
-      expense.splits.length > 0
+    expense.description &&
+    typeof expense.amount === "number" &&
+    expense.currency_code &&
+    expense.expense_date &&
+    expense.payer_id &&
+    Array.isArray(expense.splits) &&
+    expense.splits.length > 0
   );
 }

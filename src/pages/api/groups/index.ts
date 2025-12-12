@@ -194,9 +194,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     // Handle invitations separately (create invitations instead of direct membership)
     if (sanitizedEmails && sanitizedEmails.length > 0) {
-      const { createInvitationForExistingUser, createInvitationForNewUser, findUserByEmail } = await import(
-        "../../../lib/services/invitationService"
-      );
+      const { createInvitationForExistingUser, createInvitationForNewUser, findUserByEmail } =
+        await import("../../../lib/services/invitationService");
 
       const { sendInvitationEmail } = await import("../../../lib/services/emailService");
 
