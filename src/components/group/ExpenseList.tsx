@@ -1,4 +1,4 @@
-import React, { useRef, useCallback, useState } from "react";
+import React, { useRef, useCallback, useMemo, useState } from "react";
 import { ExpenseListItem } from "./ExpenseListItem";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import { EditExpenseModal } from "./expenses/EditExpenseModal";
@@ -16,7 +16,8 @@ export interface ExpenseListProps {
   onExpenseUpdated?: (expense: ExpenseDTO) => void;
   onLoadMore: () => void;
   hasMore: boolean;
-  isLoading: boolean;
+  isLoadingInitial: boolean;
+  isLoadingMore: boolean;
 }
 
 export const ExpenseList: React.FC<ExpenseListProps> = ({
@@ -30,7 +31,8 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({
   onExpenseUpdated,
   onLoadMore,
   hasMore,
-  isLoading,
+  isLoadingInitial,
+  isLoadingMore,
 }) => {
   const observerRef = useRef<IntersectionObserver | null>(null);
 
@@ -58,7 +60,7 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({
   // Intersection Observer for infinite scroll
   const lastExpenseRef = useCallback(
     (node: HTMLDivElement) => {
-      if (isLoading) return;
+      if (isLoadingMore) return;
 
       if (observerRef.current) {
         observerRef.current.disconnect();
@@ -80,7 +82,7 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({
         observerRef.current.observe(node);
       }
     },
-    [isLoading, hasMore, onLoadMore]
+    [isLoadingMore, hasMore, onLoadMore]
   );
 
   // Handle delete action
@@ -102,9 +104,9 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({
       });
 
       setDeleteDialogState({ isOpen: false, expense: null });
-    } catch (error) {
+    } catch (_error) {
       // Error is handled by the mutation
-      console.error("Failed to delete expense:", error);
+      return;
     }
   }, [deleteDialogState.expense, deleteExpenseMutation, groupId]);
 
@@ -135,7 +137,48 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({
     [onExpenseUpdated]
   );
 
-  if (expenses.length === 0 && !isLoading) {
+  const groupedExpenses = useMemo(() => {
+    const groups = new Map<
+      string,
+      {
+        label: string;
+        items: ExpenseListItemDTO[];
+      }
+    >();
+
+    expenses.forEach((expense) => {
+      const date = new Date(expense.expense_date);
+      const key = date.toISOString().slice(0, 10);
+
+      if (!groups.has(key)) {
+        const label = date.toLocaleDateString("pl-PL", {
+          weekday: "long",
+          day: "numeric",
+          month: "long",
+          year: "numeric",
+        });
+
+        groups.set(key, {
+          label,
+          items: [],
+        });
+      }
+
+      groups.get(key)?.items.push(expense);
+    });
+
+    return Array.from(groups.entries())
+      .sort(([a], [b]) => (a > b ? -1 : 1))
+      .map(([, value]) => value);
+  }, [expenses]);
+
+  const lastExpenseId = expenses.at(-1)?.id;
+
+  if (isLoadingInitial) {
+    return <ExpenseListSkeleton />;
+  }
+
+  if (expenses.length === 0 && !isLoadingInitial) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center">
         <div className="rounded-full bg-muted p-6 mb-4">
@@ -155,27 +198,57 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({
   }
 
   return (
-    <div className="space-y-4" role="list" aria-label="Lista wydatków">
-      {expenses.map((expense, index) => (
-        <div key={expense.id} ref={index === expenses.length - 1 ? lastExpenseRef : undefined} role="listitem">
-          <ExpenseListItem
-            expense={expense}
-            isOwner={expense.created_by.id === currentUserId}
-            baseCurrencyCode={baseCurrencyCode}
-            onClick={() => onExpenseClick(expense)}
-            onEdit={() => handleEdit(expense)}
-            onDelete={() => handleDelete(expense)}
-          />
-        </div>
+    <div className="relative space-y-4" role="list" aria-label="Lista wydatków">
+      {/* Main timeline line - consistent throughout the list */}
+      <div className="absolute left-[17px] top-0 bottom-0 w-px bg-gray-200" aria-hidden />
+
+      {groupedExpenses.map((group, groupIndex) => (
+        <section key={group.label} className="relative">
+          {groupIndex > 0 && <div className="border-t border-gray-100 my-6" />}
+          <div className="space-y-3">
+            <div className="flex items-center gap-3 pl-10">
+              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10 text-xs font-bold text-primary">
+                {group.items.length}
+              </div>
+              <div className="flex flex-col">
+                <span className="text-xs font-semibold text-muted-foreground capitalize tracking-wide">
+                  {group.label}
+                </span>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              {group.items.map((expense, index) => {
+                const isLastInList = expense.id === lastExpenseId;
+                const isLastInGroup = index === group.items.length - 1;
+                return (
+                  <div
+                    key={expense.id}
+                    ref={isLastInList ? lastExpenseRef : undefined}
+                    role="listitem"
+                    className="relative"
+                  >
+                    <ExpenseListItem
+                      expense={expense}
+                      isOwner={expense.created_by.id === currentUserId}
+                      baseCurrencyCode={baseCurrencyCode}
+                      onClick={() => onExpenseClick(expense)}
+                      onEdit={() => handleEdit(expense)}
+                      onDelete={() => handleDelete(expense)}
+                      showConnector={!isLastInGroup}
+                    />
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </section>
       ))}
 
       {/* Loading indicator for infinite scroll */}
-      {isLoading && hasMore && (
-        <div className="flex justify-center py-6">
-          <div className="flex items-center gap-2 text-muted-foreground">
-            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-current"></div>
-            <span>Ładowanie kolejnych wydatków...</span>
-          </div>
+      {isLoadingMore && hasMore && (
+        <div className="space-y-4">
+          <ExpenseListSkeleton rows={2} showLine />
         </div>
       )}
 
@@ -212,6 +285,43 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({
           onExpenseUpdated={handleExpenseUpdated}
         />
       )}
+    </div>
+  );
+};
+
+interface ExpenseListSkeletonProps {
+  rows?: number;
+  showLine?: boolean;
+}
+
+export const ExpenseListSkeleton: React.FC<ExpenseListSkeletonProps> = ({ rows = 4, showLine = false }) => {
+  return (
+    <div className="relative space-y-3">
+      {showLine && <div className="absolute left-[17px] top-0 bottom-0 w-px bg-gray-200" aria-hidden />}
+      {Array.from({ length: rows }).map((_, index) => (
+        <div key={index} className="relative">
+          <div className="absolute left-2 top-4 h-3 w-3 rounded-full bg-muted ring-4 ring-muted/20" aria-hidden />
+          <div className="ml-10 animate-pulse rounded-xl border border-gray-100 bg-card p-5 shadow-sm">
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex-1 space-y-3">
+                <div className="h-2.5 w-16 rounded-full bg-muted" />
+                <div className="h-4 w-40 rounded-full bg-muted" />
+                <div className="flex gap-2 items-center">
+                  <div className="h-7 w-7 rounded-full bg-muted" />
+                  <div className="h-3 w-3 rounded-full bg-muted/40" />
+                  <div className="h-7 w-7 rounded-full bg-muted" />
+                  <div className="h-7 w-7 rounded-full bg-muted" />
+                </div>
+                <div className="h-3 w-56 rounded-full bg-muted/60" />
+              </div>
+              <div className="flex flex-col items-end gap-2">
+                <div className="h-6 w-24 rounded-full bg-muted" />
+                <div className="h-3 w-16 rounded-full bg-muted/60" />
+              </div>
+            </div>
+          </div>
+        </div>
+      ))}
     </div>
   );
 };

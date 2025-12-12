@@ -35,31 +35,13 @@ export default defineConfig({
     viewport: { width: 1280, height: 720 },
   },
 
-  /* Configure projects for major browsers */
+  /* Configure projects for Chromium browser only */
   projects: [
     {
       name: "chromium",
       testIgnore: "**/unauthenticated.spec.ts",
       use: {
         ...devices["Desktop Chrome"],
-        storageState: "./e2e/.auth/user.json",
-      },
-    },
-
-    {
-      name: "firefox",
-      testIgnore: "**/unauthenticated.spec.ts",
-      use: {
-        ...devices["Desktop Firefox"],
-        storageState: "./e2e/.auth/user.json",
-      },
-    },
-
-    {
-      name: "webkit",
-      testIgnore: "**/unauthenticated.spec.ts",
-      use: {
-        ...devices["Desktop Safari"],
         storageState: "./e2e/.auth/user.json",
       },
     },

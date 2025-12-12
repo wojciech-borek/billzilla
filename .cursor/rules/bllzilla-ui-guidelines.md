@@ -13,7 +13,8 @@ Szczegółowy opis schematu kolorów, typografii oraz kierunku wizualnego aplika
 | **Secondary**    | Jasna zieleń              | `#6DBE83` | `--secondary: #6DBE83;`          | Dla delikatnych elementów UI (np. tła kart).     |
 | **Accent**       | Pomarańczowo-różowy język | `#F49B7A` | `--accent: #F49B7A;`             | Używać oszczędnie – np. badge, highlight.        |
 | **Neutral Dark** | Ciemny granat             | `#0C2231` | `--foreground: #0C2231;`         | Główny kolor tekstu.                             |
-| **Background**   | Jasny kremowy             | `#F9FAF8` | `--background: #F9FAF8;`         | Tło aplikacji – jasne, ciepłe.                   |
+| **Background**   | Jasnoszary                | `#f9fafb` | `--background: #f9fafb;`         | Tło aplikacji – jasnoszare (gray-50).            |
+| **Card**         | Biały                     | `#ffffff` | `--card: #ffffff;`               | Tło kart – czysto białe dla kontrastu.           |
 
 ---
 
@@ -23,33 +24,35 @@ Szczegółowy opis schematu kolorów, typografii oraz kierunku wizualnego aplika
 
 **Cechy UI:**
 
-- Zaokrąglone rogi (`rounded-2xl` jako standard).
+- Zaokrąglone rogi (`rounded-2xl` jako standard, `1.5rem`).
 - Duże marginesy i przestrzeń (`p-4`, `gap-6`).
 - Czyste, płaskie ikony (flat/outline).
-- Delikatne cienie (`shadow-md`, `shadow-green-100`).
+- Wyrafinowane cienie (`shadow-sm shadow-gray-100/50` - delikatny, mało przezroczysty).
+- Delikatne ramki (`border border-gray-100`).
 - Subtelne animacje (`transition-all duration-300 ease-out`).
 
 ---
 
 ## ✍️ Typografia
 
-| Zastosowanie         | Font                           | Klasa Tailwind             | Opis                          |
-| -------------------- | ------------------------------ | -------------------------- | ----------------------------- |
-| **Nagłówki (H1–H3)** | Inter / Nunito Sans            | `font-bold tracking-tight` | Nowoczesny, czytelny.         |
-| **Tekst główny**     | Inter / Rubik                  | `font-normal`              | Neutralny, lekko zaokrąglony. |
-| **Logo / Branding**  | Niestandardowy styl cartoonowy | —                          | Tylko w logotypie.            |
+| Zastosowanie         | Font                           | Klasa Tailwind                  | Opis                          |
+| -------------------- | ------------------------------ | ------------------------------- | ----------------------------- |
+| **Nagłówki (H1–H3)** | Inter                          | `font-bold tracking-tight`      | Nowoczesny, czytelny.         |
+| **Etykiety ważne**   | Inter                          | `font-semibold tracking-tight`  | Dla ważnych etykiet.          |
+| **Tekst główny**     | Inter                          | `font-normal`                   | Neutralny, lekko zaokrąglony. |
+| **Logo / Branding**  | Niestandardowy styl cartoonowy | `font-bold tracking-tight`      | Tylko w logotypie.            |
 
 ---
 
 ## 🧩 Komponenty Shadcn/UI – rekomendacje
 
-| Komponent                | Styl                                                         | Kolorystyka                                   |
-| ------------------------ | ------------------------------------------------------------ | --------------------------------------------- |
-| **Button**               | `variant="default"`                                          | `bg-primary text-white hover:bg-primary-dark` |
-| **Card**                 | `bg-white border border-gray-100 shadow-sm`                  | Wewnątrz `text-foreground`.                   |
-| **Badge**                | `bg-accent/20 text-accent`                                   | Do wyróżnień.                                 |
-| **Input**                | `border-gray-300 focus:border-primary focus:ring-primary/40` | Subtelne, ciepłe tonacje.                     |
-| **Sidebar / Navigation** | `bg-primary text-white` z `hover:bg-primary-dark`            | Spójne z motywem.                             |
+| Komponent                | Styl                                                                       | Kolorystyka                                   |
+| ------------------------ | -------------------------------------------------------------------------- | --------------------------------------------- |
+| **Button**               | `variant="default"`                                                        | `bg-primary text-white hover:bg-primary-dark` |
+| **Card**                 | `bg-white border border-gray-100 shadow-sm shadow-gray-100/50 rounded-2xl` | Wewnątrz `text-foreground`.                   |
+| **Badge**                | `bg-accent/20 text-accent`                                                 | Do wyróżnień.                                 |
+| **Input**                | `border-gray-300 focus:border-primary focus:ring-primary/40`               | Subtelne, ciepłe tonacje.                     |
+| **Sidebar / Navigation** | `bg-primary text-white` z `hover:bg-primary-dark`                          | Spójne z motywem.                             |
 
 ---
 
@@ -63,8 +66,9 @@ export default {
   theme: {
     extend: {
       colors: {
-        background: "#F9FAF8",
+        background: "#f9fafb", // gray-50 - jasnoszare tło
         foreground: "#0C2231",
+        card: "#ffffff", // czysto białe karty
         primary: "#49A067",
         "primary-dark": "#0E2E24",
         secondary: "#6DBE83",
@@ -76,6 +80,9 @@ export default {
       borderRadius: {
         xl: "1rem",
         "2xl": "1.5rem",
+      },
+      boxShadow: {
+        sm: "0 1px 2px 0 rgb(0 0 0 / 0.05)",
       },
     },
   },

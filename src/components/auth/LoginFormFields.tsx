@@ -27,7 +27,7 @@ export function LoginFormFields({ formData, errors, isLoading, onChange }: Login
       {/* Pole hasła z linkiem resetowania */}
       <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <label htmlFor="password" className="text-sm font-medium text-foreground">
+          <label htmlFor="password" className="text-sm font-semibold tracking-tight text-foreground">
             Hasło
             <span className="text-red-500 ml-1">*</span>
           </label>
@@ -44,7 +44,7 @@ export function LoginFormFields({ formData, errors, isLoading, onChange }: Login
           placeholder="••••••••"
           value={formData.password || ""}
           onChange={(e) => onChange("password", e.target.value)}
-          className="flex h-10 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm ring-offset-white file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-gray-500 focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+          className="flex h-10 w-full rounded-xl border border-gray-100 bg-white px-3 py-2 text-sm font-normal shadow-sm shadow-gray-100/50 ring-offset-white file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-gray-500 focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
           disabled={isLoading}
           aria-invalid={!!errors.password}
           aria-describedby={errors.password ? "password-error" : undefined}

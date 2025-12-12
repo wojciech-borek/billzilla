@@ -27,7 +27,7 @@ describe("Button", () => {
 
     // Assert
     button = screen.getByRole("button", { name: /outline/i });
-    expect(button).toHaveClass("border", "border-gray-200", "bg-card");
+    expect(button).toHaveClass("border", "border-gray-100", "bg-card");
   });
 
   it("should render with different sizes", () => {
@@ -36,14 +36,14 @@ describe("Button", () => {
 
     // Assert
     let button = screen.getByRole("button", { name: /small/i });
-    expect(button).toHaveClass("h-9", "rounded-xl");
+    expect(button).toHaveClass("h-9", "rounded-2xl");
 
     // Arrange & Act - Test large size
     rerender(<Button size="lg">Large</Button>);
 
     // Assert
     button = screen.getByRole("button", { name: /large/i });
-    expect(button).toHaveClass("h-12", "rounded-xl", "px-8");
+    expect(button).toHaveClass("h-12", "rounded-2xl", "px-8");
   });
 
   it("should render as child component when asChild is true", () => {
