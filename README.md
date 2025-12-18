@@ -20,7 +20,7 @@ A web application to simplify managing shared expenses for groups, with a key fe
 
 ## Project Description
 
-Billzilla is a responsive web application designed to simplify the management of shared expenses among groups such as friends, roommates, or families. The application allows users to easily track, split, and settle costs. A key distinguishing feature is the ability to add expenses using voice commands, which intelligently processes speech into structured data and fills out the form, requiring only user approval. Authentication is handled exclusively through Google accounts for quick and secure onboarding.
+Billzilla is a responsive web application designed to simplify the management of shared expenses among groups such as friends, roommates, or families. The application allows users to easily track, split, and settle costs. A key distinguishing feature is the ability to add expenses using voice commands, which intelligently processes speech into structured data and fills out the form, requiring only user approval. Authentication is handled through secure email and password registration with email verification for account security.
 
 The project aims to solve common problems associated with shared finances, such as manual tracking difficulties, complex calculations for unequal splits, and the risk of misunderstandings due to forgotten expenses.
 
@@ -75,7 +75,7 @@ To set up and run the project on your local machine, follow these steps:
     cp .env.example .env
     ```
 
-    Then, fill in the necessary environment variables in the `.env` file (e.g., database credentials, API keys for Google authentication).
+    Then, fill in the necessary environment variables in the `.env` file (e.g., Supabase credentials for database and authentication).
 
 5.  **Run the development server:**
     ```sh
@@ -87,33 +87,36 @@ To set up and run the project on your local machine, follow these steps:
 
 The following scripts are available in `package.json`:
 
-| Script                    | Description                              |
-| ------------------------- | ---------------------------------------- |
-| `npm run dev`             | Starts the development server.           |
-| `npm run build`           | Builds the application for production.   |
-| `npm run preview`         | Previews the production build locally.   |
-| `npm run astro`           | Runs the Astro CLI.                      |
-| `npm run lint`            | Lints the codebase for errors.           |
-| `npm run lint:fix`        | Fixes linting errors automatically.      |
-| `npm run format`          | Formats the code using Prettier.         |
-| `npm run test`            | Runs unit tests in watch mode.           |
-| `npm run test:run`        | Runs unit tests in single run mode.      |
-| `npm run test:ui`         | Opens Vitest UI for interactive testing. |
-| `npm run test:coverage`   | Generates test coverage report.          |
-| `npm run test:e2e`        | Runs all E2E tests in headless mode.     |
-| `npm run test:e2e:ui`     | Opens Playwright UI for test debugging.  |
-| `npm run test:e2e:headed` | Runs E2E tests with visible browser.     |
-| `npm run test:e2e:debug`  | Runs E2E tests in debug mode.            |
+| Script                              | Description                              |
+| ----------------------------------- | ---------------------------------------- |
+| `npm run dev`                       | Starts the development server.           |
+| `npm run build`                     | Builds the application for production.   |
+| `npm run preview`                   | Previews the production build locally.   |
+| `npm run astro`                     | Runs the Astro CLI.                      |
+| `npm run lint`                      | Lints the codebase for errors.           |
+| `npm run lint:fix`                  | Fixes linting errors automatically.      |
+| `npm run format`                    | Formats the code using Prettier.         |
+| `npm run test`                      | Runs unit tests in watch mode.           |
+| `npm run test:unit`                 | Runs unit tests in single run mode.      |
+| `npm run test:ui`                   | Opens Vitest UI for interactive testing. |
+| `npm run test:coverage`             | Generates test coverage report.          |
+| `npm run test:e2e`                  | Runs all E2E tests in headless mode.     |
+| `npm run test:e2e:ui`               | Opens Playwright UI for test debugging.  |
+| `npm run test:e2e:headed`           | Runs E2E tests with visible browser.     |
+| `npm run test:e2e:debug`            | Runs E2E tests in debug mode.            |
+| `npm run test:e2e:update-snapshots` | Updates E2E test snapshots.              |
 
 ## Project Scope
 
 ### Key Features
 
 - **User and Group Management**:
-  - Secure sign-up and login exclusively via Google accounts.
+  - Secure sign-up and login with email and password authentication.
+  - Email verification for account security.
+  - Password reset functionality.
   - Create and name new expense groups.
   - Invite others to groups via email.
-  - Ability to leave a group at any time (financial data is preserved for final settlements).
+  - _Ability to leave a group at any time (financial data is preserved for final settlements). [Planned for future release]_
 
 - **Expense Management**:
   - Add expenses via a manual form (description, amount, date, currency).
@@ -135,7 +138,6 @@ The following scripts are available in `package.json`:
 
 The following features are intentionally excluded from the initial MVP release to focus on core functionality:
 
-- Email and password authentication.
 - Automatic fetching of currency exchange rates from external services.
 - Complex user roles and permissions within groups.
 - Push notifications for new expenses or balance changes.
