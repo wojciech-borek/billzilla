@@ -4,9 +4,11 @@ import {
   listGroups,
   getGroupCurrencies,
   getGroupDetails,
+  archiveGroup,
   CurrencyNotFoundError,
   TransactionError,
 } from "@/lib/services/groupService";
+import { GroupAccessError, GroupDataError, GroupNotCreatorError } from "@/lib/services/errors/groupErrors";
 import {
   createMockCreateGroupCommand,
   createMockSupabaseClient,
@@ -741,6 +743,183 @@ describe("GroupService", () => {
       // Assert
       expect(error.name).toBe("TransactionError");
       expect(error.message).toBe("Database connection failed");
+    });
+  });
+
+  describe("archiveGroup", () => {
+    it("should_archive_group_successfully_when_user_is_creator", async () => {
+      // Arrange
+      const groupId = "group-123";
+      const userId = "user-creator";
+      const mockArchivedGroup = {
+        id: groupId,
+        name: "Test Group",
+        base_currency_code: "USD",
+        status: "archived" as const,
+        created_at: "2024-01-01T00:00:00Z",
+      };
+
+      // Mock membership verification (user is member)
+      mockSupabaseClient.from.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.select.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.eq.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.eq.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.eq.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.single.mockResolvedValueOnce({
+        data: { group_id: groupId },
+        error: null,
+      });
+
+      // Mock creator verification (user is creator)
+      mockSupabaseClient.from.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.select.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.eq.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.eq.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.eq.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.single.mockResolvedValueOnce({
+        data: { role: "creator" },
+        error: null,
+      });
+
+      // Mock repository archiveGroup
+      mockSupabaseClient.from.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.update.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.eq.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.select.mockResolvedValueOnce({
+        data: [mockArchivedGroup],
+        error: null,
+      });
+
+      // Act
+      const result = await archiveGroup(mockSupabaseClient, groupId, userId);
+
+      // Assert
+      expect(result).toEqual(mockArchivedGroup);
+    });
+
+    it("should_throw_GroupDataError_when_groupId_is_empty", async () => {
+      // Arrange
+      const groupId = "";
+      const userId = "user-123";
+
+      // Act & Assert
+      await expect(archiveGroup(mockSupabaseClient, groupId, userId)).rejects.toThrow(GroupDataError);
+      await expect(archiveGroup(mockSupabaseClient, groupId, userId)).rejects.toThrow("Group ID is required");
+
+      // Verify no database calls were made
+      expect(mockSupabaseClient.from).not.toHaveBeenCalled();
+    });
+
+    it("should_throw_GroupDataError_when_userId_is_empty", async () => {
+      // Arrange
+      const groupId = "group-123";
+      const userId = "";
+
+      // Act & Assert
+      await expect(archiveGroup(mockSupabaseClient, groupId, userId)).rejects.toThrow(GroupDataError);
+      await expect(archiveGroup(mockSupabaseClient, groupId, userId)).rejects.toThrow("User ID is required");
+
+      // Verify no database calls were made
+      expect(mockSupabaseClient.from).not.toHaveBeenCalled();
+    });
+
+    it("should_throw_GroupAccessError_when_user_is_not_a_member", async () => {
+      // Arrange
+      const groupId = "group-123";
+      const userId = "non-member";
+
+      // Mock membership verification (user is NOT member)
+      mockSupabaseClient.from.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.select.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.eq.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.eq.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.eq.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.single.mockResolvedValueOnce({
+        data: null,
+        error: { message: "No membership found" },
+      });
+
+      // Act & Assert
+      await expect(archiveGroup(mockSupabaseClient, groupId, userId)).rejects.toThrow(GroupAccessError);
+
+      // Verify creator check was not performed
+      expect(mockSupabaseClient.from).toHaveBeenCalledTimes(1);
+    });
+
+    it("should_throw_GroupNotCreatorError_when_user_is_member_but_not_creator", async () => {
+      // Arrange
+      const groupId = "group-123";
+      const userId = "regular-member";
+
+      // Mock membership verification (user IS member)
+      mockSupabaseClient.from.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.select.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.eq.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.eq.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.eq.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.single.mockResolvedValueOnce({
+        data: { group_id: groupId },
+        error: null,
+      });
+
+      // Mock creator verification (user is NOT creator)
+      mockSupabaseClient.from.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.select.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.eq.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.eq.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.eq.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.single.mockResolvedValueOnce({
+        data: null,
+        error: { message: "User is not creator" },
+      });
+
+      // Act & Assert
+      await expect(archiveGroup(mockSupabaseClient, groupId, userId)).rejects.toThrow(GroupNotCreatorError);
+
+      // Verify repository.archiveGroup was not called (only 2 from calls: membership + creator)
+      expect(mockSupabaseClient.from).toHaveBeenCalledTimes(2);
+    });
+
+    it("should_propagate_GroupDataError_from_repository", async () => {
+      // Arrange
+      const groupId = "group-123";
+      const userId = "user-creator";
+
+      // Mock membership verification (user is member)
+      mockSupabaseClient.from.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.select.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.eq.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.eq.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.eq.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.single.mockResolvedValueOnce({
+        data: { group_id: groupId },
+        error: null,
+      });
+
+      // Mock creator verification (user is creator)
+      mockSupabaseClient.from.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.select.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.eq.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.eq.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.eq.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.single.mockResolvedValueOnce({
+        data: { role: "creator" },
+        error: null,
+      });
+
+      // Mock repository archiveGroup failure
+      mockSupabaseClient.from.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.update.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.eq.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.select.mockResolvedValueOnce({
+        data: null,
+        error: { message: "Database update failed" },
+      });
+
+      // Act & Assert
+      await expect(archiveGroup(mockSupabaseClient, groupId, userId)).rejects.toThrow(GroupDataError);
+      // Note: We test only that it throws GroupDataError, not the specific message
+      // because the error message comes from the repository layer
     });
   });
 });

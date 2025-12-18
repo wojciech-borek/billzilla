@@ -41,3 +41,13 @@ export class GroupDataError extends Error {
     this.name = "GroupDataError";
   }
 }
+
+/**
+ * Custom error for creator-only operations
+ */
+export class GroupNotCreatorError extends Error {
+  constructor(message = "Only the group creator can perform this action") {
+    super(message);
+    this.name = "GroupNotCreatorError";
+  }
+}

@@ -8,6 +8,7 @@ import { BalanceService } from "./balanceService";
 import { BalanceRepository } from "./repositories/BalanceRepository";
 import { fetchGroupMembers, getGroupMemberDetails } from "./memberService";
 import type {
+  ArchiveGroupResponseDTO,
   CreateGroupCommand,
   CreateGroupResponseDTO,
   GroupRole,
@@ -25,11 +26,20 @@ import type {
 import { GroupRepository } from "./repositories/GroupRepository";
 import { GroupBuilderFactory } from "./builders/GroupBuilder";
 import { GroupCreationUnitOfWork } from "./units/GroupCreationUnitOfWork";
-import { UserIsActiveGroupMemberSpecification } from "./specifications/groupSpecifications";
-import { CurrencyNotFoundError, TransactionError, GroupAccessError, GroupDataError } from "./errors/groupErrors";
+import {
+  UserIsActiveGroupMemberSpecification,
+  UserIsGroupCreatorSpecification,
+} from "./specifications/groupSpecifications";
+import {
+  CurrencyNotFoundError,
+  TransactionError,
+  GroupAccessError,
+  GroupDataError,
+  GroupNotCreatorError,
+} from "./errors/groupErrors";
 
 // Re-export error classes for backward compatibility
-export { CurrencyNotFoundError, TransactionError, GroupAccessError, GroupDataError };
+export { CurrencyNotFoundError, TransactionError, GroupAccessError, GroupDataError, GroupNotCreatorError };
 
 /**
  * Creates a new group with the creator as the first member
@@ -348,4 +358,43 @@ export async function getGroupDetails(
     // Wrap unexpected errors
     throw new GroupDataError("get group details", error instanceof Error ? error.message : "Unknown error");
   }
+}
+
+/**
+ * Archives a group (soft delete). Only the creator can perform this operation.
+ *
+ * @param supabase - Supabase client instance
+ * @param groupId - ID of the group to archive
+ * @param userId - ID of the user requesting the archive
+ * @returns Archived group summary
+ * @throws {GroupAccessError} When user is not a group member
+ * @throws {GroupNotCreatorError} When user is not the creator
+ * @throws {GroupDataError} When archiving fails
+ */
+export async function archiveGroup(
+  supabase: SupabaseClient,
+  groupId: string,
+  userId: string
+): Promise<ArchiveGroupResponseDTO> {
+  if (!groupId) {
+    throw new GroupDataError("archive group", "Group ID is required");
+  }
+  if (!userId) {
+    throw new GroupDataError("archive group", "User ID is required");
+  }
+
+  const repository = new GroupRepository(supabase);
+  const membershipSpec = new UserIsActiveGroupMemberSpecification(supabase);
+  const isMember = await membershipSpec.isSatisfiedBy({ groupId, userId });
+  if (!isMember) {
+    throw new GroupAccessError();
+  }
+
+  const creatorSpec = new UserIsGroupCreatorSpecification(supabase);
+  const isCreator = await creatorSpec.isSatisfiedBy({ groupId, userId });
+  if (!isCreator) {
+    throw new GroupNotCreatorError();
+  }
+
+  return repository.archiveGroup(groupId);
 }

@@ -289,4 +289,104 @@ describe("GroupRepository", () => {
       });
     });
   });
+
+  describe("archiveGroup", () => {
+    it("should archive group successfully and return archived group data", async () => {
+      // Arrange
+      const groupId = "group-123";
+      const mockArchivedGroup = {
+        id: groupId,
+        name: "Test Group",
+        base_currency_code: "USD",
+        status: "archived",
+        created_at: "2024-01-01T00:00:00Z",
+      };
+
+      // Mock the update chain: from().update().eq().select()
+      mockSupabaseClient.from.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.update.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.eq.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.select.mockResolvedValueOnce({
+        data: [mockArchivedGroup],
+        error: null,
+      });
+
+      // Act
+      const result = await groupRepository.archiveGroup(groupId);
+
+      // Assert
+      expect(result).toEqual(mockArchivedGroup);
+      expect(mockSupabaseClient.from).toHaveBeenCalledWith("groups");
+      expect(mockSupabaseClient.update).toHaveBeenCalledWith({ status: "archived" });
+      expect(mockSupabaseClient.eq).toHaveBeenCalledWith("id", groupId);
+    });
+
+    it("should throw GroupDataError when group not found", async () => {
+      // Arrange
+      const groupId = "non-existent-group";
+
+      mockSupabaseClient.from.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.update.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.eq.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.select.mockResolvedValueOnce({
+        data: [],
+        error: null,
+      });
+
+      // Act & Assert
+      await expect(groupRepository.archiveGroup(groupId)).rejects.toThrow(
+        "Group not found or no permission to archive"
+      );
+    });
+
+    it("should throw GroupDataError when multiple groups returned", async () => {
+      // Arrange
+      const groupId = "duplicate-group";
+      const mockGroups = [
+        {
+          id: groupId,
+          name: "Group 1",
+          base_currency_code: "USD",
+          status: "archived",
+          created_at: "2024-01-01T00:00:00Z",
+        },
+        {
+          id: groupId,
+          name: "Group 2",
+          base_currency_code: "EUR",
+          status: "archived",
+          created_at: "2024-01-02T00:00:00Z",
+        },
+      ];
+
+      mockSupabaseClient.from.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.update.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.eq.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.select.mockResolvedValueOnce({
+        data: mockGroups,
+        error: null,
+      });
+
+      // Act & Assert
+      await expect(groupRepository.archiveGroup(groupId)).rejects.toThrow(
+        "Multiple groups found with same ID (database integrity issue)"
+      );
+    });
+
+    it("should throw GroupDataError when update fails", async () => {
+      // Arrange
+      const groupId = "group-123";
+
+      mockSupabaseClient.from.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.update.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.eq.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.select.mockResolvedValueOnce({
+        data: null,
+        error: { message: "Database connection failed" },
+      });
+
+      // Act & Assert
+      await expect(groupRepository.archiveGroup(groupId)).rejects.toThrow("Database connection failed");
+    });
+  });
 });

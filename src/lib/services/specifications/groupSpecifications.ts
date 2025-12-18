@@ -102,6 +102,28 @@ export class UserIsActiveGroupMemberSpecification extends GroupSpecification {
 }
 
 /**
+ * Specification for validating that the current user is the creator of the group
+ */
+export class UserIsGroupCreatorSpecification extends GroupSpecification {
+  constructor(private supabase: SupabaseClient) {
+    super();
+  }
+
+  async isSatisfiedBy({ groupId, userId }: { groupId: string; userId: string }): Promise<boolean> {
+    const { data, error } = await this.supabase
+      .from("group_members")
+      .select("role")
+      .eq("group_id", groupId)
+      .eq("profile_id", userId)
+      .eq("status", "active")
+      .eq("role", "creator")
+      .single();
+
+    return !error && data !== null;
+  }
+}
+
+/**
  * Specification for validating that a currency exists in the system
  */
 export class CurrencyExistsSpecification extends GroupSpecification {

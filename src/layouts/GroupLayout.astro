@@ -1,7 +1,6 @@
 ---
 import Layout from "./Layout.astro";
 import { Header } from "@/components/group/Header";
-import { QueryProvider } from "@/components/QueryProvider";
 import type { GroupDetailDTO, AuthUserWithProfile } from "@/types";
 
 export interface Props {
@@ -10,28 +9,19 @@ export interface Props {
   user: AuthUserWithProfile;
 }
 
-const { groupId, groupDetails, user } = Astro.props;
+const { groupId, groupDetails, user: _user } = Astro.props;
 
 // Middleware: Verify group membership (already done in individual pages)
 // Group details are passed from individual pages after SSR verification
 ---
 
 <Layout title={`${groupDetails.name} - Billzilla`}>
-  <QueryProvider>
-    <div class="min-h-screen bg-background">
-      <!-- Header Component -->
-      <Header
-        client:load
-        groupName={groupDetails.name}
-        groupId={groupId}
-        userId={user.id}
-        userRole={groupDetails.my_role}
-      />
+  <div class="min-h-screen bg-background">
+    <Header client:load groupName={groupDetails.name} groupId={groupId} userRole={groupDetails.my_role} />
 
-      <!-- Main content area -->
-      <main class="container mx-auto px-4 py-6" role="main">
-        <slot />
-      </main>
-    </div>
-  </QueryProvider>
+    <!-- Main content area -->
+    <main class="container mx-auto px-4 py-6" role="main">
+      <slot />
+    </main>
+  </div>
 </Layout>

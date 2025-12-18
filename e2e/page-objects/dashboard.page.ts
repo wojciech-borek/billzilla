@@ -56,37 +56,21 @@ export class DashboardPage {
     // Ensure any existing modal is closed first
     const existingModal = this.page.getByTestId("create-group-modal");
     if (await existingModal.isVisible()) {
-      // Try to close it by clicking escape or outside the modal
       await this.page.keyboard.press("Escape");
-      // Wait for modal to actually close
       await existingModal.waitFor({ state: "hidden", timeout: 5000 });
     }
 
-    // Ensure no visible toasts are obstructing interactions
+    // Wait for any toasts to disappear
     await this.waitForNoToasts();
 
     // Click the create group button
     await this.createGroupButton.waitFor({ state: "visible", timeout: 10000 });
     await expect(this.createGroupButton).toBeEnabled();
     await this.createGroupButton.scrollIntoViewIfNeeded();
-
-    // First attempt
-    try {
-      await this.createGroupButton.click({ timeout: 5000 });
-    } catch {
-      await this.createGroupButton.click({ force: true });
-    }
+    await this.createGroupButton.click();
 
     const modal = new CreateGroupModal(this.page);
-
-    // Wait for modal to appear, retry click once if needed
-    try {
-      await modal.waitForModal();
-    } catch {
-      await this.waitForNoToasts();
-      await this.createGroupButton.click({ force: true });
-      await modal.waitForModal();
-    }
+    await modal.waitForModal();
 
     return modal;
   }
@@ -131,5 +115,38 @@ export class DashboardPage {
 
   async getExpenseCount() {
     return await this.expensesList.locator("li").count();
+  }
+
+  /**
+   * Switch to archived groups tab/view
+   */
+  async switchToArchivedGroups() {
+    const archivedTab = this.page.getByRole("tab", { name: /archived|archiwum/i });
+    await archivedTab.click();
+    await this.page.waitForLoadState("networkidle");
+  }
+
+  /**
+   * Switch to active groups tab/view
+   */
+  async switchToActiveGroups() {
+    const activeTab = this.page.getByRole("tab", { name: /active|aktywne/i });
+    await activeTab.click();
+    await this.page.waitForLoadState("networkidle");
+  }
+
+  /**
+   * Find a group card by name
+   */
+  async findGroupByName(name: string) {
+    return this.page.locator("button").filter({ hasText: name }).first();
+  }
+
+  /**
+   * Verify that a group is not in the current list
+   */
+  async verifyGroupNotInList(name: string) {
+    const groupCard = await this.findGroupByName(name);
+    await expect(groupCard).not.toBeVisible();
   }
 }

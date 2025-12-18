@@ -284,32 +284,33 @@ export class UserIsGroupCreatorSpecification extends GroupSpecification {
 ### Krok 4: Dodanie metody w `src/lib/services/repositories/GroupRepository.ts`
 
 ```typescript
-interface ArchivedGroup {
-  id: string;
-  name: string;
-  base_currency_code: string;
-  status: GroupStatus;
-  created_at: string;
-}
-
 /**
  * Archive a group by updating its status to 'archived'
  */
-async archiveGroup(groupId: string): Promise<ArchivedGroup> {
+async archiveGroup(groupId: string): Promise<ArchiveGroupResponseDTO> {
   const { data, error } = await this.supabase
     .from("groups")
     .update({ status: "archived" })
     .eq("id", groupId)
-    .select("id, name, base_currency_code, status, created_at")
-    .single();
+    .select("id, name, base_currency_code, status, created_at");
 
-  if (error || !data) {
-    throw new GroupDataError("archive group", error?.message || "Failed to archive group");
+  if (error) {
+    throw new GroupDataError("archive group", error.message);
   }
 
-  return data;
+  if (!data || data.length === 0) {
+    throw new GroupDataError("archive group", "Group not found or no permission to archive");
+  }
+
+  if (data.length > 1) {
+    throw new GroupDataError("archive group", "Multiple groups found with same ID (database integrity issue)");
+  }
+
+  return data[0] as ArchiveGroupResponseDTO;
 }
 ```
+
+**Uwaga:** Implementacja używa zwykłego `.select()` zamiast `.single()`, aby uniknąć błędu "Cannot coerce the result to a single JSON object". Następnie waliduje odpowiedź sprawdzając długość tablicy.
 
 ### Krok 5: Dodanie funkcji w `src/lib/services/groupService.ts`
 
@@ -370,133 +371,66 @@ export async function archiveGroup(
 ### Krok 6: Utworzenie API route w `src/pages/api/groups/[groupId]/archive.ts`
 
 ```typescript
-/**
- * API endpoint for archiving a group (soft delete)
- * POST /api/groups/:groupId/archive
- */
-
 import type { APIRoute } from "astro";
 import type { ErrorResponseDTO } from "../../../../types";
 import { groupIdParamSchema } from "../../../../lib/schemas/groupSchemas";
 import { archiveGroup } from "../../../../lib/services/groupService";
-import { GroupAccessError, GroupNotCreatorError, GroupDataError } from "../../../../lib/services/errors/groupErrors";
+import { GroupAccessError, GroupDataError, GroupNotCreatorError } from "../../../../lib/services/errors/groupErrors";
 
 export const prerender = false;
 
-/**
- * POST /api/groups/:groupId/archive
- * Archives a group (soft delete). Only the creator can archive a group.
- *
- * Requirements:
- * - User must be authenticated
- * - User must be the creator of the group
- *
- * Returns:
- * - 200: Archived group data
- * - 400: Invalid group ID format
- * - 401: User not authenticated
- * - 403: User is not the creator of the group
- * - 404: Group not found or user is not a member
- * - 500: Internal server error
- */
+const jsonHeaders = { "Content-Type": "application/json" };
+
+const respondWithError = (status: number, code: string, message: string): Response => {
+  const payload: ErrorResponseDTO = {
+    error: {
+      code,
+      message,
+    },
+  };
+
+  return new Response(JSON.stringify(payload), {
+    status,
+    headers: jsonHeaders,
+  });
+};
+
 export const POST: APIRoute = async ({ params, locals }) => {
+  if (!locals?.user) {
+    return respondWithError(401, "UNAUTHORIZED", "Authentication required");
+  }
+
+  const validation = groupIdParamSchema.safeParse({ groupId: params.groupId });
+  if (!validation.success) {
+    return respondWithError(400, "VALIDATION_ERROR", "Invalid group ID format");
+  }
+
   try {
-    // Check authentication
-    if (!locals.user) {
-      const errorResponse: ErrorResponseDTO = {
-        error: {
-          code: "UNAUTHORIZED",
-          message: "Authentication required",
-        },
-      };
-      return new Response(JSON.stringify(errorResponse), {
-        status: 401,
-        headers: { "Content-Type": "application/json" },
-      });
-    }
-
-    // Validate group ID with Zod schema
-    const validationResult = groupIdParamSchema.safeParse({ groupId: params.groupId });
-    if (!validationResult.success) {
-      const errorResponse: ErrorResponseDTO = {
-        error: {
-          code: "VALIDATION_ERROR",
-          message: "Invalid group ID format",
-          details: validationResult.error.flatten(),
-        },
-      };
-      return new Response(JSON.stringify(errorResponse), {
-        status: 400,
-        headers: { "Content-Type": "application/json" },
-      });
-    }
-
-    const { groupId } = validationResult.data;
-
-    // Archive the group
-    const archivedGroup = await archiveGroup(locals.supabase, groupId, locals.user.id);
-
+    const archivedGroup = await archiveGroup(locals.supabase, validation.data.groupId, locals.user.id);
     return new Response(JSON.stringify(archivedGroup), {
       status: 200,
-      headers: { "Content-Type": "application/json" },
+      headers: jsonHeaders,
     });
   } catch (error) {
-    // Handle known errors
     if (error instanceof GroupNotCreatorError) {
-      const errorResponse: ErrorResponseDTO = {
-        error: {
-          code: "FORBIDDEN",
-          message: error.message,
-        },
-      };
-      return new Response(JSON.stringify(errorResponse), {
-        status: 403,
-        headers: { "Content-Type": "application/json" },
-      });
+      return respondWithError(403, "FORBIDDEN", error.message);
     }
 
     if (error instanceof GroupAccessError) {
-      const errorResponse: ErrorResponseDTO = {
-        error: {
-          code: "NOT_FOUND",
-          message: "Group not found",
-        },
-      };
-      return new Response(JSON.stringify(errorResponse), {
-        status: 404,
-        headers: { "Content-Type": "application/json" },
-      });
+      return respondWithError(404, "NOT_FOUND", error.message);
     }
 
     if (error instanceof GroupDataError) {
-      const errorResponse: ErrorResponseDTO = {
-        error: {
-          code: "NOT_FOUND",
-          message: "Group not found or operation failed",
-        },
-      };
-      return new Response(JSON.stringify(errorResponse), {
-        status: 404,
-        headers: { "Content-Type": "application/json" },
-      });
+      return respondWithError(404, "NOT_FOUND", error.message);
     }
 
-    // Log unexpected errors
     console.error("Unexpected error archiving group:", error);
-
-    const errorResponse: ErrorResponseDTO = {
-      error: {
-        code: "INTERNAL_SERVER_ERROR",
-        message: "An unexpected error occurred while archiving the group",
-      },
-    };
-    return new Response(JSON.stringify(errorResponse), {
-      status: 500,
-      headers: { "Content-Type": "application/json" },
-    });
+    return respondWithError(500, "INTERNAL_SERVER_ERROR", "An unexpected error occurred while archiving the group");
   }
 };
 ```
+
+**Uwaga:** Implementacja używa funkcji pomocniczej `respondWithError` dla bardziej zwięzłego i czytelnego kodu.
 
 ### Krok 7: Dodanie eksportu błędu w `src/lib/services/groupService.ts`
 

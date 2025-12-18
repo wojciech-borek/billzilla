@@ -21,6 +21,7 @@ export { useCreateGroupMutation } from "./useCreateGroupMutation";
 export { useCreateGroupFormLogic } from "./useCreateGroupFormLogic";
 export { useGroupDetails } from "./useGroupDetails";
 export { useGroupsSectionState } from "./useGroupsSectionState";
+export { useArchiveGroup } from "./useArchiveGroup";
 
 // Utility hooks
 export { useCurrenciesList } from "./useCurrenciesList";

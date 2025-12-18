@@ -1,16 +1,16 @@
 import type { SupabaseClient } from "../../../db/supabase.client";
-import type { GroupStatus, GroupRole } from "../../../types";
+import type { ArchiveGroupResponseDTO, GroupStatus, GroupRole } from "../../../types";
 import { GroupDataError } from "../errors/groupErrors";
 
 // Type definitions for repository return types
 interface UserGroupWithRole {
   id: string;
   name: string;
-  description: string | null;
+  description?: string | null;
   base_currency_code: string;
   status: GroupStatus;
   created_at: string;
-  updated_at: string;
+  updated_at?: string;
   group_members: {
     role: GroupRole;
   }[];
@@ -19,11 +19,11 @@ interface UserGroupWithRole {
 interface GroupWithMembership {
   id: string;
   name: string;
-  description: string | null;
+  description?: string | null;
   base_currency_code: string;
   status: GroupStatus;
   created_at: string;
-  updated_at: string;
+  updated_at?: string;
   group_members: {
     role: GroupRole;
     status: "active" | "inactive";
@@ -249,5 +249,30 @@ export class GroupRepository {
       joined_at: string;
     }[];
     return userMembership[0] || { role: "member", status: "active", joined_at: "" };
+  }
+
+  /**
+   * Archive a group by updating its status to 'archived'
+   */
+  async archiveGroup(groupId: string): Promise<ArchiveGroupResponseDTO> {
+    const { data, error } = await this.supabase
+      .from("groups")
+      .update({ status: "archived" })
+      .eq("id", groupId)
+      .select("id, name, base_currency_code, status, created_at");
+
+    if (error) {
+      throw new GroupDataError("archive group", error.message);
+    }
+
+    if (!data || data.length === 0) {
+      throw new GroupDataError("archive group", "Group not found or no permission to archive");
+    }
+
+    if (data.length > 1) {
+      throw new GroupDataError("archive group", "Multiple groups found with same ID (database integrity issue)");
+    }
+
+    return data[0] as ArchiveGroupResponseDTO;
   }
 }

@@ -238,7 +238,7 @@ export function useArchiveGroup() {
 2. **Kliknięcie przycisku archiwizacji** otwiera dialog potwierdzenia
 3. **Dialog wyświetla:**
    - Tytuł: "Archiwizuj grupę"
-   - Opis: "Czy na pewno chcesz zarchiwizować grupę '{nazwa}'? Zarchiwizowana grupa nie będzie widoczna na liście grup, ale wszystkie dane finansowe zostaną zachowane. Tej akcji nie można cofnąć."
+   - Opis: "Czy na pewno chcesz zarchiwizować grupę '{nazwa}'? Zarchiwizowana grupa nie będzie widoczna na liście, ale historia wydatków pozostanie zadokumentowana."
    - Przyciski: "Anuluj", "Archiwizuj"
 4. **Potwierdzenie:**
    - Przycisk "Archiwizuj" zmienia stan na ładowanie (spinner)

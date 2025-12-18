@@ -187,6 +187,12 @@ export type GroupDetailDTO = Group & {
 };
 
 /**
+ * Archive group response
+ * Used in: POST /api/groups/:id/archive
+ */
+export type ArchiveGroupResponseDTO = Pick<Group, "id" | "name" | "base_currency_code" | "status" | "created_at">;
+
+/**
  * Update group command
  * Used in: PATCH /api/groups/:id
  */

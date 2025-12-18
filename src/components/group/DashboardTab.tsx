@@ -1,8 +1,8 @@
 import React, { useCallback, useMemo, useState } from "react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useInfiniteExpenses } from "@/lib/hooks/useGroupExpenses";
 import { useGroupBalances } from "@/lib/hooks/useGroupBalances";
 import { useGroupSettlements } from "@/lib/hooks/useGroupSettlements";
-import { QueryProvider } from "@/components/QueryProvider";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import { useDeleteExpense } from "@/lib/hooks/useDeleteExpense";
 import { ExpenseList, ExpenseListSkeleton } from "./ExpenseList";
@@ -29,6 +29,59 @@ export interface DashboardTabProps {
   userId: string;
   userRole: GroupRole;
 }
+
+// Create a singleton QueryClient for this component
+let dashboardQueryClient: QueryClient | undefined;
+
+const getDashboardQueryClient = () => {
+  if (typeof window === "undefined") {
+    return new QueryClient({
+      defaultOptions: {
+        queries: {
+          staleTime: 30 * 1000,
+          gcTime: 5 * 60 * 1000,
+          retry: (failureCount, error: unknown) => {
+            const err = error as { status?: number };
+            if (err?.status >= 400 && err?.status < 500 && err?.status !== 408 && err?.status !== 429) {
+              return false;
+            }
+            return failureCount < 3;
+          },
+          refetchOnWindowFocus: true,
+          refetchOnReconnect: "always",
+        },
+        mutations: {
+          retry: false,
+        },
+      },
+    });
+  }
+
+  if (!dashboardQueryClient) {
+    dashboardQueryClient = new QueryClient({
+      defaultOptions: {
+        queries: {
+          staleTime: 30 * 1000,
+          gcTime: 5 * 60 * 1000,
+          retry: (failureCount, error: unknown) => {
+            const err = error as { status?: number };
+            if (err?.status >= 400 && err?.status < 500 && err?.status !== 408 && err?.status !== 429) {
+              return false;
+            }
+            return failureCount < 3;
+          },
+          refetchOnWindowFocus: true,
+          refetchOnReconnect: "always",
+        },
+        mutations: {
+          retry: false,
+        },
+      },
+    });
+  }
+
+  return dashboardQueryClient;
+};
 
 // Component that safely uses React Query hooks only when QueryClient is available
 const DashboardTabContent: React.FC<DashboardTabProps> = ({ groupId, userId, userRole }) => {
@@ -735,32 +788,13 @@ const DashboardTabContent: React.FC<DashboardTabProps> = ({ groupId, userId, use
   );
 };
 
-// Main component that safely renders the content only on the client side
+// Main component that wraps content in QueryClientProvider
 export const DashboardTab: React.FC<DashboardTabProps> = (props) => {
-  // Simple check if we're on the client side
-  const [isClient, setIsClient] = React.useState(false);
-
-  React.useEffect(() => {
-    setIsClient(true);
-  }, []);
-
-  // Show loading state until we're on the client side
-  if (!isClient) {
-    return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-center py-12">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-            <p className="text-muted-foreground">Ładowanie dashboard...</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const queryClient = getDashboardQueryClient();
 
   return (
-    <QueryProvider>
+    <QueryClientProvider client={queryClient}>
       <DashboardTabContent {...props} />
-    </QueryProvider>
+    </QueryClientProvider>
   );
 };

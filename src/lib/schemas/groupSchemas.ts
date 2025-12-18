@@ -5,6 +5,16 @@
 
 import { z } from "zod";
 
+/**
+ * Schema for validating UUID parameters referencing groups.
+ * Used in: POST /api/groups/:groupId/archive and other UUID-based group endpoints.
+ */
+export const groupIdParamSchema = z.object({
+  groupId: z.string().uuid("Invalid group ID format"),
+});
+
+export type GroupIdParam = z.infer<typeof groupIdParamSchema>;
+
 // ============================================================================
 // Backend Schemas (API endpoints - English messages)
 // ============================================================================
