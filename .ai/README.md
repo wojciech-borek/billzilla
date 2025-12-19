@@ -30,8 +30,10 @@ Aktywne plany implementacyjne:
 
 ### 📁 `planning/`
 Dokumenty planistyczne:
+- `features/` - plany niezaimplementowanych funkcji i szablony GitHub Issues
 - `product/prd.md` - Product Requirements Document
 - `product/refactor-plan.md` - plan refaktoryzacji
+- `product/pending-features.md` - szczegółowe specyfikacje funkcji do implementacji
 
 ### 📁 `security/`
 Dokumenty bezpieczeństwa:

@@ -16,19 +16,19 @@ export const GroupSettingsCards: React.FC<GroupSettingsCardsProps> = ({ groupId,
   const baseCurrencyCode = groupDetails?.base_currency_code || "PLN";
 
   const handleInviteMembers = () => {
-    // TODO: Implement invite members
+    // Feature tracked in pending-features.md #3: Zapraszanie Uczestników
   };
 
   const handleAddCurrency = () => {
-    // TODO: Implement add currency
+    // Feature tracked in pending-features.md #6: Dodawanie Walut
   };
 
   const handleEditMember = (_member: GroupMemberDTO) => {
-    // TODO: Implement edit member
+    // Feature tracked in pending-features.md #4: Edycja Uczestnika
   };
 
   const handleRemoveMember = (_member: GroupMemberDTO) => {
-    // TODO: Implement remove member
+    // Feature tracked in pending-features.md #5: Usuwanie Uczestnika
   };
 
   if (isLoading) {
@@ -150,11 +150,10 @@ export const GroupSettingsCards: React.FC<GroupSettingsCardsProps> = ({ groupId,
               >
                 <div className="flex items-center gap-3 min-w-0 flex-1">
                   <div
-                    className={`h-10 w-10 rounded-full flex items-center justify-center border-2 flex-shrink-0 ${
-                      member.role === "creator"
-                        ? "border-yellow-400 ring-2 ring-yellow-400/30 bg-secondary/30"
-                        : "border-card bg-primary/10"
-                    }`}
+                    className={`h-10 w-10 rounded-full flex items-center justify-center border-2 flex-shrink-0 ${member.role === "creator"
+                      ? "border-yellow-400 ring-2 ring-yellow-400/30 bg-secondary/30"
+                      : "border-card bg-primary/10"
+                      }`}
                   >
                     <span
                       className={`text-sm font-medium ${member.role === "creator" ? "text-primary" : "text-primary"}`}

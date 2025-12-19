@@ -54,7 +54,7 @@ const HeaderContent: React.FC<HeaderProps> = ({ groupName, groupId, userRole, on
   }, [onBack]);
 
   const handleLeaveGroup = () => {
-    // TODO: Implement leave group functionality
+    // Feature tracked in pending-features.md #1: Opuszczanie Grupy
   };
 
   const handleOpenArchiveDialog = useCallback(() => {
@@ -80,7 +80,7 @@ const HeaderContent: React.FC<HeaderProps> = ({ groupName, groupId, userRole, on
   }, [archiveGroupMutation, groupId, onGroupArchived]);
 
   const handleEditGroupName = () => {
-    // TODO: Implement edit group name functionality
+    // Feature tracked in pending-features.md #2: Edycja Nazwy Grupy
   };
 
   const isCreator = userRole === "creator";

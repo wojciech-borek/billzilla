@@ -195,10 +195,7 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
           status: invitation.status,
         });
       } catch (_error) {
-        // If invitation creation fails for this email, continue with others
-        // In production, you might want to collect errors and return them
-        // For now, we'll continue processing other emails
-        // TODO: Consider collecting errors and returning partial success
+        // If invitation creation fails for this email, continue with others silently
       }
     }
 
