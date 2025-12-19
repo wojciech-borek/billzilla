@@ -2,9 +2,11 @@
  * Currency service - handles business logic for currency operations
  */
 
+import { z } from "zod";
 import type { SupabaseClient } from "../../db/supabase.client";
 import type { GroupCurrencyDTO } from "../../types";
 import { CurrencyRepository } from "./repositories/CurrencyRepository";
+import { addCurrencySchema, updateCurrencySchema } from "../schemas/currencySchemas";
 
 /**
  * Custom error for currency-related operations
@@ -25,9 +27,11 @@ export class CurrencyOperationError extends Error {
  * @throws {CurrencyOperationError} If validation fails
  */
 export async function validateCurrencyExists(supabase: SupabaseClient, currencyCode: string): Promise<boolean> {
-  // Input validation
-  if (!currencyCode) {
-    throw new CurrencyOperationError("validate currency", "Currency code is required");
+  // Input validation with Zod (using partial schema for code)
+  try {
+    z.string().length(3, "Currency code is required and must be exactly 3 characters").parse(currencyCode);
+  } catch (error) {
+    throw new CurrencyOperationError("validate currency", error instanceof Error ? error.message : "Invalid input");
   }
 
   const repository = new CurrencyRepository(supabase);
@@ -174,23 +178,26 @@ export async function addCurrencyToGroup(
   currencyCode: string,
   exchangeRate: number
 ): Promise<GroupCurrencyDTO> {
-  // Input validation
   if (!groupId) {
     throw new CurrencyOperationError("add currency", "Group ID is required");
   }
-  if (!currencyCode) {
-    throw new CurrencyOperationError("add currency", "Currency code is required");
-  }
-  if (typeof exchangeRate !== "number" || exchangeRate <= 0) {
-    throw new CurrencyOperationError("add currency", "Valid exchange rate is required");
+  // Input validation with Zod
+  let validatedCode: string;
+  let validatedRate: number;
+  try {
+    const validation = addCurrencySchema.parse({ currency_code: currencyCode, exchange_rate: exchangeRate });
+    validatedCode = validation.currency_code;
+    validatedRate = validation.exchange_rate;
+  } catch (error) {
+    throw new CurrencyOperationError("add currency", error instanceof Error ? error.message : "Invalid input");
   }
 
   const repository = new CurrencyRepository(supabase);
 
   // Validate currency exists in system
-  const currencyExists = await repository.verifyCurrencyExists(currencyCode);
+  const currencyExists = await repository.verifyCurrencyExists(validatedCode);
   if (!currencyExists) {
-    throw new CurrencyOperationError("add currency", `Currency with code '${currencyCode}' does not exist`);
+    throw new CurrencyOperationError("add currency", `Currency with code '${validatedCode}' does not exist`);
   }
 
   // Get group's base currency to prevent adding it
@@ -199,25 +206,25 @@ export async function addCurrencyToGroup(
     throw new CurrencyOperationError("add currency", "Group not found");
   }
 
-  if (baseCurrency === currencyCode) {
+  if (baseCurrency === validatedCode) {
     throw new CurrencyOperationError("add currency", "Cannot add base currency");
   }
 
   // Check if currency already exists in group
-  const alreadyExists = await repository.checkCurrencyExistsInGroup(groupId, currencyCode);
+  const alreadyExists = await repository.checkCurrencyExistsInGroup(groupId, validatedCode);
   if (alreadyExists) {
     throw new CurrencyOperationError("add currency", "Currency already exists in group");
   }
 
   // Insert currency
   try {
-    await repository.insertGroupCurrency(groupId, currencyCode, exchangeRate);
+    await repository.insertGroupCurrency(groupId, validatedCode, validatedRate);
   } catch (error) {
     throw new CurrencyOperationError("add currency", error instanceof Error ? error.message : "Unknown error");
   }
 
   // Fetch and return the added currency with name
-  const currencyData = await repository.fetchCurrencyByCode(currencyCode);
+  const currencyData = await repository.fetchCurrencyByCode(validatedCode);
   if (!currencyData) {
     throw new CurrencyOperationError("add currency", "Failed to fetch currency details");
   }
@@ -225,7 +232,7 @@ export async function addCurrencyToGroup(
   return {
     code: currencyData.code,
     name: currencyData.name,
-    exchange_rate: exchangeRate,
+    exchange_rate: validatedRate,
   };
 }
 
@@ -245,15 +252,19 @@ export async function updateCurrencyRate(
   currencyCode: string,
   newExchangeRate: number
 ): Promise<GroupCurrencyDTO> {
-  // Input validation
   if (!groupId) {
     throw new CurrencyOperationError("update currency rate", "Group ID is required");
   }
   if (!currencyCode) {
     throw new CurrencyOperationError("update currency rate", "Currency code is required");
   }
-  if (typeof newExchangeRate !== "number" || newExchangeRate <= 0) {
-    throw new CurrencyOperationError("update currency rate", "Valid exchange rate is required");
+  // Input validation with Zod
+  let validatedRate: number;
+  try {
+    const validation = updateCurrencySchema.parse({ exchange_rate: newExchangeRate });
+    validatedRate = validation.exchange_rate;
+  } catch (error) {
+    throw new CurrencyOperationError("update currency rate", error instanceof Error ? error.message : "Invalid input");
   }
 
   const repository = new CurrencyRepository(supabase);
@@ -270,7 +281,7 @@ export async function updateCurrencyRate(
 
   // Update exchange rate
   try {
-    await repository.updateGroupCurrencyRate(groupId, currencyCode, newExchangeRate);
+    await repository.updateGroupCurrencyRate(groupId, currencyCode, validatedRate);
   } catch (error) {
     throw new CurrencyOperationError("update currency rate", error instanceof Error ? error.message : "Unknown error");
   }
@@ -284,7 +295,7 @@ export async function updateCurrencyRate(
   return {
     code: currencyData.code,
     name: currencyData.name,
-    exchange_rate: newExchangeRate,
+    exchange_rate: validatedRate,
   };
 }
 

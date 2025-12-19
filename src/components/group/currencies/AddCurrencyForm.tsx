@@ -11,6 +11,7 @@ import { CurrencySearchCombobox } from "./CurrencySearchCombobox";
 import { ExchangeRateInput } from "./ExchangeRateInput";
 import { useGroupCurrencies } from "./hooks/useGroupCurrencies";
 import { useAllCurrencies } from "./hooks/useAllCurrencies";
+import { addCurrencySchema } from "@/lib/schemas/currencySchemas";
 import { toast } from "sonner";
 
 interface AddCurrencyFormProps {
@@ -35,33 +36,24 @@ export function AddCurrencyForm({ groupId, baseCurrency, existingCurrencies, onS
     e.preventDefault();
     setError(undefined);
 
-    // Validation
-    if (!selectedCurrency) {
-      setError("Wybierz walutę");
+    // Validation with Zod
+    const validation = addCurrencySchema.safeParse({
+      currency_code: selectedCurrency,
+      exchange_rate: parseFloat(exchangeRate),
+    });
+
+    if (!validation.success) {
+      const firstError = validation.error.errors[0]?.message || "Niepoprawne dane";
+      setError(firstError);
       return;
     }
 
-    const rate = parseFloat(exchangeRate);
-    if (isNaN(rate) || rate <= 0) {
-      setError("Kurs musi być większy od 0");
-      return;
-    }
-
-    if (rate < 0.0001 || rate > 9999.9999) {
-      setError("Kurs musi być w zakresie 0.0001 - 9999.9999");
-      return;
-    }
-
-    const decimalPlaces = (exchangeRate.split(".")[1] || "").length;
-    if (decimalPlaces > 4) {
-      setError("Kurs może mieć maksymalnie 4 miejsca po przecinku");
-      return;
-    }
+    const { currency_code, exchange_rate } = validation.data;
 
     try {
       await addCurrency.mutateAsync({
-        currency_code: selectedCurrency,
-        exchange_rate: rate,
+        currency_code,
+        exchange_rate,
       });
 
       toast.success(`Waluta ${selectedCurrency} została pomyślnie dodana do grupy.`);

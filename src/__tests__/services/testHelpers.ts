@@ -290,6 +290,8 @@ export const resetMockSupabaseClient = (client: MockSupabaseClient) => {
   const queryBuilder = client; // The client itself serves as the query builder
   Object.keys(client).forEach((key) => {
     const method = client[key as keyof MockSupabaseClient];
+    // All query builder methods should return the query builder for chaining
+    // This includes insert, update, delete which need to chain with eq()
     if (typeof method === "function" && key !== "single" && key !== "maybeSingle" && key !== "rpc" && key !== "from") {
       (method as Mock).mockReturnValue(queryBuilder);
     }

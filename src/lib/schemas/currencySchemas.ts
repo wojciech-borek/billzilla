@@ -11,12 +11,12 @@ import { z } from "zod";
 export const addCurrencySchema = z.object({
   currency_code: z
     .string()
-    .length(3, "Currency code must be exactly 3 characters")
+    .length(3, "Currency code is required and must be exactly 3 characters")
     .regex(/^[A-Z]{3}$/, "Currency code must be 3 uppercase letters")
     .trim(),
   exchange_rate: z
     .number()
-    .positive("Exchange rate must be greater than 0")
+    .positive("Exchange rate is required and must be greater than 0")
     .min(0.0001, "Exchange rate must be at least 0.0001")
     .max(9999.9999, "Exchange rate must not exceed 9999.9999")
     .refine((val) => {
@@ -33,7 +33,7 @@ export const addCurrencySchema = z.object({
 export const updateCurrencySchema = z.object({
   exchange_rate: z
     .number()
-    .positive("Exchange rate must be greater than 0")
+    .positive("Exchange rate is required and must be greater than 0")
     .min(0.0001, "Exchange rate must be at least 0.0001")
     .max(9999.9999, "Exchange rate must not exceed 9999.9999")
     .refine((val) => {

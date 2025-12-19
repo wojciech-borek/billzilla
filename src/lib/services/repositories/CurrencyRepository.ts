@@ -149,7 +149,15 @@ export class CurrencyRepository {
   async fetchGroupCurrencies(groupId: string): Promise<GroupCurrencyDTO[]> {
     const { data, error } = await this.supabase
       .from("group_currencies")
-      .select("currency_code, exchange_rate, currencies(name)")
+      .select(
+        `
+        currency_code,
+        exchange_rate,
+        currencies (
+          name
+        )
+      `
+      )
       .eq("group_id", groupId)
       .order("currency_code");
 
@@ -157,11 +165,13 @@ export class CurrencyRepository {
       throw new Error(`Failed to fetch group currencies: ${error.message}`);
     }
 
-    return (data || []).map((gc) => {
-      const currency = gc.currencies as unknown as { name: string };
+    if (!data) return [];
+
+    return data.map((gc) => {
+      const currencyInfo = gc.currencies as { name: string } | null;
       return {
         code: gc.currency_code,
-        name: currency.name,
+        name: currencyInfo?.name || "Unknown",
         exchange_rate: gc.exchange_rate,
       };
     });

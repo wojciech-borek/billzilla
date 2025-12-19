@@ -3,7 +3,8 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import type { GroupCurrenciesDTO, AddCurrencyCommand, UpdateCurrencyCommand } from "../../../../types";
+import type { GroupCurrenciesDTO, AddCurrencyCommand, UpdateCurrencyCommand } from "@/types";
+import { toast } from "sonner";
 
 /**
  * Hook to manage group currencies with React Query
@@ -42,6 +43,9 @@ export const useGroupCurrencies = (groupId: string) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["group-currencies", groupId] });
     },
+    onError: (error: Error) => {
+      toast.error(error.message);
+    },
   });
 
   // Update exchange rate mutation
@@ -61,6 +65,9 @@ export const useGroupCurrencies = (groupId: string) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["group-currencies", groupId] });
     },
+    onError: (error: Error) => {
+      toast.error(error.message);
+    },
   });
 
   // Remove currency mutation
@@ -77,6 +84,9 @@ export const useGroupCurrencies = (groupId: string) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["group-currencies", groupId] });
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
     },
   });
 

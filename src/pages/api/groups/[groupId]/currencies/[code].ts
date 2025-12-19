@@ -8,7 +8,7 @@ import type { APIRoute } from "astro";
 import type { ErrorResponseDTO, GroupCurrencyDTO } from "@/types";
 import { updateCurrencySchema } from "@/lib/schemas/currencySchemas";
 import { updateCurrencyRate, removeCurrencyFromGroup, CurrencyOperationError } from "@/lib/services/currencyService";
-import { verifyGroupMembership } from "@/lib/services/memberService";
+import { verifyGroupMembership, verifyGroupCreator } from "@/lib/services/memberService";
 
 export const prerender = false;
 
@@ -81,14 +81,8 @@ export const PATCH: APIRoute = async ({ params, request, locals }) => {
     }
 
     // Verify user is the creator of the group
-    const { data: memberData, error: memberError } = await locals.supabase
-      .from("group_members")
-      .select("role")
-      .eq("group_id", groupId)
-      .eq("profile_id", locals.user.id)
-      .single();
-
-    if (memberError || !memberData || memberData.role !== "creator") {
+    const isCreator = await verifyGroupCreator(locals.supabase, groupId, locals.user.id);
+    if (!isCreator) {
       const errorResponse: ErrorResponseDTO = {
         error: {
           code: "FORBIDDEN",
@@ -258,14 +252,8 @@ export const DELETE: APIRoute = async ({ params, locals }) => {
     }
 
     // Verify user is the creator of the group
-    const { data: memberData, error: memberError } = await locals.supabase
-      .from("group_members")
-      .select("role")
-      .eq("group_id", groupId)
-      .eq("profile_id", locals.user.id)
-      .single();
-
-    if (memberError || !memberData || memberData.role !== "creator") {
+    const isCreator = await verifyGroupCreator(locals.supabase, groupId, locals.user.id);
+    if (!isCreator) {
       const errorResponse: ErrorResponseDTO = {
         error: {
           code: "FORBIDDEN",

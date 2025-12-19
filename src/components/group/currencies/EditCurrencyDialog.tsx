@@ -15,6 +15,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { ExchangeRateInput } from "./ExchangeRateInput";
 import { useGroupCurrencies } from "./hooks/useGroupCurrencies";
+import { updateCurrencySchema } from "@/lib/schemas/currencySchemas";
 import { toast } from "sonner";
 import type { GroupCurrencyDTO } from "@/types";
 
@@ -34,29 +35,23 @@ export function EditCurrencyDialog({ groupId, currency, baseCurrency, isOpen, on
   const handleSave = async () => {
     if (!currency) return;
 
-    const rate = parseFloat(exchangeRate);
+    // Validation with Zod
+    const validation = updateCurrencySchema.safeParse({
+      exchange_rate: parseFloat(exchangeRate),
+    });
 
-    // Validation
-    if (isNaN(rate) || rate <= 0) {
-      setError("Kurs musi być większy od 0");
+    if (!validation.success) {
+      const firstError = validation.error.errors[0]?.message || "Niepoprawne dane";
+      setError(firstError);
       return;
     }
 
-    if (rate < 0.0001 || rate > 9999.9999) {
-      setError("Kurs musi być w zakresie 0.0001 - 9999.9999");
-      return;
-    }
-
-    const decimalPlaces = (exchangeRate.split(".")[1] || "").length;
-    if (decimalPlaces > 4) {
-      setError("Kurs może mieć maksymalnie 4 miejsca po przecinku");
-      return;
-    }
+    const { exchange_rate: validatedRate } = validation.data;
 
     try {
       await updateRate.mutateAsync({
         code: currency.code,
-        exchange_rate: rate,
+        exchange_rate: validatedRate,
       });
 
       toast.success(`Kurs waluty ${currency.code} został pomyślnie zaktualizowany.`);

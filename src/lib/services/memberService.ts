@@ -185,3 +185,34 @@ export async function getGroupMemberDetails(supabase: SupabaseClient, groupId: s
 
   return members;
 }
+
+/**
+ * Verifies if a user is the creator of a specific group
+ *
+ * @param supabase - Supabase client instance
+ * @param groupId - ID of the group
+ * @param userId - ID of the user to check
+ * @returns true if user is the creator, false otherwise
+ * @throws {MemberOperationError} If check fails
+ */
+export async function verifyGroupCreator(supabase: SupabaseClient, groupId: string, userId: string): Promise<boolean> {
+  if (!groupId) {
+    throw new MemberOperationError("verify creator", "Group ID is required");
+  }
+  if (!userId) {
+    throw new MemberOperationError("verify creator", "User ID is required");
+  }
+
+  const { data, error } = await supabase
+    .from("group_members")
+    .select("role")
+    .eq("group_id", groupId)
+    .eq("profile_id", userId)
+    .single();
+
+  if (error && error.code !== "PGRST116") {
+    throw new MemberOperationError("verify creator", error.message);
+  }
+
+  return data?.role === "creator";
+}
