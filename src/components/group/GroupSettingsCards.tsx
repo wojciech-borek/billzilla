@@ -150,10 +150,11 @@ export const GroupSettingsCards: React.FC<GroupSettingsCardsProps> = ({ groupId,
               >
                 <div className="flex items-center gap-3 min-w-0 flex-1">
                   <div
-                    className={`h-10 w-10 rounded-full flex items-center justify-center border-2 flex-shrink-0 ${member.role === "creator"
-                      ? "border-yellow-400 ring-2 ring-yellow-400/30 bg-secondary/30"
-                      : "border-card bg-primary/10"
-                      }`}
+                    className={`h-10 w-10 rounded-full flex items-center justify-center border-2 flex-shrink-0 ${
+                      member.role === "creator"
+                        ? "border-yellow-400 ring-2 ring-yellow-400/30 bg-secondary/30"
+                        : "border-card bg-primary/10"
+                    }`}
                   >
                     <span
                       className={`text-sm font-medium ${member.role === "creator" ? "text-primary" : "text-primary"}`}

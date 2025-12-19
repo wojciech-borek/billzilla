@@ -239,10 +239,10 @@ const DashboardTabContent: React.FC<DashboardTabProps> = ({ groupId, userId, use
       isOpen: true,
       prefillData: suggested
         ? {
-          payerId: suggested.from.profile_id,
-          payeeId: suggested.to.profile_id,
-          amount: suggested.amount,
-        }
+            payerId: suggested.from.profile_id,
+            payeeId: suggested.to.profile_id,
+            amount: suggested.amount,
+          }
         : null,
     });
   }, []);
@@ -381,12 +381,13 @@ const DashboardTabContent: React.FC<DashboardTabProps> = ({ groupId, userId, use
             <div className="min-w-0 flex-1">
               <p className="text-xs sm:text-sm font-medium text-muted-foreground">Twoje saldo</p>
               <p
-                className={`text-xl sm:text-2xl font-bold truncate ${currentUserBalance?.balance && currentUserBalance.balance > 0
-                  ? "text-emerald-600"
-                  : currentUserBalance?.balance && currentUserBalance.balance < 0
-                    ? "text-rose-600"
-                    : "text-muted-foreground"
-                  }`}
+                className={`text-xl sm:text-2xl font-bold truncate ${
+                  currentUserBalance?.balance && currentUserBalance.balance > 0
+                    ? "text-emerald-600"
+                    : currentUserBalance?.balance && currentUserBalance.balance < 0
+                      ? "text-rose-600"
+                      : "text-muted-foreground"
+                }`}
               >
                 {currentUserBalance?.balance ? currentUserBalance.balance.toFixed(2) : "0.00"} {baseCurrencyCode}
               </p>
@@ -493,12 +494,13 @@ const DashboardTabContent: React.FC<DashboardTabProps> = ({ groupId, userId, use
                       </div>
                     </div>
                     <span
-                      className={`font-semibold text-sm sm:text-base whitespace-nowrap flex-shrink-0 ${currentUserBalance.balance > 0
-                        ? "text-emerald-600"
-                        : currentUserBalance.balance < 0
-                          ? "text-rose-600"
-                          : "text-muted-foreground"
-                        }`}
+                      className={`font-semibold text-sm sm:text-base whitespace-nowrap flex-shrink-0 ${
+                        currentUserBalance.balance > 0
+                          ? "text-emerald-600"
+                          : currentUserBalance.balance < 0
+                            ? "text-rose-600"
+                            : "text-muted-foreground"
+                      }`}
                     >
                       {currentUserBalance.balance >= 0 ? "+" : ""}
                       {currentUserBalance.balance.toFixed(2)} {baseCurrencyCode}
@@ -508,8 +510,9 @@ const DashboardTabContent: React.FC<DashboardTabProps> = ({ groupId, userId, use
                   {Math.abs(currentUserBalance.balance) > 0.01 && maxAbsoluteBalance > 0 && (
                     <div className="relative h-2 bg-gray-100 rounded-full overflow-hidden">
                       <div
-                        className={`absolute h-full transition-all duration-300 ${currentUserBalance.balance > 0 ? "bg-emerald-500 left-1/2" : "bg-rose-500 right-1/2"
-                          }`}
+                        className={`absolute h-full transition-all duration-300 ${
+                          currentUserBalance.balance > 0 ? "bg-emerald-500 left-1/2" : "bg-rose-500 right-1/2"
+                        }`}
                         style={{
                           width: `${(Math.abs(currentUserBalance.balance) / maxAbsoluteBalance) * 50}%`,
                         }}
@@ -545,12 +548,13 @@ const DashboardTabContent: React.FC<DashboardTabProps> = ({ groupId, userId, use
                         </div>
                       </div>
                       <span
-                        className={`font-semibold text-sm sm:text-base whitespace-nowrap flex-shrink-0 ${member.balance > 0
-                          ? "text-emerald-600"
-                          : member.balance < 0
-                            ? "text-rose-600"
-                            : "text-muted-foreground"
-                          }`}
+                        className={`font-semibold text-sm sm:text-base whitespace-nowrap flex-shrink-0 ${
+                          member.balance > 0
+                            ? "text-emerald-600"
+                            : member.balance < 0
+                              ? "text-rose-600"
+                              : "text-muted-foreground"
+                        }`}
                       >
                         {member.balance >= 0 ? "+" : ""}
                         {member.balance.toFixed(2)} {baseCurrencyCode}
@@ -560,8 +564,9 @@ const DashboardTabContent: React.FC<DashboardTabProps> = ({ groupId, userId, use
                     {Math.abs(member.balance) > 0.01 && maxAbsoluteBalance > 0 && (
                       <div className="relative h-2 bg-gray-100 rounded-full overflow-hidden">
                         <div
-                          className={`absolute h-full transition-all duration-300 ${member.balance > 0 ? "bg-emerald-500 left-1/2" : "bg-rose-500 right-1/2"
-                            }`}
+                          className={`absolute h-full transition-all duration-300 ${
+                            member.balance > 0 ? "bg-emerald-500 left-1/2" : "bg-rose-500 right-1/2"
+                          }`}
                           style={{
                             width: `${(Math.abs(member.balance) / maxAbsoluteBalance) * 50}%`,
                           }}
