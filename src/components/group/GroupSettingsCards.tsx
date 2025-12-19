@@ -1,7 +1,11 @@
-import React from "react";
+import React, { useState } from "react";
 import { Users, DollarSign, Mail, Plus, Clock, Edit2, Trash2, Bell } from "lucide-react";
-import type { GroupMemberDTO, GroupRole } from "@/types";
+import type { GroupMemberDTO, GroupRole, GroupCurrencyDTO } from "@/types";
 import { useGroupDetails } from "@/lib/hooks/useGroupDetails";
+import { useGroupCurrencies } from "./currencies/hooks/useGroupCurrencies";
+import { AddCurrencyDialog } from "./currencies/AddCurrencyDialog";
+import { EditCurrencyDialog } from "./currencies/EditCurrencyDialog";
+import { DeleteCurrencyDialog } from "./currencies/DeleteCurrencyDialog";
 
 export interface GroupSettingsCardsProps {
   groupId: string;
@@ -10,17 +14,25 @@ export interface GroupSettingsCardsProps {
 
 export const GroupSettingsCards: React.FC<GroupSettingsCardsProps> = ({ groupId, userRole }) => {
   const { data: groupDetails, isLoading, error } = useGroupDetails(groupId);
+  const { currencies, isLoading: isLoadingCurrencies } = useGroupCurrencies(groupId);
+  const [isAddCurrencyDialogOpen, setIsAddCurrencyDialogOpen] = useState(false);
+  const [editingCurrency, setEditingCurrency] = useState<GroupCurrencyDTO | null>(null);
+  const [deletingCurrency, setDeletingCurrency] = useState<GroupCurrencyDTO | null>(null);
 
   const members = groupDetails?.members || [];
   const pendingInvitations = groupDetails?.pending_invitations || [];
   const baseCurrencyCode = groupDetails?.base_currency_code || "PLN";
+  const isCreator = userRole === "creator";
+
+  // Get existing currency codes for filtering
+  const existingCurrencyCodes = currencies?.additional_currencies.map((c) => c.code) || [];
 
   const handleInviteMembers = () => {
     // Feature tracked in pending-features.md #3: Zapraszanie Uczestników
   };
 
   const handleAddCurrency = () => {
-    // Feature tracked in pending-features.md #6: Dodawanie Walut
+    setIsAddCurrencyDialogOpen(true);
   };
 
   const handleEditMember = (_member: GroupMemberDTO) => {
@@ -29,6 +41,14 @@ export const GroupSettingsCards: React.FC<GroupSettingsCardsProps> = ({ groupId,
 
   const handleRemoveMember = (_member: GroupMemberDTO) => {
     // Feature tracked in pending-features.md #5: Usuwanie Uczestnika
+  };
+
+  const handleEditCurrency = (currency: GroupCurrencyDTO) => {
+    setEditingCurrency(currency);
+  };
+
+  const handleDeleteCurrency = (currency: GroupCurrencyDTO) => {
+    setDeletingCurrency(currency);
   };
 
   if (isLoading) {
@@ -211,27 +231,113 @@ export const GroupSettingsCards: React.FC<GroupSettingsCardsProps> = ({ groupId,
             </div>
             <h2 className="text-lg sm:text-xl font-semibold text-foreground truncate">Waluty</h2>
           </div>
-          <button
-            onClick={handleAddCurrency}
-            className="inline-flex items-center justify-center rounded-lg text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground hover:scale-105 h-10 w-10 shadow-sm flex-shrink-0"
-            aria-label="Dodaj walutę"
-          >
-            <Plus className="w-4 h-4" />
-          </button>
+          {isCreator && (
+            <button
+              onClick={handleAddCurrency}
+              className="inline-flex items-center justify-center rounded-lg text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground hover:scale-105 h-10 w-10 shadow-sm flex-shrink-0"
+              aria-label="Dodaj walutę"
+            >
+              <Plus className="w-4 h-4" />
+            </button>
+          )}
         </div>
 
-        <div className="space-y-4">
-          <div>
-            <div className="text-sm font-medium text-foreground mb-2">Waluta bazowa</div>
-            <span className="text-muted-foreground">{baseCurrencyCode}</span>
+        {isLoadingCurrencies ? (
+          <div className="space-y-3">
+            <div className="h-12 bg-muted rounded animate-pulse"></div>
+            <div className="h-12 bg-muted rounded animate-pulse"></div>
           </div>
+        ) : (
+          <div className="space-y-4">
+            {/* Base Currency */}
+            <div className="p-3 rounded-xl bg-primary/5 border border-primary/20">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold text-foreground">{currencies?.base_currency.code}</span>
+                    <span className="text-sm text-muted-foreground">{currencies?.base_currency.name}</span>
+                    <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                      Bazowa
+                    </span>
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-1">
+                    1 {currencies?.base_currency.code} = 1.0000 {currencies?.base_currency.code}
+                  </div>
+                </div>
+              </div>
+            </div>
 
-          <div>
-            <div className="text-sm font-medium text-foreground mb-2">Dodatkowe waluty</div>
-            <div className="text-sm text-muted-foreground">Brak dodatkowych walut</div>
+            {/* Additional Currencies */}
+            {currencies?.additional_currencies && currencies.additional_currencies.length > 0 ? (
+              <div className="space-y-2">
+                <div className="text-sm font-medium text-foreground">Dodatkowe waluty</div>
+                {currencies.additional_currencies.map((currency) => (
+                  <div key={currency.code} className="p-3 rounded-xl bg-muted/30 hover:bg-muted/50 transition-colors">
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold text-foreground">{currency.code}</span>
+                          <span className="text-sm text-muted-foreground">{currency.name}</span>
+                        </div>
+                        <div className="text-xs text-muted-foreground mt-1">
+                          1 {currency.code} = {currency.exchange_rate.toFixed(4)} {baseCurrencyCode}
+                        </div>
+                      </div>
+                      {isCreator && (
+                        <div className="flex items-center gap-1 flex-shrink-0">
+                          <button
+                            onClick={() => handleEditCurrency(currency)}
+                            className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 text-muted-foreground hover:text-foreground hover:bg-accent h-8 w-8"
+                            aria-label="Edytuj kurs"
+                          >
+                            <Edit2 className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteCurrency(currency)}
+                            className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 text-destructive hover:text-destructive hover:bg-destructive/10 h-8 w-8"
+                            aria-label="Usuń walutę"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-sm text-muted-foreground">Brak dodatkowych walut</div>
+            )}
           </div>
-        </div>
+        )}
       </div>
+
+      {/* Add Currency Dialog */}
+      <AddCurrencyDialog
+        groupId={groupId}
+        baseCurrencyCode={baseCurrencyCode}
+        existingCurrencies={existingCurrencyCodes}
+        isOpen={isAddCurrencyDialogOpen}
+        onClose={() => setIsAddCurrencyDialogOpen(false)}
+        isCreator={isCreator}
+      />
+
+      {/* Edit Currency Dialog */}
+      <EditCurrencyDialog
+        groupId={groupId}
+        currency={editingCurrency}
+        baseCurrency={baseCurrencyCode}
+        isOpen={!!editingCurrency}
+        onClose={() => setEditingCurrency(null)}
+      />
+
+      {/* Delete Currency Dialog */}
+      <DeleteCurrencyDialog
+        groupId={groupId}
+        currency={deletingCurrency}
+        isOpen={!!deletingCurrency}
+        onClose={() => setDeletingCurrency(null)}
+      />
     </div>
   );
 };
