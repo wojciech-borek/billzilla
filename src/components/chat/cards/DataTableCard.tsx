@@ -77,7 +77,7 @@ export default function DataTableCard({ data }: DataTableCardProps) {
       {searchKeyword && (
         <div className="mb-4">
           <span className="inline-flex items-center gap-2 bg-accent/20 text-accent px-3 py-1.5 rounded-lg text-sm font-semibold">
-            🔍 "{searchKeyword}"
+            🔍 &ldquo;{searchKeyword}&rdquo;
           </span>
         </div>
       )}
@@ -96,6 +96,14 @@ export default function DataTableCard({ data }: DataTableCardProps) {
                 row.onClick ? "hover:shadow-md hover:border-primary/20 cursor-pointer" : ""
               }`}
               onClick={row.onClick}
+              onKeyDown={(e) => {
+                if (row.onClick && (e.key === "Enter" || e.key === " ")) {
+                  e.preventDefault();
+                  row.onClick();
+                }
+              }}
+              role={row.onClick ? "button" : undefined}
+              tabIndex={row.onClick ? 0 : undefined}
             >
               <div className="flex items-center gap-3">
                 {/* Avatar if provided */}

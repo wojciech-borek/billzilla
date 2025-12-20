@@ -14,6 +14,7 @@ import { lazy } from "react";
  * Component mapping configuration
  */
 export interface ComponentMapping {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   component: ComponentType<any>;
   loadingText: string;
   cardType: "metric" | "data_table" | "chart" | "none";
