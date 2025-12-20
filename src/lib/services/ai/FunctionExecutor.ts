@@ -165,6 +165,18 @@ export class FunctionExecutor {
       memberBreakdown = Array.from(memberTotals.values());
     }
 
+    let currency = args.currency as string;
+    if (!currency) {
+      try {
+        const groupCurrencies = await getGroupCurrencies(this.context.supabase, groupId, this.context.userId);
+        currency = groupCurrencies.base_currency.code;
+      } catch (error) {
+        // Fallback to PLN if fetching fails (e.g. user not authorized in legacy flows, logical error)
+        console.error("Failed to fetch group currency for default, falling back to PLN", error);
+        currency = "PLN";
+      }
+    }
+
     return {
       success: true,
       data: {
@@ -174,7 +186,7 @@ export class FunctionExecutor {
           end: endDate.toISOString().split("T")[0],
         },
         total,
-        currency: args.currency || "PLN",
+        currency: currency,
         expense_count: filteredExpenses.length,
         member_breakdown: memberBreakdown,
       },

@@ -108,11 +108,33 @@ export class ChatService {
       // 4. Get conversation history for context
       const history = await this.conversationRepo.getMessageHistory(conversation.id, 20);
 
+      // Security: Analyze conversation history for multi-turn jailbreak attempts
+      const historyAnalysis = this.securityGuard.analyzeConversation(history);
+      if (historyAnalysis.isSuspicious) {
+        throw new ChatServiceError(
+          "Suspicious conversational pattern detected. Please stay within appropriate topics.",
+          "SUSPICIOUS_CONVERSATION",
+          400
+        );
+      }
+
       // 5. Prepare messages for OpenRouter
       const openRouterMessages = this.formatMessagesForOpenRouter(history);
 
       // 6. Get available tools
       const tools = this.getAvailableTools();
+
+      // Security: Scan tool metadata for potential poisoning
+      const toolAnalysis = this.securityGuard.analyzeToolMetadata(tools);
+      if (toolAnalysis.isSuspicious) {
+        // eslint-disable-next-line no-console
+        console.error("[ChatService] Security alert: tool metadata poisoning detected", toolAnalysis.reason);
+        throw new ChatServiceError(
+          "A security issue was detected with the system configuration.",
+          "TOOL_SECURITY_ALERT",
+          500
+        );
+      }
 
       // 7. Function calling loop
       let iteration = 0;
