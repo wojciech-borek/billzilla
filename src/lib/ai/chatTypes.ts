@@ -46,6 +46,7 @@ export type FunctionName =
   | "get_expenses"
   | "get_members"
   | "get_group_metadata"
+  | "list_user_groups"
   // Utility functions
   | "get_group_context"
   | "get_currency_exchange_rates";
@@ -61,3 +62,64 @@ export type SmartCardType = "metric" | "data_table" | "chart";
 export type { MetricCardData } from "@/components/chat/cards/MetricCard";
 export type { DataTableCardData } from "@/components/chat/cards/DataTableCard";
 export type { ChartCardData } from "@/components/chat/cards/ChartCard";
+
+/**
+ * Chat API Request/Response Types
+ */
+
+/**
+ * Context information for chat requests
+ */
+export interface ChatContext {
+  timezone?: string;
+  language?: "pl" | "en";
+}
+
+/**
+ * Chat API request structure
+ */
+export interface ChatRequest {
+  group_id: string | null;
+  conversation_id?: string;
+  message: string;
+  context?: ChatContext;
+}
+
+/**
+ * Rate limit information
+ */
+export interface RateLimitInfo {
+  remaining: number;
+  reset_at: string;
+}
+
+/**
+ * Chat response metadata
+ */
+export interface ChatResponseMetadata {
+  tokens_used: number;
+  model: string;
+  function_calls_count: number;
+  processing_time_ms: number;
+}
+
+/**
+ * Chat API response structure
+ */
+export interface ChatResponse {
+  conversation_id: string;
+  messages: ChatMessage[];
+  metadata: ChatResponseMetadata;
+  rate_limit: RateLimitInfo;
+}
+
+/**
+ * Conversation metadata
+ */
+export interface ConversationMetadata {
+  id: string;
+  user_id: string;
+  group_id: string | null;
+  created_at: Date;
+  updated_at: Date;
+}

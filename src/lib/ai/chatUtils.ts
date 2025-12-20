@@ -7,10 +7,10 @@
 import type { ChatMessage, FunctionName } from "./chatTypes";
 
 /**
- * Generate unique message ID
+ * Generate unique message ID using UUID v4
  */
-export function generateMessageId(type = "msg"): string {
-  return `${type}-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
+export function generateMessageId(): string {
+  return crypto.randomUUID();
 }
 
 /**
@@ -18,7 +18,7 @@ export function generateMessageId(type = "msg"): string {
  */
 export function createUserMessage(content: string): ChatMessage {
   return {
-    id: generateMessageId("user"),
+    id: generateMessageId(),
     type: "user_text",
     content,
     timestamp: new Date(),
@@ -30,7 +30,7 @@ export function createUserMessage(content: string): ChatMessage {
  */
 export function createAITextMessage(content: string): ChatMessage {
   return {
-    id: generateMessageId("ai"),
+    id: generateMessageId(),
     type: "ai_text",
     content,
     timestamp: new Date(),
@@ -42,7 +42,7 @@ export function createAITextMessage(content: string): ChatMessage {
  */
 export function createFunctionCallMessage(functionName: FunctionName): ChatMessage {
   return {
-    id: generateMessageId("fn-call"),
+    id: generateMessageId(),
     type: "ai_function_call",
     content: "",
     timestamp: new Date(),
@@ -58,7 +58,7 @@ export function createFunctionCallMessage(functionName: FunctionName): ChatMessa
  */
 export function createFunctionResultMessage(functionName: FunctionName, data: object): ChatMessage {
   return {
-    id: generateMessageId("fn-result"),
+    id: generateMessageId(),
     type: "ai_function_result",
     content: data,
     timestamp: new Date(),
@@ -73,7 +73,7 @@ export function createFunctionResultMessage(functionName: FunctionName, data: ob
  */
 export function createErrorMessage(error: string): ChatMessage {
   return {
-    id: generateMessageId("error"),
+    id: generateMessageId(),
     type: "ai_error",
     content: "",
     timestamp: new Date(),
@@ -88,7 +88,7 @@ export function createErrorMessage(error: string): ChatMessage {
  */
 export function createSystemMessage(content: string): ChatMessage {
   return {
-    id: generateMessageId("system"),
+    id: generateMessageId(),
     type: "system_info",
     content,
     timestamp: new Date(),

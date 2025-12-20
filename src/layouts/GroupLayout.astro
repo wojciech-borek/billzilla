@@ -1,6 +1,7 @@
 ---
 import Layout from "./Layout.astro";
 import { Header } from "@/components/group/Header";
+import { ChatButton } from "@/components/chat/ChatButton";
 import type { GroupDetailDTO, AuthUserWithProfile } from "@/types";
 
 export interface Props {
@@ -23,5 +24,8 @@ const { groupId, groupDetails, user: _user } = Astro.props;
     <main class="container mx-auto px-4 py-6" role="main">
       <slot />
     </main>
+
+    <!-- AI Chat FAB -->
+    <ChatButton client:load groupId={groupId} groupName={groupDetails.name} />
   </div>
 </Layout>

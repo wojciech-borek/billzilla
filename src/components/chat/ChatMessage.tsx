@@ -12,6 +12,7 @@
 import { Suspense } from "react";
 import type { ChatMessage as ChatMessageType, FunctionName } from "@/lib/ai/chatTypes";
 import { getComponentMapping } from "@/lib/ai/chatComponentMapping";
+import { ChatDataTransformer } from "@/lib/ai/ChatDataTransformer";
 import { FunctionCallLoadingCard } from "./loading/FunctionCallLoadingCard";
 import { TypingIndicator } from "./loading/TypingIndicator";
 import { ErrorCard } from "./errors/ErrorCard";
@@ -72,11 +73,12 @@ export function ChatMessage({ message, onRetry }: ChatMessageProps) {
     }
 
     const SmartCardComponent = mapping.component;
+    const transformedData = ChatDataTransformer.transform(functionName, message.content);
 
     return (
       <div className="mb-4">
         <Suspense fallback={<FunctionCallLoadingCard functionName={functionName} />}>
-          <SmartCardComponent data={message.content} />
+          <SmartCardComponent data={transformedData} />
         </Suspense>
       </div>
     );

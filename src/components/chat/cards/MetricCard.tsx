@@ -78,11 +78,13 @@ export default function MetricCard({ data }: MetricCardProps) {
 
       {/* Main Metric */}
       <div className="mb-6">
-        <p className="text-sm text-muted-foreground mb-1">{metric.label}</p>
-        <p className="text-4xl font-bold text-primary">{formatNumber(metric.value, metric.currency)}</p>
+        <p className="text-sm text-muted-foreground mb-1">{metric?.label || "Wartość"}</p>
+        <p className="text-4xl font-bold text-primary">
+          {metric ? formatNumber(metric.value, metric.currency) : "---"}
+        </p>
 
         {/* Trend indicator */}
-        {metric.trend && (
+        {metric?.trend && (
           <div className={`mt-2 flex items-center gap-2 ${getTrendColor(metric.trend.direction)}`}>
             {metric.trend.direction === "up" && <span>↑</span>}
             {metric.trend.direction === "down" && <span>↓</span>}

@@ -1,30 +1,22 @@
 /**
  * ChatContainer Component
  *
- * Main chat wrapper that integrates all chat components:
- * - Chat messages list with auto-scroll
- * - Chat input
- * - Header with group info
- *
- * This is the main component to embed in pages
+ * Main chat wrapper that integrates all chat components with real API
  */
 
-import { useState, useRef, useEffect } from "react";
-import type { ChatMessage as ChatMessageType } from "@/lib/ai/chatTypes";
+import { useRef, useEffect } from "react";
 import { ChatMessage } from "./ChatMessage";
 import { ChatInput } from "./ChatInput";
+import { useChatAPI } from "@/lib/hooks/useChatAPI";
 
 interface ChatContainerProps {
   groupId: string;
   groupName: string;
-  onSendMessage?: (message: string) => Promise<void>;
-  initialMessages?: ChatMessageType[];
 }
 
-export function ChatContainer({ groupName, onSendMessage, initialMessages = [] }: ChatContainerProps) {
-  const [messages, setMessages] = useState<ChatMessageType[]>(initialMessages);
-  const [isLoading, setIsLoading] = useState(false);
+export function ChatContainer({ groupId, groupName }: ChatContainerProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const { messages, isLoading, sendMessage } = useChatAPI({ groupId });
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -32,61 +24,11 @@ export function ChatContainer({ groupName, onSendMessage, initialMessages = [] }
   }, [messages]);
 
   const handleSendMessage = async (content: string) => {
-    // Create user message
-    const userMessage: ChatMessageType = {
-      id: `user-${Date.now()}`,
-      type: "user_text",
-      content,
-      timestamp: new Date(),
-      metadata: { isLoading: true },
-    };
-
-    setMessages((prev) => [...prev, userMessage]);
-    setIsLoading(true);
-
-    try {
-      // Call parent handler if provided
-      if (onSendMessage) {
-        await onSendMessage(content);
-      }
-
-      // Update user message to show as sent
-      setMessages((prev) =>
-        prev.map((msg) =>
-          msg.id === userMessage.id ? { ...msg, metadata: { ...msg.metadata, isLoading: false } } : msg
-        )
-      );
-
-      // TODO: In real implementation, this would be handled by WebSocket/SSE
-      // For now, we'll add a placeholder AI response
-      const aiMessage: ChatMessageType = {
-        id: `ai-${Date.now()}`,
-        type: "ai_text",
-        content: "Rozumiem. Przetwarzam twoje zapytanie...",
-        timestamp: new Date(),
-      };
-
-      setMessages((prev) => [...prev, aiMessage]);
-    } catch (_error) {
-      // Add error message
-      const errorMessage: ChatMessageType = {
-        id: `error-${Date.now()}`,
-        type: "ai_error",
-        content: "",
-        timestamp: new Date(),
-        metadata: {
-          error: "Nie udało się wysłać wiadomości. Spróbuj ponownie.",
-        },
-      };
-
-      setMessages((prev) => [...prev, errorMessage]);
-    } finally {
-      setIsLoading(false);
-    }
+    await sendMessage(content);
   };
 
   const handleRetry = () => {
-    // TODO: Implement retry logic
+    // TODO: Implement retry logic for failed messages
     console.log("Retry last message");
   };
 
@@ -99,7 +41,6 @@ export function ChatContainer({ groupName, onSendMessage, initialMessages = [] }
             <h2 className="text-lg font-bold text-foreground">AI Financial Assistant</h2>
             <p className="text-sm text-muted-foreground">{groupName}</p>
           </div>
-          {/* Optional: Add settings or close button */}
         </div>
       </div>
 

@@ -17,3 +17,21 @@ export {
   type CurrencyOption,
   type CreateGroupSuccessResult,
 } from "./groupSchemas";
+
+// Chat schemas
+export {
+  chatRequestSchema,
+  chatContextSchema,
+  messageTypeSchema,
+  chatMessageSchema,
+  chatMessageMetadataSchema,
+  rateLimitInfoSchema,
+  chatResponseMetadataSchema,
+  chatResponseSchema,
+  type ChatRequest,
+  type ChatContext,
+  type MessageType,
+  type ChatMessageMetadata,
+  type RateLimitInfo,
+  type ChatResponseMetadata,
+} from "./chatSchemas";

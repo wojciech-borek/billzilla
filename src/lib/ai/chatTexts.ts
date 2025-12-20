@@ -23,6 +23,7 @@ export const CHAT_TEXTS = {
     get_expenses: "Pobieram dane o wydatkach...",
     get_members: "Pobieram listę uczestników...",
     get_group_metadata: "Pobieram metadane grupy...",
+    list_user_groups: "Pobieram listę Twoich grup...",
     // Utility functions
     get_group_context: "Pobieram informacje o grupie...",
     get_currency_exchange_rates: "Pobieram kursy walut...",

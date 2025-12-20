@@ -117,6 +117,13 @@ export const CHAT_COMPONENT_MAP: Record<FunctionName, ComponentMapping> = {
     errorFallback: "Nie mogę pobrać metadanych grupy.",
   },
 
+  list_user_groups: {
+    component: DataTableCard,
+    cardType: "data_table",
+    loadingText: CHAT_TEXTS.loadingStates.list_user_groups,
+    errorFallback: "Nie mogę pobrać listy Twoich grup.",
+  },
+
   // Utility Functions (context/metadata, no card needed)
   get_group_context: {
     component: NoCard,

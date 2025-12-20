@@ -84,7 +84,7 @@ export default function DataTableCard({ data }: DataTableCardProps) {
 
       {/* Table/List */}
       <div className="space-y-2 max-h-96 overflow-y-auto">
-        {rows.length === 0 ? (
+        {!rows || rows.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
             <p className="text-sm">{emptyMessage || "Brak danych"}</p>
           </div>
@@ -118,8 +118,8 @@ export default function DataTableCard({ data }: DataTableCardProps) {
 
                 {/* Data columns */}
                 <div className="flex-1 grid grid-cols-1 gap-1">
-                  {columns.map((col) => {
-                    const value = row.data[col.key];
+                  {(columns || []).map((col) => {
+                    const value = row.data ? row.data[col.key] : undefined;
                     const align = col.align || "left";
 
                     return (
