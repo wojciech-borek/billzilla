@@ -213,7 +213,7 @@ export class OpenRouterService {
    */
   public async chatCompletion(params: ChatCompletionParams): Promise<ChatCompletionResponse> {
     const payload: Record<string, unknown> = {
-      model: params.model || "anthropic/claude-3.5-sonnet",
+      model: params.model || "anthropic/claude-3-haiku",
       messages: params.messages,
       temperature: params.temperature ?? 0.7,
       max_tokens: params.maxTokens ?? 2048,
