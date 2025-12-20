@@ -145,7 +145,7 @@ export class ChatService {
       let llmResponse = await this.openRouter.chatCompletion({
         messages: openRouterMessages,
         tools,
-        model: "anthropic/claude-3-haiku",
+        model: "anthropic/claude-3.5-sonnet",
         temperature: 0.7,
       });
 
@@ -232,7 +232,7 @@ export class ChatService {
         llmResponse = await this.openRouter.chatCompletion({
           messages: openRouterMessages,
           tools,
-          model: "anthropic/claude-3-haiku",
+          model: "anthropic/claude-3.5-sonnet",
           temperature: 0.7,
         });
 
@@ -311,7 +311,9 @@ export class ChatService {
    * Get system prompt for the AI
    */
   private getSystemPrompt(): string {
+    const today = new Date().toISOString().split("T")[0];
     return `You are a helpful financial assistant for Billzilla, an expense management application.
+Current Date: ${today}
 
 Your role is to help users understand their group expenses, analyze spending patterns, and answer questions about their financial data.
 
@@ -319,7 +321,7 @@ You have access to various tools to retrieve expense data, member balances, and 
 
 Context and Tool Usage:
 - Group-specific chat: You are locked to the current group. All tools will automatically use this group's context. You cannot access data from other groups.
-- Dashboard chat: You are in a global context. You can access any of the user's groups, but you MUST provide the 'group_id' in your tool calls. If you don't know the group ID, call 'list_user_groups' first to find it, or ask the user which group they are referring to.
+- Dashboard chat: You are in a global context. You MUST provide 'group_id' for group-specific tools. If the user refers to "my group" or "expenses" without specifying a group, DO NOT ask for an ID immediately. Instead, call 'list_user_groups' to see their groups. If they have only one active group, use that ID automatically. If they have multiple, ask them to clarify which one.
 
 Guidelines:
 - Always be polite and professional
@@ -329,6 +331,9 @@ Guidelines:
 - When showing dates, use a readable format
 - If you're unsure about something, ask for clarification
 - Respond in the same language as the user's question (Polish or English)
+- Use 'generate_group_report' for comprehensive TEXT/METRIC summaries. It does NOT generate charts.
+- Use 'analyze_spending_trends' when the user explicitly asks for CHARTS, visualizations, or trends over time.
+- If the user asks for a chart from a report, use BOTH tools or explain that the report is a summary.
 
 Remember: You can only READ data, never modify or delete anything.`;
   }

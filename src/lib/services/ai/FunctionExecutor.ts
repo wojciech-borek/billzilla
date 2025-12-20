@@ -260,8 +260,11 @@ export class FunctionExecutor {
     // Parse periods
     const currentStart = new Date(args.current_period_start as string);
     const currentEnd = new Date(args.current_period_end as string);
+    currentEnd.setUTCHours(23, 59, 59, 999); // Include entire end day (UTC)
+
     const comparisonStart = new Date(args.comparison_period_start as string);
     const comparisonEnd = new Date(args.comparison_period_end as string);
+    comparisonEnd.setUTCHours(23, 59, 59, 999); // Include entire end day (UTC)
 
     // Calculate totals for each period
     const currentTotal = expenses
@@ -282,6 +285,24 @@ export class FunctionExecutor {
     const change = currentTotal - comparisonTotal;
     const percentageChange = comparisonTotal > 0 ? (change / comparisonTotal) * 100 : 0;
 
+    // Generate daily trends for current period
+    const trendsMap = new Map<string, number>();
+    const expensesInCurrentPeriod = expenses.filter((e) => {
+      const date = new Date(e.expense_date);
+      return date >= currentStart && date <= currentEnd;
+    });
+
+    expensesInCurrentPeriod.forEach((e) => {
+      const date = new Date(e.expense_date).toISOString().split("T")[0];
+      const current = trendsMap.get(date) || 0;
+      trendsMap.set(date, current + e.amount_in_base_currency);
+    });
+
+    // Sort trends by date
+    const trends = Array.from(trendsMap.entries())
+      .map(([date, amount]) => ({ date, amount }))
+      .sort((a, b) => a.date.localeCompare(b.date));
+
     return {
       success: true,
       data: {
@@ -299,6 +320,7 @@ export class FunctionExecutor {
         change,
         percentage_change: percentageChange,
         trend: change > 0 ? "increasing" : change < 0 ? "decreasing" : "stable",
+        trends, // Add trends array for chart visualization
       },
     };
   }

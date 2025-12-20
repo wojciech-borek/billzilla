@@ -178,10 +178,45 @@ export function transformChatData(functionName: FunctionName, rawData: unknown):
       return transformExpensesSummary(rawData as RawExpensesSummary);
     case "analyze_spending_trends":
       return transformSpendingTrends(rawData as RawSpendingTrends);
+    case "generate_group_report":
+      return transformGroupReport(rawData as RawGroupReport);
     // Add more mappers as needed
     default:
       return rawData;
   }
+}
+
+/**
+ * Transforms generate_group_report into MetricCardData
+ */
+function transformGroupReport(data: RawGroupReport): MetricCardData {
+  const summary = data.summary || {};
+  const period = data.period || {};
+
+  // Extract total and currency from summary part of report
+  const total = summary.total || 0;
+  const currency = summary.currency || "PLN";
+
+  return {
+    title: "Raport Finansowy Grupy",
+    subtitle: period.start && period.end ? `${period.start} - ${period.end}` : "Całkowity czas",
+    metric: {
+      label: "Łączne wydatki",
+      value: total,
+      currency: currency,
+    },
+    // We can show member breakdown or balances as breakdown
+    breakdown: summary.member_breakdown
+      ? {
+          label: "Wydatki wg członków",
+          items: summary.member_breakdown.map((m) => ({
+            name: m.name,
+            value: m.total,
+            currency: currency,
+          })),
+        }
+      : undefined,
+  };
 }
 
 // Deprecated class wrapper for backward compatibility if needed,

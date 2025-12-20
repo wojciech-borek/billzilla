@@ -230,7 +230,25 @@ export class SecurityGuard {
   /**
    * Analyzes user message for suspicious patterns
    */
+  /**
+   * Analyzes user message for suspicious patterns
+   */
   analyzeUserMessage(message: string): PromptAnalysisResult {
+    // 1. Check heuristics (spam, obfuscation, etc.) - specific to human input
+    const heuristicsResult = this.checkMessageHeuristics(message);
+    if (heuristicsResult.isSuspicious) {
+      return heuristicsResult;
+    }
+
+    // 2. Check for injection patterns
+    return this.detectSuspiciousPatterns(message);
+  }
+
+  /**
+   * Checks message strict heuristics (length, special chars, hidden unicode)
+   * These rules are intended for human-generated text and might flag structured data as suspicious.
+   */
+  private checkMessageHeuristics(message: string): PromptAnalysisResult {
     // Check message length
     if (message.length > 2000) {
       return {
@@ -256,8 +274,16 @@ export class SecurityGuard {
       };
     }
 
+    return { isSuspicious: false };
+  }
+
+  /**
+   * Detects known injection patterns in text
+   * Suitable for both user input and system data (like schemas).
+   */
+  private detectSuspiciousPatterns(input: string): PromptAnalysisResult {
     // NORMALIZATION: Pre-process input
-    const normalized = this.normalizeInput(message);
+    const normalized = this.normalizeInput(input);
 
     // Check for suspicious patterns on normalized input
     const matches: string[] = [];
@@ -291,9 +317,7 @@ export class SecurityGuard {
       }
     }
 
-    return {
-      isSuspicious: false,
-    };
+    return { isSuspicious: false };
   }
 
   /**
@@ -398,7 +422,7 @@ export class SecurityGuard {
    */
   analyzeToolMetadata(tools: Tool[]): PromptAnalysisResult {
     for (const tool of tools) {
-      // Check function name
+      // Check function name - names should be simple, so heuristics apply
       const nameAnalysis = this.analyzeUserMessage(tool.function.name);
       if (nameAnalysis.isSuspicious) {
         return {
@@ -408,7 +432,7 @@ export class SecurityGuard {
         };
       }
 
-      // Check description
+      // Check description - descriptions are human text, heuristics apply
       if (tool.function.description) {
         const descAnalysis = this.analyzeUserMessage(tool.function.description);
         if (descAnalysis.isSuspicious) {
@@ -420,9 +444,10 @@ export class SecurityGuard {
         }
       }
 
-      // Check parameters (values/descriptions if available)
+      // Check parameters - THIS IS JSON SCHEMA, heuristics DO NOT apply
+      // Use only pattern detection
       const paramsString = JSON.stringify(tool.function.parameters);
-      const paramsAnalysis = this.analyzeUserMessage(paramsString);
+      const paramsAnalysis = this.detectSuspiciousPatterns(paramsString);
       if (paramsAnalysis.isSuspicious) {
         return {
           isSuspicious: true,
