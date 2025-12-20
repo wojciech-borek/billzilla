@@ -250,28 +250,65 @@ describe("InvitationService Integration Tests", () => {
     });
   });
 
-  describe("getUserInvitations", () => {
-    it.skip("should return invitations for authenticated user", async () => {
-      // Skipping this test for now due to complex mocking requirements
-      // The function works correctly but mocking the complex Supabase query chain is challenging
-      expect(true).toBe(true);
-    });
-
-    it.skip("should return empty array when no invitations found", async () => {
-      // Skipping due to complex mocking - will be tested via API integration tests
-      expect(true).toBe(true);
-    });
-
-    it.skip("should throw error when query fails", async () => {
-      // Skipping due to complex mocking - will be tested via API integration tests
-      expect(true).toBe(true);
-    });
-  });
 
   describe("acceptInvitation", () => {
-    it.skip("should accept invitation and add user to group successfully", async () => {
-      // Skipping due to complex transaction mocking - will be tested via API integration tests
-      expect(true).toBe(true);
+    it("should accept invitation and add user to group successfully", async () => {
+      // Arrange
+      const invitationId = "inv-123";
+      const userId = "user-123";
+      const groupId = "group-123";
+      const groupName = "Test Group";
+
+      const mockInvitationData = {
+        id: invitationId,
+        email: "user@example.com",
+        status: "pending",
+        invitee_profile_id: userId,
+        group_id: groupId,
+        groups: { id: groupId, name: groupName },
+      };
+
+      // 1. Mock invitation fetch
+      mockSupabaseClient.from.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.select.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.eq.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.single.mockResolvedValueOnce({
+        data: mockInvitationData,
+        error: null,
+      });
+
+      // 2. Mock membership check (not a member)
+      mockSupabaseClient.from.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.select.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.eq.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.eq.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.eq.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.single.mockResolvedValueOnce({
+        data: null,
+        error: { code: "PGRST116" },
+      });
+
+      // 3. Mock RPC transaction
+      mockSupabaseClient.rpc.mockResolvedValueOnce({
+        data: null,
+        error: null,
+      });
+
+      // Act
+      const result = await acceptInvitation(mockSupabaseClient, invitationId, userId);
+
+      // Assert
+      expect(result).toEqual({
+        message: "Invitation accepted successfully. You have been added to the group.",
+        invitation_id: invitationId,
+        group_id: groupId,
+        group_name: groupName,
+      });
+
+      expect(mockSupabaseClient.rpc).toHaveBeenCalledWith("accept_invitation_transaction", {
+        p_invitation_id: invitationId,
+        p_user_id: userId,
+      });
     });
 
     it("should throw InvitationNotFoundError when invitation doesn't exist", async () => {
@@ -356,10 +393,6 @@ describe("InvitationService Integration Tests", () => {
   });
 
   describe("declineInvitation", () => {
-    it.skip("should decline invitation successfully", async () => {
-      // Skipping due to complex mocking - will be tested via API integration tests
-      expect(true).toBe(true);
-    });
 
     it("should throw InvitationNotFoundError when invitation doesn't exist", async () => {
       // Arrange

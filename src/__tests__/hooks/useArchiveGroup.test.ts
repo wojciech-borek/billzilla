@@ -31,6 +31,7 @@ describe("useArchiveGroup", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.spyOn(console, "error").mockImplementation(() => {});
 
     // Create a fresh QueryClient for each test
     queryClient = new QueryClient({
