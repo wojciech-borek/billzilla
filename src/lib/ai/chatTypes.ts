@@ -1,0 +1,55 @@
+/**
+ * Chat Types for AI Assistant
+ *
+ * Type definitions for chat messages, function calls, and component mapping
+ */
+
+/**
+ * Possible message types in the chat
+ */
+export type MessageType =
+  | "user_text" // Regular user text message
+  | "ai_text" // AI text response (with optional markdown)
+  | "ai_function_call" // AI is calling a function → show what it's doing
+  | "ai_function_result" // Function result → render SmartCard
+  | "ai_error" // AI or API error
+  | "system_info"; // System information (e.g., rate limits)
+
+/**
+ * Chat message structure
+ */
+export interface ChatMessage {
+  id: string;
+  type: MessageType;
+  content: string | object; // string for text, object for function results
+  timestamp: Date;
+  metadata?: {
+    functionName?: string; // name of called function (for debugging)
+    isLoading?: boolean; // whether loading is in progress
+    error?: string; // error message
+  };
+}
+
+/**
+ * Function names that AI can call
+ */
+export type FunctionName =
+  | "get_member_balances"
+  | "get_expenses_summary"
+  | "search_expenses"
+  | "analyze_spending_trends"
+  | "get_top_expenses"
+  | "get_member_statistics"
+  | "generate_group_report";
+
+/**
+ * Card types for universal SmartCards
+ */
+export type SmartCardType = "metric" | "data_table" | "chart";
+
+/**
+ * Import card data types
+ */
+export type { MetricCardData } from "@/components/chat/cards/MetricCard";
+export type { DataTableCardData } from "@/components/chat/cards/DataTableCard";
+export type { ChartCardData } from "@/components/chat/cards/ChartCard";

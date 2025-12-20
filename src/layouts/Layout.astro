@@ -2,16 +2,19 @@
 import "../styles/global.css";
 import { UserMenu } from "@/components/auth/UserMenu";
 import { Toaster } from "@/components/ui/sonner";
+import { ChatButton } from "@/components/chat/ChatButton";
 import type { AuthUserWithProfile } from "@/types";
 
 interface Props {
   title?: string;
   showHeader?: boolean;
+  groupId?: string;
+  groupName?: string;
 }
 
-const { title = "Billzilla", showHeader = true } = Astro.props;
+const { title = "Billzilla", showHeader = true, groupId, groupName } = Astro.props;
 
-// Pobierz dane użytkownika z middleware (już zawiera pełny profil)
+// Pobierz dane użytkownika z middleware
 const user: AuthUserWithProfile | null = Astro.locals.user;
 ---
 
@@ -54,6 +57,10 @@ const user: AuthUserWithProfile | null = Astro.locals.user;
 
     <!-- Toast notifications -->
     <Toaster client:load />
+
+    <!-- AI Chat Button (only for authenticated users) -->
+    {user && <ChatButton client:load groupId={groupId} groupName={groupName} />}
+
     <footer class="border-t border-gray-100 bg-white shadow-sm shadow-gray-100/50">
       <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <div class="flex justify-center gap-6 text-sm text-gray-600">

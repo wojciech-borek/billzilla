@@ -13,7 +13,7 @@ export default function FloatingActionButton({ onClick }: FloatingActionButtonPr
     <Button
       onClick={onClick}
       size="icon"
-      className="fixed bottom-6 right-6 h-16 w-16 rounded-full shadow-lg shadow-green-200 transition-all duration-300 ease-out hover:scale-110 hover:shadow-xl hover:shadow-green-300 focus-visible:scale-110 focus-visible:shadow-xl"
+      className="fixed bottom-6 right-24 h-14 w-14 rounded-full shadow-lg shadow-green-200 transition-all duration-300 ease-out hover:scale-110 hover:shadow-xl hover:shadow-green-300 focus-visible:scale-110 focus-visible:shadow-xl"
       aria-label="Utwórz nową grupę"
       title="Utwórz nową grupę"
       data-testid="create-group-button"

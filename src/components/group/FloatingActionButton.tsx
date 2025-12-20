@@ -18,7 +18,7 @@ export const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
       onClick={onClick}
       disabled={disabled}
       className={`
-        fixed bottom-6 right-6 h-14 w-14 rounded-full
+        fixed bottom-6 right-24 h-14 w-14 rounded-full
         bg-primary text-primary-foreground
         shadow-lg shadow-green-100/50
         hover:bg-primary/90 hover:shadow-xl hover:shadow-green-100/70
