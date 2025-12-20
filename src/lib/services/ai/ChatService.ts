@@ -145,7 +145,7 @@ export class ChatService {
       let llmResponse = await this.openRouter.chatCompletion({
         messages: openRouterMessages,
         tools,
-        model: "anthropic/claude-3-haiku",
+        model: "anthropic/claude-3.5-sonnet",
         temperature: 0.7,
       });
 
@@ -232,7 +232,7 @@ export class ChatService {
         llmResponse = await this.openRouter.chatCompletion({
           messages: openRouterMessages,
           tools,
-          model: "anthropic/claude-3-haiku",
+          model: "anthropic/claude-3.5-sonnet",
           temperature: 0.7,
         });
 
@@ -319,7 +319,7 @@ You have access to various tools to retrieve expense data, member balances, and 
 
 Context and Tool Usage:
 - Group-specific chat: You are locked to the current group. All tools will automatically use this group's context. You cannot access data from other groups.
-- Dashboard chat: You are in a global context. You can access any of the user's groups, but you MUST provide the 'group_id' in your tool calls. If you don't know the group ID, call 'list_user_groups' first to find it, or ask the user which group they are referring to.
+- Dashboard chat: You are in a global context. You MUST provide 'group_id' for group-specific tools. If the user refers to "my group" or "expenses" without specifying a group, DO NOT ask for an ID immediately. Instead, call 'list_user_groups' to see their groups. If they have only one active group, use that ID automatically. If they have multiple, ask them to clarify which one.
 
 Guidelines:
 - Always be polite and professional
