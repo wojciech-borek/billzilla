@@ -221,7 +221,10 @@ export class FunctionExecutor {
     }
 
     // Filter by payer
-    if (args.payer_id) {
+    // Helper flag for "my expenses" to avoid ID hallucination
+    if (args.own_expenses_only) {
+      filtered = filtered.filter((e) => e.payer_id === this.context.userId);
+    } else if (args.payer_id) {
       filtered = filtered.filter((e) => e.payer_id === args.payer_id);
     }
 

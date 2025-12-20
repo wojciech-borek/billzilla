@@ -418,9 +418,21 @@ Remember: You can only READ data, never modify or delete anything.`;
         ...baseParams,
         properties: {
           ...baseParams.properties,
-          keyword: { type: "string", description: "Search keyword" },
+          keyword: {
+            type: "string",
+            description: "Search keyword. Use SINGULAR forms for better matching (e.g. 'zakup' instead of 'zakupy').",
+          },
           start_date: { type: "string", format: "date" },
           end_date: { type: "string", format: "date" },
+          payer_id: {
+            type: "string",
+            format: "uuid",
+            description: "UUID of the payer to filter by. Do NOT invent UUIDs.",
+          },
+          own_expenses_only: {
+            type: "boolean",
+            description: "Set to true if user asks for 'my' expenses. Overrides payer_id.",
+          },
           limit: { type: "integer", minimum: 1, maximum: 50, default: 10 },
         },
       },
