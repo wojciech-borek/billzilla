@@ -29,6 +29,12 @@ const DataTableCard = lazy(() => import("@/components/chat/cards/DataTableCard")
 const ChartCard = lazy(() => import("@/components/chat/cards/ChartCard"));
 
 /**
+ * No-op component for functions that don't need a visual card
+ * AI will generate text-only responses for these
+ */
+const NoCard = () => null;
+
+/**
  * Main mapping object: Function name → Component + metadata
  *
  * STRATEGY:
@@ -87,6 +93,43 @@ export const CHAT_COMPONENT_MAP: Record<FunctionName, ComponentMapping> = {
     cardType: "metric",
     loadingText: CHAT_TEXTS.loadingStates.generate_group_report,
     errorFallback: "Nie mogę wygenerować raportu.",
+  },
+
+  // Generic Low-Level Tools (AI processes raw data, no card needed)
+  get_expenses: {
+    component: NoCard,
+    cardType: "none",
+    loadingText: CHAT_TEXTS.loadingStates.get_expenses,
+    errorFallback: "Nie mogę pobrać danych o wydatkach.",
+  },
+
+  get_members: {
+    component: NoCard,
+    cardType: "none",
+    loadingText: CHAT_TEXTS.loadingStates.get_members,
+    errorFallback: "Nie mogę pobrać listy uczestników.",
+  },
+
+  get_group_metadata: {
+    component: NoCard,
+    cardType: "none",
+    loadingText: CHAT_TEXTS.loadingStates.get_group_metadata,
+    errorFallback: "Nie mogę pobrać metadanych grupy.",
+  },
+
+  // Utility Functions (context/metadata, no card needed)
+  get_group_context: {
+    component: NoCard,
+    cardType: "none",
+    loadingText: CHAT_TEXTS.loadingStates.get_group_context,
+    errorFallback: "Nie mogę pobrać informacji o grupie.",
+  },
+
+  get_currency_exchange_rates: {
+    component: NoCard,
+    cardType: "none",
+    loadingText: CHAT_TEXTS.loadingStates.get_currency_exchange_rates,
+    errorFallback: "Nie mogę pobrać kursów walut.",
   },
 };
 

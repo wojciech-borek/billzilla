@@ -11,6 +11,7 @@ export const CHAT_TEXTS = {
    * Displayed while AI is processing the request
    */
   loadingStates: {
+    // Specialized high-level tools
     get_member_balances: "Sprawdzam salda uczestników...",
     get_expenses_summary: "Analizuję wydatki z wybranego okresu...",
     search_expenses: "Szukam transakcji...",
@@ -18,6 +19,13 @@ export const CHAT_TEXTS = {
     get_top_expenses: "Sortuję największe wydatki...",
     get_member_statistics: "Obliczam statystyki uczestników...",
     generate_group_report: "Generuję raport finansowy...",
+    // Generic low-level tools
+    get_expenses: "Pobieram dane o wydatkach...",
+    get_members: "Pobieram listę uczestników...",
+    get_group_metadata: "Pobieram metadane grupy...",
+    // Utility functions
+    get_group_context: "Pobieram informacje o grupie...",
+    get_currency_exchange_rates: "Pobieram kursy walut...",
   },
 
   /**

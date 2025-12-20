@@ -34,13 +34,21 @@ export interface ChatMessage {
  * Function names that AI can call
  */
 export type FunctionName =
+  // Specialized high-level tools
   | "get_member_balances"
   | "get_expenses_summary"
   | "search_expenses"
   | "analyze_spending_trends"
   | "get_top_expenses"
   | "get_member_statistics"
-  | "generate_group_report";
+  | "generate_group_report"
+  // Generic low-level tools
+  | "get_expenses"
+  | "get_members"
+  | "get_group_metadata"
+  // Utility functions
+  | "get_group_context"
+  | "get_currency_exchange_rates";
 
 /**
  * Card types for universal SmartCards
