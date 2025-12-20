@@ -250,7 +250,6 @@ describe("InvitationService Integration Tests", () => {
     });
   });
 
-
   describe("acceptInvitation", () => {
     it("should accept invitation and add user to group successfully", async () => {
       // Arrange
@@ -393,7 +392,6 @@ describe("InvitationService Integration Tests", () => {
   });
 
   describe("declineInvitation", () => {
-
     it("should throw InvitationNotFoundError when invitation doesn't exist", async () => {
       // Arrange
       const invitationId = "non-existent-inv";
