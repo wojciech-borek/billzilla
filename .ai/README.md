@@ -7,6 +7,8 @@ Folder `.ai` zawiera dokumentację techniczną, plany implementacyjne i specyfik
 ### 📁 `architecture/`
 Dokumenty opisujące architekturę systemu:
 - `ai-services/` - plany implementacji usług AI
+  - `llm-tools-schema.md` - schemat narzędzi (tools) dla LLM w standardzie OpenAI/OpenRouter
+  - `backend-function-calling-architecture.md` - architektura backendu dla Function Calling (OpenRouter), zabezpieczenia, baza danych
 - `api/` - specyfikacja API REST
 - `database/` - plany bazy danych
 - `frontend/` - wybór technologii frontend
@@ -34,6 +36,8 @@ Dokumenty planistyczne:
 - `product/prd.md` - Product Requirements Document
 - `product/refactor-plan.md` - plan refaktoryzacji
 - `product/pending-features.md` - szczegółowe specyfikacje funkcji do implementacji
+- `product/ai-chat-planning-session.md` - sesja planistyczna dla AI Chat Assistant
+- `product/ai-chat-ui-design.md` - szczegółowa specyfikacja UI/UX dla czatu AI (Smart UI)
 
 ### 📁 `security/`
 Dokumenty bezpieczeństwa:
