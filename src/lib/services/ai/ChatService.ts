@@ -145,7 +145,7 @@ export class ChatService {
       let llmResponse = await this.openRouter.chatCompletion({
         messages: openRouterMessages,
         tools,
-        model: "anthropic/claude-3.5-sonnet",
+        model: "anthropic/claude-3-haiku",
         temperature: 0.7,
       });
 
@@ -232,7 +232,7 @@ export class ChatService {
         llmResponse = await this.openRouter.chatCompletion({
           messages: openRouterMessages,
           tools,
-          model: "anthropic/claude-3.5-sonnet",
+          model: "anthropic/claude-3-haiku",
           temperature: 0.7,
         });
 

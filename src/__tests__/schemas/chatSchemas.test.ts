@@ -241,7 +241,7 @@ describe("Chat Schemas", () => {
     it("should validate valid metadata", () => {
       const validMetadata = {
         tokens_used: 450,
-        model: "anthropic/claude-3.5-sonnet",
+        model: "anthropic/claude-3-haiku",
         function_calls_count: 1,
         processing_time_ms: 2800,
       };
@@ -283,7 +283,7 @@ describe("Chat Schemas", () => {
         ],
         metadata: {
           tokens_used: 450,
-          model: "anthropic/claude-3.5-sonnet",
+          model: "anthropic/claude-3-haiku",
           function_calls_count: 1,
           processing_time_ms: 2800,
         },
