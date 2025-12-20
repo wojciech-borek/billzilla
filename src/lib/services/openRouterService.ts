@@ -81,6 +81,72 @@ export interface ExtractDataParams<T extends z.ZodTypeAny> {
   maxTokens?: number;
 }
 
+/**
+ * Chat message for OpenRouter API
+ */
+export interface ChatMessage {
+  role: "system" | "user" | "assistant" | "tool";
+  content: string;
+  tool_calls?: ToolCall[];
+  tool_call_id?: string;
+}
+
+/**
+ * Tool call structure
+ */
+export interface ToolCall {
+  id: string;
+  type: "function";
+  function: {
+    name: string;
+    arguments: string;
+  };
+}
+
+/**
+ * Tool definition for function calling
+ */
+export interface Tool {
+  type: "function";
+  function: {
+    name: string;
+    description: string;
+    parameters: Record<string, unknown>;
+  };
+}
+
+/**
+ * Chat completion parameters
+ */
+export interface ChatCompletionParams {
+  messages: ChatMessage[];
+  tools?: Tool[];
+  model?: string;
+  temperature?: number;
+  maxTokens?: number;
+}
+
+/**
+ * Chat completion response
+ */
+export interface ChatCompletionResponse {
+  id: string;
+  model: string;
+  choices: {
+    message: {
+      role: string;
+      content?: string;
+      tool_calls?: ToolCall[];
+    };
+    finish_reason: string;
+  }[];
+  usage: {
+    prompt_tokens: number;
+    completion_tokens: number;
+    total_tokens: number;
+  };
+}
+
 // ============================================================================
 // OpenRouter Service Implementation
 // ============================================================================
@@ -134,6 +200,38 @@ export class OpenRouterService {
       throw new Error(
         `Unexpected error in OpenRouterService: ${error instanceof Error ? error.message : String(error)}`
       );
+    }
+  }
+
+  /**
+   * Chat completion with optional function calling support
+   *
+   * @param params - Chat completion parameters
+   * @returns Promise resolving to chat completion response
+   * @throws {OpenRouterApiError} When API returns an error status
+   * @throws {NetworkError} When network connectivity fails
+   */
+  public async chatCompletion(params: ChatCompletionParams): Promise<ChatCompletionResponse> {
+    const payload: Record<string, unknown> = {
+      model: params.model || "anthropic/claude-3.5-sonnet",
+      messages: params.messages,
+      temperature: params.temperature ?? 0.7,
+      max_tokens: params.maxTokens ?? 2048,
+    };
+
+    // Add tools if provided
+    if (params.tools && params.tools.length > 0) {
+      payload.tools = params.tools;
+    }
+
+    try {
+      const response = await this.makeApiRequest(payload);
+      return response as ChatCompletionResponse;
+    } catch (error) {
+      if (error instanceof OpenRouterApiError || error instanceof NetworkError) {
+        throw error;
+      }
+      throw new Error(`Unexpected error in chatCompletion: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
@@ -246,6 +344,7 @@ Please extract the expense details from the transcribed text using the provided 
 
         try {
           const errorData = await response.json();
+          // eslint-disable-next-line no-console
           console.log("OpenRouter API Error Response:", errorData);
           errorMessage = errorData.error?.message || errorData.message || errorMessage;
         } catch {
@@ -290,7 +389,11 @@ Please extract the expense details from the transcribed text using the provided 
     // Parse JSON string to object
     let parsedData: unknown;
     try {
-      parsedData = JSON.parse(argumentsString);
+      if (argumentsString && argumentsString !== "undefined" && argumentsString.trim() !== "") {
+        parsedData = JSON.parse(argumentsString);
+      } else {
+        parsedData = {};
+      }
     } catch (error) {
       throw new InvalidJsonResponseError(
         `Failed to parse function arguments as JSON: ${error instanceof Error ? error.message : String(error)}`

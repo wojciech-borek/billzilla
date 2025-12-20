@@ -5,8 +5,6 @@ import PullToRefreshIndicator from "./PullToRefreshIndicator";
 import CreateGroupModal from "../group/CreateGroupModal";
 import { AddExpenseModal } from "../group/expenses/AddExpenseModal";
 import { Toaster } from "../ui/sonner";
-import { Button } from "../ui/button";
-import { toast } from "sonner";
 import type { DashboardPresentationProps } from "./DashboardContainer";
 
 export function DashboardPresentation(props: DashboardPresentationProps) {
@@ -41,24 +39,8 @@ export function DashboardPresentation(props: DashboardPresentationProps) {
         </div>
       </div>
 
-      {/* Floating Action Buttons */}
-      <div className="fixed bottom-6 right-6 flex flex-col gap-3">
-        <FloatingActionButton onClick={onCreateGroup} />
-        {/* Add Expense FAB - only show if user has groups */}
-        {hasAnyGroups && (
-          <Button
-            onClick={() => toast.info('Kliknij przycisk "Dodaj wydatek" na karcie grupy, aby dodać wydatek')}
-            size="icon"
-            className="h-14 w-14 rounded-full shadow-lg shadow-blue-200 bg-blue-600 hover:bg-blue-700 transition-all duration-300 ease-out hover:scale-110 hover:shadow-xl hover:shadow-blue-300 focus-visible:scale-110 focus-visible:shadow-xl"
-            aria-label="Dodaj wydatek"
-            title="Kliknij przycisk na karcie grupy"
-          >
-            <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-            </svg>
-          </Button>
-        )}
-      </div>
+      {/* Floating Action Button */}
+      <FloatingActionButton onClick={onCreateGroup} />
 
       {/* Toast notifications */}
       <Toaster />
