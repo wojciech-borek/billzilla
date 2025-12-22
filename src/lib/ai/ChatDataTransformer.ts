@@ -8,15 +8,8 @@
 import type { FunctionName } from "./chatTypes";
 import type { DataTableCardData } from "@/components/chat/cards/DataTableCard";
 import type { MetricCardData } from "@/components/chat/cards/MetricCard";
-import type { ChartCardData } from "@/components/chat/cards/ChartCard";
 
 // Specific types for raw function results
-interface RawSpendingTrends {
-  trends?: { date: string; amount: number }[];
-  insight?: string;
-  error?: string;
-}
-
 interface RawUserGroup {
   id: string;
   name: string;
@@ -50,30 +43,6 @@ interface RawExpensesSummary {
   currency?: string;
   member_breakdown?: { name: string; total: number }[];
   error?: string;
-}
-
-/**
- * Transforms analyze_spending_trends into ChartCardData
- */
-function transformSpendingTrends(data: RawSpendingTrends): ChartCardData {
-  const points = data.trends || [];
-
-  return {
-    title: "Trendy wydatków",
-    subtitle: "Analiza czasowa",
-    chartType: "line",
-    data: {
-      labels: points.map((p) => p.date),
-      datasets: [
-        {
-          label: "Wydatki",
-          data: points.map((p) => p.amount),
-          color: "primary",
-        },
-      ],
-    },
-    insight: data.insight,
-  };
 }
 
 /**
@@ -176,47 +145,10 @@ export function transformChatData(functionName: FunctionName, rawData: unknown):
       return transformMemberBalances(rawData as RawMemberBalances);
     case "get_expenses_summary":
       return transformExpensesSummary(rawData as RawExpensesSummary);
-    case "analyze_spending_trends":
-      return transformSpendingTrends(rawData as RawSpendingTrends);
-    case "generate_group_report":
-      return transformGroupReport(rawData as RawGroupReport);
     // Add more mappers as needed
     default:
       return rawData;
   }
-}
-
-/**
- * Transforms generate_group_report into MetricCardData
- */
-function transformGroupReport(data: RawGroupReport): MetricCardData {
-  const summary = data.summary || {};
-  const period = data.period || {};
-
-  // Extract total and currency from summary part of report
-  const total = summary.total || 0;
-  const currency = summary.currency || "PLN";
-
-  return {
-    title: "Raport Finansowy Grupy",
-    subtitle: period.start && period.end ? `${period.start} - ${period.end}` : "Całkowity czas",
-    metric: {
-      label: "Łączne wydatki",
-      value: total,
-      currency: currency,
-    },
-    // We can show member breakdown or balances as breakdown
-    breakdown: summary.member_breakdown
-      ? {
-          label: "Wydatki wg członków",
-          items: summary.member_breakdown.map((m) => ({
-            name: m.name,
-            value: m.total,
-            currency: currency,
-          })),
-        }
-      : undefined,
-  };
 }
 
 // Deprecated class wrapper for backward compatibility if needed,

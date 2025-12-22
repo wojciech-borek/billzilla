@@ -38,10 +38,6 @@ export type FunctionName =
   | "get_member_balances"
   | "get_expenses_summary"
   | "search_expenses"
-  | "analyze_spending_trends"
-  | "get_top_expenses"
-  | "get_member_statistics"
-  | "generate_group_report"
   // Generic low-level tools
   | "get_expenses"
   | "get_members"

@@ -196,10 +196,6 @@ const ALLOWED_FUNCTIONS: readonly FunctionName[] = [
   "get_member_balances",
   "get_expenses_summary",
   "search_expenses",
-  "analyze_spending_trends",
-  "get_top_expenses",
-  "get_member_statistics",
-  "generate_group_report",
 
   // Utility
   "get_group_context",

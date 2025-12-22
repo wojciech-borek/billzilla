@@ -1,7 +1,7 @@
 # Sesja Planistyczna: AI Chat Assistant dla Billzilla
 
-**Data:** 2025-12-20  
-**Status:** 📋 Planowanie  
+**Data:** 2025-12-22  
+**Status:** ✅ Zaimplementowane  
 **Typ:** Feature Planning Session
 
 ---
@@ -260,34 +260,35 @@ AI będzie miał dostęp do:
 
 ---
 
-## 🛠️ Wymagania techniczne (sugestie)
+## 🛠️ Wymagania techniczne
 
 ### Backend
-- **Endpoint:** `POST /api/groups/[groupId]/chat`
-- **Context preparation:** Agregacja danych grupy do promptu systemowego
-- **Rate limiting:** Kontrola kosztów LLM (np. 100 zapytań/grupa/dzień)
-- **Caching:** Cache dla powtarzających się zapytań
+- **Endpoint:** `POST /api/chat`
+- **Model:** `anthropic/claude-3-haiku` (OpenRouter)
+- **Koszt:** $0.25/1M input, $1.25/1M output tokens
+- **Temperatura:** 0.7
+- **Function calling:** 9 funkcji (podstawowe operacje odczytu)
+- **Rate limiting:** Do zaimplementowania (planowane: 100 zapytań/grupa/dzień)
 
 ### Frontend
-- **Chat UI:** React component (możliwe biblioteki: `react-chat-elements`, `@chatscope/chat-ui-kit-react`)
-- **Real-time:** WebSocket lub Server-Sent Events dla streaming odpowiedzi
-- **State management:** Zachowanie historii konwersacji w session/local storage
+- **Chat UI:** React component (prosty interfejs tekstowy)
+- **State management:** Historia konwersacji w bazie danych
 - **Responsive:** Mobile-first design
+- **Streaming:** Nie zaimplementowane (odpowiedzi pełne)
 
 ### AI/LLM
-- **Provider:** OpenRouter (preferowane) lub OpenAI bezpośrednio
-  - OpenRouter: Elastyczność (GPT-4, Claude, inne modele), failover, cost optimization
-  - Kompatybilny format: OpenAI Function Calling API
-- **Model:** GPT-4 lub Claude 3.5 Sonnet (do testowania)
-- **System prompt:** Kontekst grupy + instrukcje zachowania (rola Financial Analyst)
-- **Function calling:** Strukturalne odpowiedzi (JSON) dla wykresów/tabel
-- **Streaming:** Lepsze UX dla długich odpowiedzi
+- **Provider:** OpenRouter
+- **Model:** `anthropic/claude-3-haiku`
+- **System prompt:** Prosty asystent finansowy - tylko tekstowe odpowiedzi
+- **Function calling:** Strukturalne odpowiedzi (JSON) dla podstawowych danych
+- **Wizualizacje:** Brak - tylko tekst
 
 ### Bezpieczeństwo
 - ✅ **Autoryzacja:** Tylko członkowie grupy mogą chatować o tej grupie
-- ✅ **Privacy:** Opt-out z treningu modelu (OpenAI, Anthropic oferują)
-- ✅ **Sanityzacja:** Walidacja danych przed wysłaniem do LLM
-- ✅ **Audit:** Logowanie wszystkich zapytań do AI (kto, kiedy, co)
+- ✅ **Privacy:** Opt-out z treningu modelu (OpenRouter/Anthropic)
+- ✅ **Sanityzacja:** SecurityGuard waliduje wszystkie zapytania
+- ✅ **Prompt injection protection:** Wykrywanie prób manipulacji
+- ✅ **Function whitelist:** Tylko dozwolone funkcje
 
 ---
 

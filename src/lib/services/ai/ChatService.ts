@@ -145,7 +145,7 @@ export class ChatService {
       let llmResponse = await this.openRouter.chatCompletion({
         messages: openRouterMessages,
         tools,
-        model: "anthropic/claude-3.5-sonnet",
+        model: "anthropic/claude-3-haiku",
         temperature: 0.7,
       });
 
@@ -232,7 +232,7 @@ export class ChatService {
         llmResponse = await this.openRouter.chatCompletion({
           messages: openRouterMessages,
           tools,
-          model: "anthropic/claude-3.5-sonnet",
+          model: "anthropic/claude-3-haiku",
           temperature: 0.7,
         });
 
@@ -315,25 +315,23 @@ export class ChatService {
     return `You are a helpful financial assistant for Billzilla, an expense management application.
 Current Date: ${today}
 
-Your role is to help users understand their group expenses, analyze spending patterns, and answer questions about their financial data.
+Your role is to help users understand their group expenses and answer questions about their financial data.
 
-You have access to various tools to retrieve expense data, member balances, and generate reports. Use these tools to provide accurate and helpful responses.
+You have access to tools to retrieve expense data, member balances, and search expenses. Use these tools to provide accurate and helpful responses.
 
 Context and Tool Usage:
-- Group-specific chat: You are locked to the current group. All tools will automatically use this group's context. You cannot access data from other groups.
-- Dashboard chat: You are in a global context. You MUST provide 'group_id' for group-specific tools. If the user refers to "my group" or "expenses" without specifying a group, DO NOT ask for an ID immediately. Instead, call 'list_user_groups' to see their groups. If they have only one active group, use that ID automatically. If they have multiple, ask them to clarify which one.
+- Group-specific chat: You are locked to the current group. All tools will automatically use this group's context.
+- Dashboard chat: You are in a global context. You MUST provide 'group_id' for group-specific tools. If the user refers to "my group" without specifying, call 'list_user_groups' first. If they have only one active group, use that ID automatically.
 
 Guidelines:
 - Always be polite and professional
-- Provide clear, concise answers
+- Provide clear, concise text answers
 - Use the appropriate tools to fetch data
 - Format monetary amounts with currency codes (e.g., 12.50 PLN)
 - When showing dates, use a readable format
 - If you're unsure about something, ask for clarification
 - Respond in the same language as the user's question (Polish or English)
-- Use 'generate_group_report' for comprehensive TEXT/METRIC summaries. It does NOT generate charts.
-- Use 'analyze_spending_trends' when the user explicitly asks for CHARTS, visualizations, or trends over time.
-- If the user asks for a chart from a report, use BOTH tools or explain that the report is a summary.
+- Present data as simple text lists or summaries
 
 Remember: You can only READ data, never modify or delete anything.`;
   }
@@ -366,13 +364,6 @@ Remember: You can only READ data, never modify or delete anything.`;
         "Aggregates group expenses for a specified time period. Returns total amount and optional breakdown per member.",
       search_expenses:
         "Searches for specific expenses based on keywords in description, date range, payer, or amount range.",
-      analyze_spending_trends:
-        "Compares spending between time periods to identify trends. Returns percentage change and insights.",
-      get_top_expenses: "Returns the top N largest expenses in the group, optionally filtered by time period.",
-      get_member_statistics:
-        "Aggregates spending statistics per group member: number of transactions, total amount spent, average expense.",
-      generate_group_report:
-        "Generates a comprehensive financial report for the group including total expenses, top expenses, member balances, and transaction count.",
       get_expenses: "Fetches raw expense data from the group with pagination and optional filters.",
       get_members: "Retrieves the list of group members with basic information.",
       get_group_metadata:
@@ -435,23 +426,6 @@ Remember: You can only READ data, never modify or delete anything.`;
           },
           limit: { type: "integer", minimum: 1, maximum: 50, default: 10 },
         },
-      },
-      analyze_spending_trends: {
-        ...baseParams,
-        properties: {
-          ...baseParams.properties,
-          current_period_start: { type: "string", format: "date" },
-          current_period_end: { type: "string", format: "date" },
-          comparison_period_start: { type: "string", format: "date" },
-          comparison_period_end: { type: "string", format: "date" },
-        },
-        required: [
-          "group_id",
-          "current_period_start",
-          "current_period_end",
-          "comparison_period_start",
-          "comparison_period_end",
-        ],
       },
       list_user_groups: {
         type: "object",
