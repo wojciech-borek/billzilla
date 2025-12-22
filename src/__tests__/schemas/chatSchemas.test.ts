@@ -128,7 +128,7 @@ describe("Chat Schemas", () => {
 
   describe("messageTypeSchema", () => {
     it("should validate all message types", () => {
-      const validTypes = ["user_text", "ai_text", "ai_function_call", "ai_function_result", "ai_error", "system_info"];
+      const validTypes = ["user_text", "ai_text", "ai_function_call", "ai_error", "system_info"];
 
       validTypes.forEach((type) => {
         const result = messageTypeSchema.safeParse(type);
@@ -155,18 +155,12 @@ describe("Chat Schemas", () => {
       expect(result.success).toBe(true);
     });
 
-    it("should validate function result message with object content", () => {
+    it("should validate AI text message with object content", () => {
       const validMessage = {
         id: "msg-456",
-        type: "ai_function_result",
-        content: {
-          total: 3450.0,
-          currency: "PLN",
-        },
+        type: "ai_text",
+        content: "The total expenses are 3,450.00 PLN",
         timestamp: new Date(),
-        metadata: {
-          functionName: "get_expenses_summary",
-        },
       };
 
       const result = chatMessageSchema.safeParse(validMessage);

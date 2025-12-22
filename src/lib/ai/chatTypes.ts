@@ -10,8 +10,7 @@
 export type MessageType =
   | "user_text" // Regular user text message
   | "ai_text" // AI text response (with optional markdown)
-  | "ai_function_call" // AI is calling a function → show what it's doing
-  | "ai_function_result" // Function result → render SmartCard
+  | "ai_function_call" // AI is calling a function → show loading state
   | "ai_error" // AI or API error
   | "system_info"; // System information (e.g., rate limits)
 
@@ -32,6 +31,7 @@ export interface ChatMessage {
 
 /**
  * Function names that AI can call
+ * NOTE: Only functions actually implemented in FunctionExecutor
  */
 export type FunctionName =
   // Specialized high-level tools
@@ -46,18 +46,6 @@ export type FunctionName =
   // Utility functions
   | "get_group_context"
   | "get_currency_exchange_rates";
-
-/**
- * Card types for universal SmartCards
- */
-export type SmartCardType = "metric" | "data_table" | "chart";
-
-/**
- * Import card data types
- */
-export type { MetricCardData } from "@/components/chat/cards/MetricCard";
-export type { DataTableCardData } from "@/components/chat/cards/DataTableCard";
-export type { ChartCardData } from "@/components/chat/cards/ChartCard";
 
 /**
  * Chat API Request/Response Types

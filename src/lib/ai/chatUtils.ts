@@ -54,21 +54,6 @@ export function createFunctionCallMessage(functionName: FunctionName): ChatMessa
 }
 
 /**
- * Create a function result message
- */
-export function createFunctionResultMessage(functionName: FunctionName, data: object): ChatMessage {
-  return {
-    id: generateMessageId(),
-    type: "ai_function_result",
-    content: data,
-    timestamp: new Date(),
-    metadata: {
-      functionName,
-    },
-  };
-}
-
-/**
  * Create an error message
  */
 export function createErrorMessage(error: string): ChatMessage {

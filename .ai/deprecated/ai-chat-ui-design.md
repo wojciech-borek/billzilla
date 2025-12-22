@@ -81,8 +81,7 @@ interface ChatMessage {
 
 Gdy AI wywołuje tool (np. `get_member_balances`), użytkownik powinien:
 1. **Zobaczyć, że AI coś robi** (loading state)
-2. **Otrzymać wizualne potwierdzenie wyniku** (interactive card)
-3. **Móc interagować z danymi** (expand, filter, drill-down)
+2. **Otrzymać odpowiedź tekstową** sformatowaną w czytelny sposób (Markdown)
 
 ---
 
@@ -90,64 +89,62 @@ Gdy AI wywołuje tool (np. `get_member_balances`), użytkownik powinien:
 
 **Kiedy:** AI wywołał funkcję, czekamy na odpowiedź z backendu
 
-**Komponent:** `FunctionCallLoadingCard`
+**Komponent:** `FunctionCallLoadingCard` (z `ChatMessage`)
 
 **Design:**
+Prosty kontener pokazujący, że system przetwarza zapytanie.
 
 ```tsx
-// Przykładowy wygląd w Tailwind CSS
+// Przykładowy wygląd
 <div className="bg-primary/5 border-l-4 border-primary rounded-2xl p-4 shadow-sm">
-  {/* Ikona + Spinner */}
   <div className="flex items-center gap-3">
-    <div className="relative">
-      {/* Spinner animation */}
-      <div className="animate-spin rounded-full h-6 w-6 border-2 border-primary border-t-transparent" />
-    </div>
-    
-    {/* Status text */}
-    <div>
-      <p className="font-semibold text-foreground text-sm">
-        Sprawdzam salda członków...
-      </p>
-      <p className="text-sm text-gray-500">
-        Funkcja: <code className="bg-gray-100 px-1.5 py-0.5 rounded text-xs">get_member_balances</code>
-      </p>
-    </div>
+    <div className="animate-spin rounded-full h-5 w-5 border-2 border-primary border-t-transparent" />
+    <p className="font-semibold text-foreground text-sm">
+      Sprawdzam dane...
+    </p>
   </div>
 </div>
 ```
 
-**Dynamiczny tekst loadingu** (uzależniony od wywołanej funkcji):
+---
 
-| Funkcja | Loading text |
-|---------|--------------|
-| `get_member_balances` | "Sprawdzam salda członków..." |
-| `get_expenses_summary` | "Analizuję wydatki z wybranego okresu..." |
-| `search_expenses` | "Szukam transakcji..." |
-| `analyze_spending_trends` | "Porównuję okresy i identyfikuję trendy..." |
-| `generate_group_report` | "Generuję raport finansowy..." |
+### 1.2. Function Result - Prezentacja wyników
+
+**Zmiana architektury:** Zrezygnowano ze skomplikowanych komponentów "Smart Cards" (wykresów, interaktywnych tabel) na rzecz **prostych, czytelnych odpowiedzi tekstowych** formatowanych Markdownem.
+
+**Zalety:**
+- Lżejszy interfejs (brak ciężkich bibliotek wykresów)
+- Większa elastyczność (AI decyduje jak najlepiej przedstawić dane)
+- Mniej błędów (brak sztywnych mapowań typów)
+
+**Formatowanie:**
+AI używa Markdown do strukturyzowania danych:
+- **Pogrubienie** dla kwot i nazwisk
+- **Listy** dla zestawień transakcji
+- **Tabele Markdown** dla prostych zestawień danych
+
+**Przykład:**
+```
+User: Ile wydaliśmy w grudniu?
+AI: W grudniu 2024 łączna suma wydatków to **3 450,00 PLN**.
+
+Oto podział na osoby:
+- **Ania**: 1 200,00 PLN
+- **Tomek**: 1 450,00 PLN
+- **Kasia**: 800,00 PLN
+```
 
 ---
 
-### 1.2. Function Result Cards - Interaktywne podsumowania
+### 1.3. (Sekcja usunięta - Smart Cards deprecated)
 
-Po zakończeniu wywołania funkcji, **zamiast** zwykłego tekstu, wyświetlamy **SmartCard** odpowiadający typowi funkcji.
+Zrezygnowano z komponentów:
+- `BalancesCard`
+- `ExpenseSummaryCard`
+- `TrendAnalysisCard`
+- `ChartCard`
 
-#### Mapping: Funkcja → Komponent
-
-| Funkcja | Komponent | Opis |
-|---------|-----------|------|
-| `get_member_balances` | `BalancesCard` | Lista sald z kolorowymi wskaźnikami (kto komu wisi) |
-| `get_expenses_summary` | `ExpenseSummaryCard` | Suma + mini wykres + breakdown |
-| `search_expenses` | `ExpenseListCard` | Lista transakcji z możliwością filtrowania |
-| `analyze_spending_trends` | `TrendAnalysisCard` | Porównanie okresów + wykres liniowy |
-| `get_top_expenses` | `TopExpensesCard` | Ranking największych wydatków |
-| `get_member_statistics` | `MemberStatsCard` | Statystyki per członek (liczba transakcji, średnia) |
-| `generate_group_report` | `ReportCard` | Kompleksowy raport (może być downloadable PDF) |
-
----
-
-### 1.3. Przykładowe komponenty
+Wszystkie te dane są teraz prezentowane w formie tekstu przez model AI.
 
 #### A. `BalancesCard` - Komu ile wisi?
 
