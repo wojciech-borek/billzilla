@@ -18,7 +18,6 @@ import {
   createUserMessage,
   createAITextMessage,
   createFunctionCallMessage,
-  createFunctionResultMessage,
   createErrorMessage,
 } from "@/lib/ai/chatUtils";
 
@@ -119,10 +118,17 @@ export class ChatService {
       }
 
       // 5. Prepare messages for OpenRouter
-      const openRouterMessages = this.formatMessagesForOpenRouter(history);
+      const systemPrompt = this.getSystemPrompt(conversation);
+      const openRouterMessages: OpenRouterMessage[] = [
+        {
+          role: "system",
+          content: systemPrompt,
+        },
+        ...this.formatMessagesForOpenRouter(history),
+      ];
 
       // 6. Get available tools
-      const tools = this.getAvailableTools();
+      const tools = this.getAvailableTools(conversation);
 
       // Security: Scan tool metadata for potential poisoning
       const toolAnalysis = this.securityGuard.analyzeToolMetadata(tools);
@@ -145,7 +151,7 @@ export class ChatService {
       let llmResponse = await this.openRouter.chatCompletion({
         messages: openRouterMessages,
         tools,
-        model: "anthropic/claude-3.5-sonnet",
+        model: "anthropic/claude-3-haiku",
         temperature: 0.7,
       });
 
@@ -209,16 +215,12 @@ export class ChatService {
           } else {
             // Sanitize and execute
             const sanitizedArgs = this.securityGuard.sanitizeArgs(functionArgs as Record<string, unknown>);
-            const executor = new FunctionExecutor({ supabase: this.supabase, userId, groupId });
+            // Use group_id from conversation (source of truth) instead of request params
+            const executor = new FunctionExecutor({ supabase: this.supabase, userId, groupId: conversation.group_id });
             functionResult = await executor.execute(toolCall.function.name as FunctionName, sanitizedArgs);
           }
 
-          // Save function result to DB
-          const resultMsg = createFunctionResultMessage(
-            toolCall.function.name as FunctionName,
-            (functionResult.data as Record<string, unknown>) || { error: functionResult.error }
-          );
-          await this.conversationRepo.addMessage(conversation.id, resultMsg);
+          // Function results are sent to LLM, not saved to DB (text-only chat)
 
           // Add tool result to OpenRouter messages
           openRouterMessages.push({
@@ -232,7 +234,7 @@ export class ChatService {
         llmResponse = await this.openRouter.chatCompletion({
           messages: openRouterMessages,
           tools,
-          model: "anthropic/claude-3.5-sonnet",
+          model: "anthropic/claude-3-haiku",
           temperature: 0.7,
         });
 
@@ -282,12 +284,7 @@ export class ChatService {
    * Format chat messages for OpenRouter API
    */
   private formatMessagesForOpenRouter(messages: ChatMessage[]): OpenRouterMessage[] {
-    const formatted: OpenRouterMessage[] = [
-      {
-        role: "system",
-        content: this.getSystemPrompt(),
-      },
-    ];
+    const formatted: OpenRouterMessage[] = [];
 
     for (const msg of messages) {
       if (msg.type === "user_text") {
@@ -310,30 +307,53 @@ export class ChatService {
   /**
    * Get system prompt for the AI
    */
-  private getSystemPrompt(): string {
+  private getSystemPrompt(conversation: { group_id: string | null }): string {
     const today = new Date().toISOString().split("T")[0];
+
+    // Determine conversation context
+    const contextInfo = conversation.group_id
+      ? `You are in a GROUP-SPECIFIC conversation (group_id: ${conversation.group_id}).
+
+**CRITICAL**: The system AUTOMATICALLY uses this group context for ALL function calls.
+- DO NOT provide 'group_id' parameter when calling ANY function
+- The backend will inject the group_id from this conversation context
+- If you provide group_id anyway, it will be IGNORED in favor of the conversation context`
+      : `You are in a DASHBOARD conversation (no specific group selected).
+
+**CRITICAL**: You MUST explicitly provide 'group_id' for all group-related functions.
+
+**WORKFLOW:**
+1. If you don't have group UUIDs yet, call 'list_user_groups' first
+2. The response contains 'id' field (UUID) and 'name' for each group
+3. When user mentions a group by name or says "tam"/"there"/"w niej", use the UUID you received
+4. If user has only ONE group, automatically use that group's UUID
+5. NEVER invent or guess UUIDs - only use exact values from list_user_groups`;
+
     return `You are a helpful financial assistant for Billzilla, an expense management application.
 Current Date: ${today}
 
-Your role is to help users understand their group expenses, analyze spending patterns, and answer questions about their financial data.
+**CONVERSATION CONTEXT:**
+${contextInfo}
 
-You have access to various tools to retrieve expense data, member balances, and generate reports. Use these tools to provide accurate and helpful responses.
+Your role is to help users understand their group expenses and answer questions about their financial data.
 
-Context and Tool Usage:
-- Group-specific chat: You are locked to the current group. All tools will automatically use this group's context. You cannot access data from other groups.
-- Dashboard chat: You are in a global context. You MUST provide 'group_id' for group-specific tools. If the user refers to "my group" or "expenses" without specifying a group, DO NOT ask for an ID immediately. Instead, call 'list_user_groups' to see their groups. If they have only one active group, use that ID automatically. If they have multiple, ask them to clarify which one.
+You have access to tools to retrieve expense data, member balances, and search expenses. Use these tools to provide accurate and helpful responses.
+
+**IMPORTANT - Data Formatting:**
+- After calling a tool, YOU MUST format the results as clear, readable TEXT in your response
+- DO NOT just return raw data - present it in a user-friendly way
+- Use bullet points, numbered lists, or simple tables (using text formatting)
+- Example: Instead of returning JSON, write: "Your groups: 1. Wakacje (Creator, balance: 0.00 PLN)"
 
 Guidelines:
 - Always be polite and professional
-- Provide clear, concise answers
-- Use the appropriate tools to fetch data
+- Provide clear, concise text answers
+- Use the appropriate tools to fetch data, then format the results nicely
 - Format monetary amounts with currency codes (e.g., 12.50 PLN)
-- When showing dates, use a readable format
+- When showing dates, use a readable format (e.g., "22 grudnia 2024")
 - If you're unsure about something, ask for clarification
 - Respond in the same language as the user's question (Polish or English)
-- Use 'generate_group_report' for comprehensive TEXT/METRIC summaries. It does NOT generate charts.
-- Use 'analyze_spending_trends' when the user explicitly asks for CHARTS, visualizations, or trends over time.
-- If the user asks for a chart from a report, use BOTH tools or explain that the report is a summary.
+- Present data as simple text lists or summaries - NO fancy formatting needed
 
 Remember: You can only READ data, never modify or delete anything.`;
   }
@@ -341,7 +361,7 @@ Remember: You can only READ data, never modify or delete anything.`;
   /**
    * Get available tools for function calling
    */
-  private getAvailableTools(): Tool[] {
+  private getAvailableTools(conversation: { group_id: string | null }): Tool[] {
     const allowedFunctions = this.securityGuard.getAllowedFunctions();
 
     // Map function names to tool definitions
@@ -351,7 +371,7 @@ Remember: You can only READ data, never modify or delete anything.`;
       function: {
         name: functionName,
         description: this.getFunctionDescription(functionName),
-        parameters: this.getFunctionParameters(functionName),
+        parameters: this.getFunctionParameters(functionName, conversation),
       },
     }));
   }
@@ -366,13 +386,6 @@ Remember: You can only READ data, never modify or delete anything.`;
         "Aggregates group expenses for a specified time period. Returns total amount and optional breakdown per member.",
       search_expenses:
         "Searches for specific expenses based on keywords in description, date range, payer, or amount range.",
-      analyze_spending_trends:
-        "Compares spending between time periods to identify trends. Returns percentage change and insights.",
-      get_top_expenses: "Returns the top N largest expenses in the group, optionally filtered by time period.",
-      get_member_statistics:
-        "Aggregates spending statistics per group member: number of transactions, total amount spent, average expense.",
-      generate_group_report:
-        "Generates a comprehensive financial report for the group including total expenses, top expenses, member balances, and transaction count.",
       get_expenses: "Fetches raw expense data from the group with pagination and optional filters.",
       get_members: "Retrieves the list of group members with basic information.",
       get_group_metadata:
@@ -390,17 +403,25 @@ Remember: You can only READ data, never modify or delete anything.`;
   /**
    * Get function parameters schema
    */
-  private getFunctionParameters(functionName: string): Record<string, unknown> {
-    // Simplified parameter schemas - in production, these should come from a central schema
+  private getFunctionParameters(
+    functionName: string,
+    conversation: { group_id: string | null }
+  ): Record<string, unknown> {
+    // If conversation has group_id, make it optional (uses conversation context)
+    // If dashboard conversation, make it required
+    const hasGroupContext = conversation.group_id !== null;
+
     const baseParams = {
       type: "object",
       properties: {
         group_id: {
           type: "string",
-          description: "The unique identifier of the group (UUID format)",
+          description: hasGroupContext
+            ? "Optional - automatically uses conversation group context. Do not provide this parameter."
+            : "Required - the unique identifier of the group (UUID format). Use list_user_groups to find available groups.",
         },
       },
-      required: ["group_id"],
+      required: hasGroupContext ? [] : ["group_id"],
     };
 
     // Add function-specific parameters
@@ -435,23 +456,6 @@ Remember: You can only READ data, never modify or delete anything.`;
           },
           limit: { type: "integer", minimum: 1, maximum: 50, default: 10 },
         },
-      },
-      analyze_spending_trends: {
-        ...baseParams,
-        properties: {
-          ...baseParams.properties,
-          current_period_start: { type: "string", format: "date" },
-          current_period_end: { type: "string", format: "date" },
-          comparison_period_start: { type: "string", format: "date" },
-          comparison_period_end: { type: "string", format: "date" },
-        },
-        required: [
-          "group_id",
-          "current_period_start",
-          "current_period_end",
-          "comparison_period_start",
-          "comparison_period_end",
-        ],
       },
       list_user_groups: {
         type: "object",

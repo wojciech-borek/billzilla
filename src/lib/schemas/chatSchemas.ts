@@ -27,14 +27,7 @@ export const chatRequestSchema = z.object({
 /**
  * Message type enum schema
  */
-export const messageTypeSchema = z.enum([
-  "user_text",
-  "ai_text",
-  "ai_function_call",
-  "ai_function_result",
-  "ai_error",
-  "system_info",
-]);
+export const messageTypeSchema = z.enum(["user_text", "ai_text", "ai_function_call", "ai_error", "system_info"]);
 
 /**
  * Chat message metadata schema

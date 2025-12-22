@@ -4,7 +4,6 @@ import { listGroups } from "@/lib/services/groupService";
 import { createMockSupabaseClient, type MockSupabaseClient } from "../testHelpers";
 
 import { BalanceService } from "@/lib/services/balanceService";
-import { getGroupExpenses } from "@/lib/services/expenseService";
 // import { getGroupMemberDetails } from "@/lib/services/memberService";
 
 // Mock the services
@@ -318,49 +317,6 @@ describe("FunctionExecutor", () => {
 
       expect(result.success).toBe(false);
       expect(result.error).toContain("Group ID is required");
-    });
-  });
-  describe("analyze_spending_trends date filtering", () => {
-    it("should include expenses on the end date with time component", async () => {
-      // Arrange
-      const userId = "user-123";
-      const groupId = "group-1";
-      const mockExpenses = [
-        {
-          id: "exp-1",
-          amount_in_base_currency: 100,
-          expense_date: "2025-12-20T15:30:00.000Z", // Afternoon expense
-          group_id: groupId,
-        },
-      ];
-
-      // Mock getGroupExpenses to return our test expense
-      vi.mocked(getGroupExpenses).mockResolvedValue({
-        data: mockExpenses,
-      } as any);
-
-      const executor = new FunctionExecutor({
-        supabase: mockSupabaseClient,
-        userId,
-        groupId,
-      });
-
-      // Act
-      // Request analysis ending on 2025-12-20
-      const result = await executor.execute("analyze_spending_trends", {
-        group_id: groupId,
-        current_period_start: "2025-12-01",
-        current_period_end: "2025-12-20", // The day of the expense
-        comparison_period_start: "2025-11-01",
-        comparison_period_end: "2025-11-30",
-      });
-
-      // Assert
-      expect(result.success).toBe(true);
-      // Logic bug: if end date is 00:00:00, this will be 0 instead of 100
-      // We expect it to be 100 if working correctly
-      const data = result.data as any;
-      expect(data.current_period.total).toBe(100);
     });
   });
 });

@@ -6,7 +6,7 @@ Folder `.ai` zawiera dokumentację techniczną, plany implementacyjne i specyfik
 
 ### 📁 `architecture/`
 Dokumenty opisujące architekturę systemu:
-- `ai-services/` - plany implementacji usług AI
+- `ai-services/` - implementacja usług AI
   - `llm-tools-schema.md` - schemat narzędzi (tools) dla LLM w standardzie OpenAI/OpenRouter
   - `backend-function-calling-architecture.md` - architektura backendu dla Function Calling (OpenRouter), zabezpieczenia, baza danych
 - `api/` - specyfikacja API REST

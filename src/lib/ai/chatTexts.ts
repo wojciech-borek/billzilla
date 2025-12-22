@@ -15,10 +15,6 @@ export const CHAT_TEXTS = {
     get_member_balances: "Sprawdzam salda uczestników...",
     get_expenses_summary: "Analizuję wydatki z wybranego okresu...",
     search_expenses: "Szukam transakcji...",
-    analyze_spending_trends: "Porównuję okresy i identyfikuję trendy...",
-    get_top_expenses: "Sortuję największe wydatki...",
-    get_member_statistics: "Obliczam statystyki uczestników...",
-    generate_group_report: "Generuję raport finansowy...",
     // Generic low-level tools
     get_expenses: "Pobieram dane o wydatkach...",
     get_members: "Pobieram listę uczestników...",
@@ -87,16 +83,5 @@ export const CHAT_TEXTS = {
    */
   expenseList: {
     title: "Wyniki wyszukiwania",
-  },
-
-  /**
-   * Trend analysis card specific texts
-   */
-  trends: {
-    title: "Analiza trendów",
-    increase: "Wzrost wydatków",
-    decrease: "Spadek wydatków",
-    noChange: "Bez zmian",
-    insight: "Insight:",
   },
 } as const;

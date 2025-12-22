@@ -3,16 +3,12 @@
  *
  * Renders a single chat message with appropriate styling based on type:
  * - user_text: User message bubble
- * - ai_text: AI text response
+ * - ai_text: AI text response (simplified chat - all results formatted as text)
  * - ai_function_call: Loading state for function execution
- * - ai_function_result: SmartCard component based on function type
  * - ai_error: Error card
  */
 
-import { Suspense } from "react";
 import type { ChatMessage as ChatMessageType, FunctionName } from "@/lib/ai/chatTypes";
-import { getComponentMapping } from "@/lib/ai/chatComponentMapping";
-import { ChatDataTransformer } from "@/lib/ai/ChatDataTransformer";
 import { FunctionCallLoadingCard } from "./loading/FunctionCallLoadingCard";
 import { TypingIndicator } from "./loading/TypingIndicator";
 import { ErrorCard } from "./errors/ErrorCard";
@@ -54,32 +50,6 @@ export function ChatMessage({ message, onRetry }: ChatMessageProps) {
     return (
       <div className="mb-4">
         <FunctionCallLoadingCard functionName={functionName} />
-      </div>
-    );
-  }
-
-  // AI function result - render SmartCard
-  if (message.type === "ai_function_result") {
-    const functionName = message.metadata?.functionName as FunctionName;
-    const mapping = getComponentMapping(functionName);
-
-    if (!mapping) {
-      // Fallback - render JSON (dev mode)
-      return (
-        <div className="mb-4 bg-muted p-4 rounded-xl">
-          <pre className="text-xs overflow-x-auto">{JSON.stringify(message.content, null, 2)}</pre>
-        </div>
-      );
-    }
-
-    const SmartCardComponent = mapping.component;
-    const transformedData = ChatDataTransformer.transform(functionName, message.content);
-
-    return (
-      <div className="mb-4">
-        <Suspense fallback={<FunctionCallLoadingCard functionName={functionName} />}>
-          <SmartCardComponent data={transformedData} />
-        </Suspense>
       </div>
     );
   }

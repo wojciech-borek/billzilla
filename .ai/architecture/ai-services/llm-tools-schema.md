@@ -1,7 +1,8 @@
 # LLM Tools Schema - AI Chat Assistant
 
-**Data:** 2025-12-20  
-**Status:** 📋 Planowanie  
+**Data:** 2025-12-22  
+**Status:** ✅ Zaimplementowane  
+**Model:** `anthropic/claude-3-haiku` (OpenRouter)  
 **Format:** OpenAI Function Calling / OpenRouter Compatible
 
 ---
@@ -12,37 +13,37 @@ Definiuje strukturę `tools` dla modelu LLM zgodnie ze standardem OpenAI, używa
 
 ---
 
-## 🔄 Strategia: Hybrid Approach
+## 🔄 Strategia: Simplified Approach
 
 ### Filozofia
 
-Schemat wykorzystuje **podejście hybrydowe**, łączące dwa typy narzędzi:
+Schemat wykorzystuje **uproszczone podejście**, skupiające się na podstawowych narzędziach do odczytu danych:
 
 **1. Generic Low-Level Tools** (z paginacją)
-- Dają AI bezpośredni dostęp do surowych danych
-- Umożliwiają elastyczne analizy i niestandardowe zapytania
-- AI może samodzielnie filtrować, agregować, sortować
+- Bezpośredni dostęp do surowych danych
+- Elastyczne filtrowanie i wyszukiwanie
+- AI samodzielnie analizuje dane tekstowo
 
-**2. Specialized High-Level Tools** (pre-agregowane)
-- Zoptymalizowane dla najczęstszych use case'ów
-- Szybsze odpowiedzi, niższe koszty (mniej tokenów)
-- Backend wykonuje ciężkie obliczenia
+**2. Specialized High-Level Tools** (podstawowe agregacje)
+- Proste podsumowania i salda
+- Szybkie odpowiedzi na typowe pytania
+- Brak ciężkich obliczeń i wykresów
 
 ### Kiedy AI używa których tools?
 
 | Typ zapytania | Tool type | Przykład |
 |---------------|-----------|----------|
 | Typowe, proste | **Specialized** | "Ile wydaliśmy w grudniu?" → `get_expenses_summary` |
-| Złożone, niestandardowe | **Generic** | "Pokaż wydatki > średniej z 3 miesięcy" → `get_expenses` + własna analiza |
-| Porównania okresów | **Specialized** | "Czy wydajemy więcej?" → `analyze_spending_trends` |
-| Ad-hoc wyszukiwanie | **Generic/Hybrid** | "Pizza + piwo wczoraj" → `search_expenses` lub `get_expenses` |
+| Wyszukiwanie | **Specialized** | "Pizza wczoraj" → `search_expenses` |
+| Surowe dane | **Generic** | "Pokaż wszystkie wydatki" → `get_expenses` |
+| Salda | **Specialized** | "Kto ile wisi?" → `get_member_balances` |
 
-### Korzyści hybrydowego podejścia
+### Korzyści uproszczonego podejścia
 
-- ✅ **80% zapytań = szybko i tanio** (specialized tools)
-- ✅ **20% edge cases = elastycznie** (generic tools)
-- ✅ **AI może być kreatywne** przy nietypowych pytaniach
-- ✅ **Nie trzeba przewidywać wszystkich scenariuszy**
+- ✅ **Niskie koszty** - lżejszy model (`claude-3-haiku`)
+- ✅ **Wysoka stabilność** - brak timeoutów
+- ✅ **Szybkie odpowiedzi** - proste operacje
+- ✅ **Tekstowe odpowiedzi** - bez skomplikowanych wizualizacji
 
 ---
 
@@ -271,9 +272,9 @@ Zwraca pełne metadane grupy: ustawienia, waluty, daty utworzenia, status archiw
 
 ---
 
-### Kategoria 2: Specialized High-Level Tools (Pre-Aggregated)
+### Kategoria 2: Specialized High-Level Tools (Podstawowe Agregacje)
 
-### Epic 1: Podstawowe zapytania o wydatki
+Proste, zoptymalizowane funkcje dla najczęstszych zapytań. Zwracają tekstowe podsumowania bez ciężkich obliczeń.
 
 #### 1. `get_member_balances`
 
