@@ -116,7 +116,7 @@ export function useChatAPI({ groupId, onError }: UseChatAPIOptions): UseChatAPIR
     async function fetchHistory() {
       setIsLoading(true);
       setError(null);
-      
+
       try {
         const queryParams = new URLSearchParams();
         if (groupId === "general") {
@@ -126,17 +126,17 @@ export function useChatAPI({ groupId, onError }: UseChatAPIOptions): UseChatAPIR
         }
 
         const response = await fetch(`/api/chat?${queryParams.toString()}`);
-        
+
         if (!response.ok) {
-           // If 404, it might just mean no conversation yet, which is fine
-           if (response.status === 404) {
-             return;
-           }
-           throw new Error("Failed to load chat history");
+          // If 404, it might just mean no conversation yet, which is fine
+          if (response.status === 404) {
+            return;
+          }
+          throw new Error("Failed to load chat history");
         }
 
         const data: ChatResponse = await response.json();
-        
+
         if (isMounted) {
           if (data.messages && data.messages.length > 0) {
             setMessages(data.messages);
@@ -145,7 +145,7 @@ export function useChatAPI({ groupId, onError }: UseChatAPIOptions): UseChatAPIR
         }
       } catch (err) {
         console.error("Failed to fetch chat history:", err);
-        // Don't show visible error to user for history fetch failure, 
+        // Don't show visible error to user for history fetch failure,
         // just start with empty chat
       } finally {
         if (isMounted) {
