@@ -508,4 +508,35 @@ Remember: You can only READ data, never modify or delete anything.`;
 
     return specificParams[functionName] || baseParams;
   }
+
+  /**
+   * Get latest conversation history
+   */
+  async getLatestConversation(userId: string, groupId: string | null): Promise<ChatResponse> {
+    const startTime = Date.now();
+
+    // 1. Get or create conversation
+    const conversation = await this.conversationRepo.getOrCreateConversation(userId, groupId);
+
+    // 2. Get message history
+    // Frontend limit: 50 messages
+    const history = await this.conversationRepo.getMessageHistory(conversation.id, 50);
+
+    // 3. Build response
+    const processingTime = Date.now() - startTime;
+    return {
+      conversation_id: conversation.id,
+      messages: history,
+      metadata: {
+        tokens_used: 0,
+        model: "none",
+        function_calls_count: 0,
+        processing_time_ms: processingTime,
+      },
+      rate_limit: {
+        remaining: 100,
+        reset_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+      },
+    };
+  }
 }

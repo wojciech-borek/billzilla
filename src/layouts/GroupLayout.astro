@@ -16,16 +16,13 @@ const { groupId, groupDetails, user: _user } = Astro.props;
 // Group details are passed from individual pages after SSR verification
 ---
 
-<Layout title={`${groupDetails.name} - Billzilla`}>
+<Layout title={`${groupDetails.name} - Billzilla`} groupId={groupId} groupName={groupDetails.name}>
   <div class="min-h-screen bg-background">
     <Header client:load groupName={groupDetails.name} groupId={groupId} userRole={groupDetails.my_role} />
 
-    <!-- Main content area -->
+    {/* Main content area */}
     <main class="container mx-auto px-4 py-6" role="main">
       <slot />
     </main>
-
-    <!-- AI Chat FAB -->
-    <ChatButton client:load groupId={groupId} groupName={groupDetails.name} />
   </div>
 </Layout>

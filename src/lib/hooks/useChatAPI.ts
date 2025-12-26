@@ -5,7 +5,7 @@
  * Handles sending messages, managing conversation state, and processing responses
  */
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import type { ChatMessage, ChatResponse } from "@/lib/ai/chatTypes";
 
 interface UseChatAPIOptions {
@@ -108,6 +108,63 @@ export function useChatAPI({ groupId, onError }: UseChatAPIOptions): UseChatAPIR
     setConversationId(null);
     setError(null);
   }, []);
+
+  // Fetch initial history
+  useEffect(() => {
+    let isMounted = true;
+
+    async function fetchHistory() {
+      setIsLoading(true);
+      setError(null);
+      
+      try {
+        const queryParams = new URLSearchParams();
+        if (groupId === "general") {
+          queryParams.append("group_id", "null");
+        } else {
+          queryParams.append("group_id", groupId);
+        }
+
+        const response = await fetch(`/api/chat?${queryParams.toString()}`);
+        
+        if (!response.ok) {
+           // If 404, it might just mean no conversation yet, which is fine
+           if (response.status === 404) {
+             return;
+           }
+           throw new Error("Failed to load chat history");
+        }
+
+        const data: ChatResponse = await response.json();
+        
+        if (isMounted) {
+          if (data.messages && data.messages.length > 0) {
+            setMessages(data.messages);
+            setConversationId(data.conversation_id);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch chat history:", err);
+        // Don't show visible error to user for history fetch failure, 
+        // just start with empty chat
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    }
+
+    if (groupId) {
+      // Reset state when changing groups
+      setMessages([]);
+      setConversationId(null);
+      fetchHistory();
+    }
+
+    return () => {
+      isMounted = false;
+    };
+  }, [groupId]);
 
   return {
     messages,
