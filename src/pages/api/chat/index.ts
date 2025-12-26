@@ -109,7 +109,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const chatResponse: ChatResponse = await chatService.processChatMessage({
       userId: locals.user.id,
       groupId: group_id,
-      conversationId: conversation_id,
+      conversationId: conversation_id || undefined,
       message,
       context,
     });
@@ -144,6 +144,91 @@ export const POST: APIRoute = async ({ request, locals }) => {
       error: {
         code: "INTERNAL_SERVER_ERROR",
         message: `An unexpected error occurred while processing your message: ${error instanceof Error ? error.message : String(error)}`,
+      },
+    };
+    return new Response(JSON.stringify(errorResponse), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+};
+
+/**
+ * GET /api/chat
+ * Retrieves chat history for a group or dashboard conversation
+ *
+ * Query params:
+ * - group_id (required): UUID of the group or 'null' for dashboard
+ *
+ * @returns 200 - Chat response with messages
+ * @returns 401 - Unauthorized
+ * @returns 400 - Validation error
+ * @returns 500 - Internal server error
+ */
+export const GET: APIRoute = async ({ request, locals }) => {
+  try {
+    // 1. Check authentication
+    if (!locals.user) {
+      const errorResponse: ErrorResponseDTO = {
+        error: {
+          code: "UNAUTHORIZED",
+          message: "Authentication required",
+        },
+      };
+      return new Response(JSON.stringify(errorResponse), {
+        status: 401,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    // 2. Parse query params
+    const url = new URL(request.url);
+    const groupIdParam = url.searchParams.get("group_id");
+
+    // group_id can be a UUID or explicitly "null" string (for dashboard)
+    // If it's effectively null/empty, we treat it as global dashboard
+    let groupId: string | null = groupIdParam;
+    if (groupId === "null" || groupId === "undefined" || !groupId) {
+      groupId = null;
+    }
+
+    // 3. Setup OpenRouter API (needed for ChatService init)
+    const openRouterApiKey = import.meta.env.OPENROUTER_API_KEY;
+    if (!openRouterApiKey) {
+      const errorResponse: ErrorResponseDTO = {
+        error: {
+          code: "CONFIGURATION_ERROR",
+          message: "AI service is not properly configured",
+        },
+      };
+      return new Response(JSON.stringify(errorResponse), {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    // 4. Initialize ChatService
+    const chatService = new ChatService({
+      supabase: locals.supabase,
+      openRouterApiKey,
+    });
+
+    // 5. Get conversation history
+    const chatResponse: ChatResponse = await chatService.getLatestConversation(locals.user.id, groupId);
+
+    // 6. Return response
+    return new Response(JSON.stringify(chatResponse), {
+      status: 200,
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+  } catch (error) {
+    console.error("[ChatAPI] Unexpected error in GET:", error);
+    const errorResponse: ErrorResponseDTO = {
+      error: {
+        code: "INTERNAL_SERVER_ERROR",
+        message: "An unexpected error occurred while fetching chat history",
       },
     };
     return new Response(JSON.stringify(errorResponse), {
