@@ -384,8 +384,7 @@ AMBIGUITY:
 High confidence (>80%)? Assume intent + state assumption.
 Low confidence? Ask clarification BEFORE calling tools.
 
-You can only READ data, never modify.`
-    .trim();
+You can only READ data, never modify.`.trim();
   }
 
   /**
