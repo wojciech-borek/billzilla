@@ -194,7 +194,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     // Handle invitations separately (create invitations instead of direct membership)
     if (sanitizedEmails && sanitizedEmails.length > 0) {
-      const { createInvitationForExistingUser, createInvitationForNewUser, findUserByEmail } =
+      const { createInvitationForExistingUser, createInvitationForNewUser, findUserByEmail, deriveUserDisplayName } =
         await import("../../../lib/services/invitationService");
 
       const { sendInvitationEmail } = await import("../../../lib/services/emailService");
@@ -211,18 +211,18 @@ export const POST: APIRoute = async ({ request, locals }) => {
             invitation = await createInvitationForExistingUser(supabase, result.id, email, existingUserId);
 
             // Fetch invited user's profile to get their name
-            const { data: invitedUserProfile } = await supabase
+            const { data: invitedUserProfile, error: profileError } = await supabase
               .from("profiles")
               .select("full_name, email")
               .eq("id", existingUserId)
               .single();
 
+            if (profileError) {
+              console.error(`[CreateGroupAPI] Failed to fetch profile for user ${existingUserId}:`, profileError);
+            }
+
             // Derive user name with fallback chain
-            const userName =
-              invitedUserProfile?.full_name ||
-              invitedUserProfile?.email?.split("@")[0] ||
-              email.split("@")[0] ||
-              "Użytkowniku";
+            const userName = deriveUserDisplayName(invitedUserProfile, email);
 
             // Send email to existing user
             await sendInvitationEmail(supabase, email, result.id, "existing_user", {

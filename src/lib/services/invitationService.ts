@@ -44,6 +44,20 @@ export class InvitationAlreadyProcessedError extends InvitationOperationError {
 }
 
 /**
+ * Derives a user's display name from their profile data
+ *
+ * @param profile - User profile data (or null if fetch failed)
+ * @param fallbackEmail - Email to use as fallback
+ * @returns Derived display name with fallback chain
+ */
+export function deriveUserDisplayName(
+  profile: { full_name?: string | null; email?: string | null } | null,
+  fallbackEmail: string
+): string {
+  return profile?.full_name || profile?.email?.split("@")[0] || fallbackEmail.split("@")[0] || "Użytkowniku";
+}
+
+/**
  * Creates an invitation for an existing user
  *
  * @param supabase - Supabase client instance

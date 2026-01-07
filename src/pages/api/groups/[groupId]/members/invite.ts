@@ -9,6 +9,7 @@ import {
   createInvitationForExistingUser,
   createInvitationForNewUser,
   findUserByEmail,
+  deriveUserDisplayName,
   InvitationOperationError,
 } from "@/lib/services/invitationService";
 import { sendInvitationEmail } from "@/lib/services/emailService";
@@ -166,18 +167,18 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
           invitation = await createInvitationForExistingUser(supabase, groupId, email, existingUserId);
 
           // Fetch invited user's profile to get their name
-          const { data: invitedUserProfile } = await supabase
+          const { data: invitedUserProfile, error: profileError } = await supabase
             .from("profiles")
             .select("full_name, email")
             .eq("id", existingUserId)
             .single();
 
+          if (profileError) {
+            console.error(`[InviteMembersAPI] Failed to fetch profile for user ${existingUserId}:`, profileError);
+          }
+
           // Derive user name with fallback chain
-          const userName =
-            invitedUserProfile?.full_name ||
-            invitedUserProfile?.email?.split("@")[0] ||
-            email.split("@")[0] ||
-            "Użytkowniku";
+          const userName = deriveUserDisplayName(invitedUserProfile, email);
 
           // Send email to existing user
           await sendInvitationEmail(supabase, email, groupId, "existing_user", {
