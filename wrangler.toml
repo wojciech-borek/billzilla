@@ -8,6 +8,11 @@ compatibility_flags = ["nodejs_compat", "disable_nodejs_process_v2"]
 # The following environment variables should be configured in Cloudflare Pages dashboard:
 # - OPENAI_API_KEY: Your OpenAI API key
 # - OPENROUTER_API_KEY: Your OpenRouter API key
+# - APP_URL: Your app URL (e.g., https://billzilla.pages.dev)
+#
+# For Supabase environment variables (SMTP), set them in Supabase Dashboard:
+# - SMTP_USER: Your Gmail address (e.g., your-gmail@gmail.com)
+# - SMTP_PASS: Your Gmail App Password (16 characters, no spaces)
 #
 # IMPORTANT: Make sure to enable "Functions" in the Environment Variables settings
 # so they are available to server-side functions at runtime.
@@ -16,3 +21,4 @@ compatibility_flags = ["nodejs_compat", "disable_nodejs_process_v2"]
 # [vars]
 # OPENAI_API_KEY = "your-openai-api-key-here"
 # OPENROUTER_API_KEY = "your-openrouter-api-key-here"
+# APP_URL = "http://localhost:4321"

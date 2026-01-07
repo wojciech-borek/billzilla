@@ -35,8 +35,7 @@ export interface ExistingUserInvitationVariables {
   user_name: string;
   inviter_name: string;
   group_name: string;
-  accept_url: string;
-  decline_url: string;
+  app_url: string;
 }
 
 /**
@@ -45,8 +44,7 @@ export interface ExistingUserInvitationVariables {
 export interface NewUserInvitationVariables {
   inviter_name: string;
   group_name: string;
-  signup_url: string;
-  invitation_token: string;
+  app_url: string;
 }
 
 /**
@@ -133,100 +131,6 @@ export async function sendInvitationEmail(
   }
 }
 
-/**
- * Generates a secure invitation token
- *
- * @param invitationId - ID of the invitation
- * @returns Secure token string
- */
-export async function generateInvitationToken(invitationId: string): Promise<string> {
-  const secret = process.env.INVITATION_TOKEN_SECRET;
-  if (!secret) {
-    throw new EmailOperationError(
-      "generate token",
-      "INVITATION_TOKEN_SECRET environment variable is required for secure token generation"
-    );
-  }
-  const timestamp = Date.now();
-  const data = `${invitationId}:${timestamp}`;
-
-  // Use Web Crypto API for workerd compatibility
-  const encoder = new TextEncoder();
-  const key = encoder.encode(secret);
-  const message = encoder.encode(data);
-
-  // Simple HMAC implementation using Web Crypto API
-  const cryptoKey = await crypto.subtle.importKey("raw", key, { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
-
-  const signature = await crypto.subtle.sign("HMAC", cryptoKey, message);
-  const signatureHex = Array.from(new Uint8Array(signature))
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
-
-  // Runtime-agnostic base64url encoding
-  const tokenData = `${data}:${signatureHex}`;
-
-  // Check if Buffer with base64url support is available (Node.js)
-  if (typeof Buffer !== "undefined" && typeof Buffer.from === "function") {
-    try {
-      return Buffer.from(tokenData).toString("base64url");
-    } catch {
-      // Fallback if base64url is not supported
-    }
-  }
-
-  // Fallback implementation for environments without Buffer base64url support
-  const textEncoder = new TextEncoder();
-  const bytes = textEncoder.encode(tokenData);
-
-  // Convert bytes to binary string
-  let binary = "";
-  for (const byte of bytes) {
-    binary += String.fromCharCode(byte);
-  }
-
-  // Convert to base64
-  const base64 = globalThis.btoa(binary);
-
-  // Convert to base64url: replace +, / with -, _ and strip =
-  return base64.replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
-}
-
-/**
- * Verifies an invitation token
- *
- * @param token - Token to verify
- * @returns Invitation ID if valid, null if invalid or expired
- */
-export function verifyInvitationToken(token: string): string | null {
-  const _secret = process.env.INVITATION_TOKEN_SECRET;
-  if (!_secret) {
-    throw new EmailOperationError(
-      "verify token",
-      "INVITATION_TOKEN_SECRET environment variable is required for secure token verification"
-    );
-  }
-
-  try {
-    const decoded = Buffer.from(token, "base64url").toString();
-    const [invitationId, timestamp, _signature] = decoded.split(":");
-
-    // Check if token is expired (30 days)
-    const tokenAge = Date.now() - parseInt(timestamp);
-    const maxAge = 30 * 24 * 60 * 60 * 1000; // 30 days in milliseconds
-
-    if (tokenAge > maxAge) {
-      return null; // Token expired
-    }
-
-    // For verification, we'll use a simple approach since Web Crypto is async
-    // In production, consider using a synchronous crypto library
-    // For now, return invitationId (basic validation)
-    return invitationId;
-  } catch (_error) {
-    return null; // Invalid token format
-  }
-}
 
 /**
  * Loads an email template from the filesystem

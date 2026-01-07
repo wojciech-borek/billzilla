@@ -6,19 +6,20 @@
     <title>Zaproszenie do grupy w Billzilla</title>
     <style>
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             line-height: 1.6;
-            color: #333;
+            color: #0C2231;
             max-width: 600px;
             margin: 0 auto;
             padding: 20px;
-            background-color: #f8f9fa;
+            background-color: #f9fafb;
         }
         .container {
-            background-color: white;
+            background-color: #ffffff;
             padding: 30px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border-radius: 1.5rem;
+            box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            border: 1px solid #f9fafb;
         }
         .header {
             text-align: center;
@@ -27,33 +28,28 @@
         .logo {
             font-size: 24px;
             font-weight: bold;
-            color: #2563eb;
+            color: #49A067;
             margin-bottom: 10px;
         }
         .title {
             font-size: 20px;
             font-weight: 600;
-            color: #1f2937;
+            color: #0C2231;
             margin: 20px 0;
         }
         .content {
             margin: 20px 0;
         }
-        .group-info {
-            background-color: #f3f4f6;
+        .invitation-info {
+            background-color: #6DBE83;
             padding: 20px;
-            border-radius: 6px;
+            border-radius: 1rem;
             margin: 20px 0;
-            border-left: 4px solid #2563eb;
+            color: #0E2E24;
         }
-        .group-name {
+        .invitation-text {
             font-weight: 600;
-            color: #1f2937;
             font-size: 18px;
-        }
-        .inviter-info {
-            color: #6b7280;
-            margin-top: 8px;
         }
         .actions {
             text-align: center;
@@ -62,26 +58,30 @@
         .button {
             display: inline-block;
             padding: 12px 24px;
-            background-color: #2563eb;
-            color: white;
+            background-color: #49A067;
+            color: #0E2E24;
             text-decoration: none;
-            border-radius: 6px;
+            border-radius: 1rem;
             font-weight: 500;
-            margin: 0 10px 10px 0;
+            border: 1px solid #49A067;
+            transition: all 0.3s ease-out;
         }
         .button:hover {
-            background-color: #1d4ed8;
+            background-color: #0E2E24;
+            color: #49A067;
         }
         .features {
-            background-color: #f0f9ff;
-            border: 1px solid #0ea5e9;
-            border-radius: 6px;
+            background-color: #F49B7A;
+            border: 1px solid #F49B7A;
+            border-radius: 1rem;
             padding: 20px;
             margin: 20px 0;
+            color: #0C2231;
         }
         .features h3 {
-            color: #0c4a6e;
+            color: #0C2231;
             margin-top: 0;
+            font-weight: 600;
         }
         .features ul {
             margin: 10px 0 0 0;
@@ -89,12 +89,12 @@
         }
         .features li {
             margin-bottom: 5px;
-            color: #0c4a6e;
+            color: #0C2231;
         }
         .footer {
             margin-top: 30px;
             padding-top: 20px;
-            border-top: 1px solid #e5e7eb;
+            border-top: 1px solid #f9fafb;
             font-size: 14px;
             color: #6b7280;
             text-align: center;
@@ -105,17 +105,14 @@
     <div class="container">
         <div class="header">
             <div class="logo">Billzilla</div>
-            <h1 class="title">Zaproszenie do grupy</h1>
+            <h1 class="title">Masz zaproszenie!</h1>
         </div>
 
         <div class="content">
             <p>Cześć!</p>
 
-            <p><strong>{{inviter_name}}</strong> zaprasza Cię do dołączenia do grupy w aplikacji Billzilla.</p>
-
-            <div class="group-info">
-                <div class="group-name">{{group_name}}</div>
-                <div class="inviter-info">Zaproszenie od: {{inviter_name}}</div>
+            <div class="invitation-info">
+                <div class="invitation-text">{{inviter_name}} zaprasza Cię do grupy "{{group_name}}"</div>
             </div>
 
             <div class="features">
@@ -129,11 +126,11 @@
                 </ul>
             </div>
 
-            <p>Aby dołączyć do grupy, najpierw utwórz konto w Billzilla, a następnie zaakceptuj zaproszenie.</p>
+            <p>Aby dołączyć do grupy, utwórz konto w Billzilla i zaloguj się - zaproszenie będzie czekać na Ciebie w aplikacji.</p>
         </div>
 
         <div class="actions">
-            <a href="{{signup_url}}?invitation_token={{invitation_token}}" class="button">Utwórz konto i dołącz</a>
+            <a href="{{app_url}}" class="button">Otwórz aplikację</a>
         </div>
 
         <div class="footer">

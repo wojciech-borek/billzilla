@@ -170,22 +170,17 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
             user_name: "Użytkowniku", // Will be replaced with actual name in email service
             inviter_name: user.full_name || "Użytkownik Billzilla",
             group_name: groupName,
-            accept_url: `${process.env.APP_URL || "http://localhost:4321"}/invitations/${invitation.id}/accept`,
-            decline_url: `${process.env.APP_URL || "http://localhost:4321"}/invitations/${invitation.id}/decline`,
+            app_url: `${import.meta.env.APP_URL || "http://localhost:4321"}/login`,
           });
         } else {
           // Create invitation for new user
           invitation = await createInvitationForNewUser(supabase, groupId, email);
 
           // Send email to new user
-          const { generateInvitationToken } = await import("@/lib/services/emailService");
-          const invitationToken = await generateInvitationToken(invitation.id);
-
           await sendInvitationEmail(supabase, email, groupId, "new_user", {
             inviter_name: user.full_name || "Użytkownik Billzilla",
             group_name: groupName,
-            signup_url: `${process.env.APP_URL || "http://localhost:4321"}/signup?invitation=${invitationToken}`,
-            invitation_token: invitationToken,
+            app_url: `${import.meta.env.APP_URL || "http://localhost:4321"}/login`,
           });
         }
 

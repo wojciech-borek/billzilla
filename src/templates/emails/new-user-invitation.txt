@@ -1,11 +1,8 @@
-Billzilla - Zaproszenie do grupy
+Billzilla - Masz zaproszenie!
 
 Cześć!
 
-{{inviter_name}} zaprasza Cię do dołączenia do grupy w aplikacji Billzilla.
-
-Grupa: {{group_name}}
-Zaproszenie od: {{inviter_name}}
+{{inviter_name}} zaprasza Cię do grupy "{{group_name}}"
 
 Dlaczego warto dołączyć do Billzilla?
 - Łatwe rozliczanie: Automatyczne obliczanie kto komu jest winien pieniądze
@@ -14,8 +11,9 @@ Dlaczego warto dołączyć do Billzilla?
 - Wiele walut: Obsługa różnych walut z automatycznym przeliczaniem
 - Bezpieczeństwo: Twoje dane są chronione, a prywatność jest priorytetem
 
-Aby dołączyć do grupy, najpierw utwórz konto w Billzilla, a następnie zaakceptuj zaproszenie:
-{{signup_url}}?invitation_token={{invitation_token}}
+Aby dołączyć do grupy, utwórz konto w Billzilla i zaloguj się - zaproszenie będzie czekać na Ciebie w aplikacji.
+
+Otwórz aplikację: {{app_url}}
 
 Jeśli nie jesteś zainteresowany dołączeniem do grupy, możesz zignorować tę wiadomość.
 
