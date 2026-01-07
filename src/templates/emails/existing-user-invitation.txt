@@ -1,6 +1,6 @@
 Billzilla - Masz zaproszenie!
 
-Cześć{{#if user_name}}, {{user_name}}{{/if}}!
+Cześć, {{user_name}}!
 
 {{inviter_name}} zaprasza Cię do grupy "{{group_name}}"
 

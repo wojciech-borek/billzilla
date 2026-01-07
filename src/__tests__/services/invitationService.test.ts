@@ -276,7 +276,16 @@ describe("InvitationService Integration Tests", () => {
         error: null,
       });
 
-      // 2. Mock membership check (not a member)
+      // 2. Mock user email fetch (for verification)
+      mockSupabaseClient.from.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.select.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.eq.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.single.mockResolvedValueOnce({
+        data: { email: "user@example.com" },
+        error: null,
+      });
+
+      // 3. Mock membership check (not a member)
       mockSupabaseClient.from.mockReturnValueOnce(mockSupabaseClient);
       mockSupabaseClient.select.mockReturnValueOnce(mockSupabaseClient);
       mockSupabaseClient.eq.mockReturnValueOnce(mockSupabaseClient);
@@ -381,6 +390,15 @@ describe("InvitationService Integration Tests", () => {
       mockSupabaseClient.eq.mockReturnValueOnce(mockSupabaseClient);
       mockSupabaseClient.single.mockResolvedValueOnce({
         data: mockInvitationData,
+        error: null,
+      });
+
+      // Mock user email fetch
+      mockSupabaseClient.from.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.select.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.eq.mockReturnValueOnce(mockSupabaseClient);
+      mockSupabaseClient.single.mockResolvedValueOnce({
+        data: { email: "user@example.com" },
         error: null,
       });
 

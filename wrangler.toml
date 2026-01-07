@@ -5,17 +5,17 @@ pages_build_output_dir = "dist"
 compatibility_flags = ["nodejs_compat", "disable_nodejs_process_v2"]
 
 # Cloudflare Pages automatically provides environment variables set in the dashboard
-# The following environment variables should be configured in Cloudflare Pages dashboard:
+# The following environment variables should be configured in Cloudflare Pages dashboard
+# as Runtime Environment Variables (NOT build-time variables):
 # - OPENAI_API_KEY: Your OpenAI API key
 # - OPENROUTER_API_KEY: Your OpenRouter API key
 # - APP_URL: Your app URL (e.g., https://billzilla.pages.dev)
+# - SMTP_USER: Your Gmail address (e.g., your-gmail@gmail.com) - needed by Supabase at runtime
+# - SMTP_PASS: Your Gmail App Password (16 characters, no spaces) - needed by Supabase at runtime
 #
-# For Supabase environment variables (SMTP), set them in Supabase Dashboard:
-# - SMTP_USER: Your Gmail address (e.g., your-gmail@gmail.com)
-# - SMTP_PASS: Your Gmail App Password (16 characters, no spaces)
-#
-# IMPORTANT: Make sure to enable "Functions" in the Environment Variables settings
-# so they are available to server-side functions at runtime.
+# IMPORTANT: SMTP credentials are read by Supabase at runtime via env() function in config.toml.
+# They must be set as Runtime Environment Variables in Cloudflare Pages Project Settings,
+# NOT as build-time environment variables in the CI/CD workflow.
 
 # Uncomment and set values below ONLY for local development with wrangler dev
 # [vars]

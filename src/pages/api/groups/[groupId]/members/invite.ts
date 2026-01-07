@@ -165,9 +165,23 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
           // Create invitation for existing user
           invitation = await createInvitationForExistingUser(supabase, groupId, email, existingUserId);
 
+          // Fetch invited user's profile to get their name
+          const { data: invitedUserProfile } = await supabase
+            .from("profiles")
+            .select("full_name, email")
+            .eq("id", existingUserId)
+            .single();
+
+          // Derive user name with fallback chain
+          const userName =
+            invitedUserProfile?.full_name ||
+            invitedUserProfile?.email?.split("@")[0] ||
+            email.split("@")[0] ||
+            "Użytkowniku";
+
           // Send email to existing user
           await sendInvitationEmail(supabase, email, groupId, "existing_user", {
-            user_name: "Użytkowniku", // Will be replaced with actual name in email service
+            user_name: userName,
             inviter_name: user.full_name || "Użytkownik Billzilla",
             group_name: groupName,
             app_url: `${import.meta.env.APP_URL || "http://localhost:4321"}/login`,

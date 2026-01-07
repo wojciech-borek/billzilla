@@ -77,8 +77,6 @@ jobs:
           PUBLIC_SUPABASE_URL: ${{ secrets.PUBLIC_SUPABASE_URL }}
           PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.PUBLIC_SUPABASE_ANON_KEY }}
           INVITATION_TOKEN_SECRET: ${{ secrets.INVITATION_TOKEN_SECRET }}
-          SMTP_USER: ${{ secrets.SMTP_USER }}
-          SMTP_PASS: ${{ secrets.SMTP_PASS }}
 
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/wrangler-action@v3
