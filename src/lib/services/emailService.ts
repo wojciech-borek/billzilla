@@ -131,7 +131,6 @@ export async function sendInvitationEmail(
   }
 }
 
-
 /**
  * Loads an email template from the filesystem
  *
