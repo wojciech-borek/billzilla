@@ -185,7 +185,7 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
             user_name: userName,
             inviter_name: user.full_name || "Użytkownik Billzilla",
             group_name: groupName,
-            app_url: `${import.meta.env.APP_URL || "http://localhost:4321"}/login`,
+            app_url: import.meta.env.APP_URL || "http://localhost:4321",
           });
         } else {
           // Create invitation for new user
@@ -195,7 +195,7 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
           await sendInvitationEmail(supabase, email, groupId, "new_user", {
             inviter_name: user.full_name || "Użytkownik Billzilla",
             group_name: groupName,
-            app_url: `${import.meta.env.APP_URL || "http://localhost:4321"}/login`,
+            app_url: import.meta.env.APP_URL || "http://localhost:4321",
           });
         }
 
