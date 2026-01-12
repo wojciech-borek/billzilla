@@ -1,23 +1,16 @@
-Billzilla - Zaproszenie do grupy
+Billzilla - Masz zaproszenie!
 
-Cześć{{#if user_name}}, {{user_name}}{{/if}}!
+Cześć, {{user_name}}!
 
-{{inviter_name}} zaprasza Cię do dołączenia do grupy w aplikacji Billzilla.
-
-Grupa: {{group_name}}
-Zaproszenie od: {{inviter_name}}
+{{inviter_name}} zaprasza Cię do grupy "{{group_name}}"
 
 Informacja o prywatności: Dołączenie do grupy oznacza, że inni członkowie będą mogli zobaczyć Twoje imię oraz historię wydatków w tej grupie. Możesz opuścić grupę w dowolnym momencie.
 
-Aby dołączyć do grupy, kliknij link "Akceptuj zaproszenie":
-{{accept_url}}
+Zaloguj się do aplikacji, aby zobaczyć zaproszenie i zdecydować czy chcesz dołączyć do grupy.
 
-Jeśli nie chcesz dołączyć, kliknij link "Odrzuć zaproszenie":
-{{decline_url}}
+Otwórz aplikację: {{app_url}}
 
-Możesz też zignorować tę wiadomość.
+Jeśli nie chcesz dołączyć do grupy, możesz zignorować tę wiadomość.
 
 ---
 Ta wiadomość została wysłana automatycznie przez aplikację Billzilla.
-Jeśli nie masz konta w Billzilla, możesz je utworzyć na stronie rejestracji:
-{{signup_url}}

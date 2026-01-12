@@ -208,7 +208,7 @@ AND NOT EXISTS (
 
 
 -- Create function for sending invitation emails
--- Uses Supabase's Send Email Auth Hook approach for custom emails
+-- Uses Supabase's built-in SMTP configuration (same as auth emails)
 CREATE OR REPLACE FUNCTION send_invitation_email(
   to_email TEXT,
   email_subject TEXT,
@@ -220,57 +220,42 @@ LANGUAGE plpgsql
 SECURITY DEFINER
 AS $$
 DECLARE
-  hook_url TEXT;
-  hook_payload JSON;
-  response JSON;
+  smtp_enabled BOOLEAN := false;
 BEGIN
-  -- For production: configure Send Email Auth Hook in Supabase Dashboard
-  -- Go to Authentication > Hooks > Send Email Hook
-  -- Set webhook URL to your email service endpoint
+  -- Check if SMTP is configured in auth settings
+  SELECT COALESCE(
+    (auth.get_auth_config() -> 'email' -> 'smtp' ->> 'enabled')::BOOLEAN,
+    false
+  ) INTO smtp_enabled;
 
-  -- Get webhook URL from auth hook configuration (if configured)
-  SELECT value::TEXT INTO hook_url
-  FROM auth.hook_config
-  WHERE type = 'send_email' AND enabled = true
-  LIMIT 1;
-
-  -- If hook is configured, send via webhook
-  IF hook_url IS NOT NULL THEN
-    hook_payload := json_build_object(
-      'type', 'send_email',
-      'record', json_build_object(
-        'email', to_email,
-        'subject', email_subject,
-        'html_content', html_content,
-        'text_content', text_content
-      )
+  -- If SMTP is enabled, send email using Supabase's built-in email system
+  IF smtp_enabled THEN
+    -- Send email using Supabase's email infrastructure
+    -- This uses the same SMTP configuration as auth emails
+    PERFORM auth.send_email(
+      to_email,
+      email_subject,
+      html_content,
+      text_content
     );
-
-    -- Send to webhook (requires pg_net extension)
-    SELECT net.http_post(
-      url := hook_url,
-      headers := json_build_object('Content-Type', 'application/json'),
-      body := hook_payload
-    ) INTO response;
 
     RETURN json_build_object(
       'success', true,
-      'message', 'Email sent via auth hook',
-      'recipient', to_email,
-      'hook_url', hook_url
+      'message', 'Email sent via SMTP',
+      'recipient', to_email
     );
   END IF;
 
   -- Fallback: log email for manual processing
-  RAISE LOG 'Invitation email (no hook configured): to=%, subject=%, html_len=%',
+  RAISE LOG 'Invitation email (SMTP not configured): to=%, subject=%, html_len=%',
     to_email, email_subject, length(html_content);
 
   RETURN json_build_object(
     'success', false,
-    'message', 'Email logged (configure Send Email Auth Hook for sending)',
+    'message', 'Email logged (configure SMTP in auth.email.smtp for sending)',
     'recipient', to_email,
     'subject', email_subject,
-    'needs_hook_setup', true
+    'needs_smtp_setup', true
   );
 EXCEPTION
   WHEN OTHERS THEN

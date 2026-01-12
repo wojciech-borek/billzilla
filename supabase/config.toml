@@ -183,15 +183,15 @@ otp_length = 6
 # Number of seconds before the email OTP expires (defaults to 1 hour).
 otp_expiry = 3600
 
-# Use a production-ready SMTP server
-# [auth.email.smtp]
-# enabled = true
-# host = "smtp.mailtrap.io"
-# port = 2525
-# user = "test_user"
-# pass = "test_pass"
-# admin_email = "admin@billzilla.local"
-# sender_name = "Billzilla"
+# Use Gmail SMTP (free: 500 emails/day, unlimited time)
+[auth.email.smtp]
+enabled = true
+host = "smtp.gmail.com"
+port = 587
+user = "env(SMTP_USER)"
+pass = "env(SMTP_PASS)"
+admin_email = "noreply@billzilla.app"
+sender_name = "Billzilla"
 
 # Uncomment to customize email template
 # [auth.email.template.invite]

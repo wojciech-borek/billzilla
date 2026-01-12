@@ -194,7 +194,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     // Handle invitations separately (create invitations instead of direct membership)
     if (sanitizedEmails && sanitizedEmails.length > 0) {
-      const { createInvitationForExistingUser, createInvitationForNewUser, findUserByEmail } =
+      const { createInvitationForExistingUser, createInvitationForNewUser, findUserByEmail, deriveUserDisplayName } =
         await import("../../../lib/services/invitationService");
 
       const { sendInvitationEmail } = await import("../../../lib/services/emailService");
@@ -210,27 +210,36 @@ export const POST: APIRoute = async ({ request, locals }) => {
             // Create invitation for existing user
             invitation = await createInvitationForExistingUser(supabase, result.id, email, existingUserId);
 
+            // Fetch invited user's profile to get their name
+            const { data: invitedUserProfile, error: profileError } = await supabase
+              .from("profiles")
+              .select("full_name, email")
+              .eq("id", existingUserId)
+              .single();
+
+            if (profileError) {
+              console.error(`[CreateGroupAPI] Failed to fetch profile for user ${existingUserId}:`, profileError);
+            }
+
+            // Derive user name with fallback chain
+            const userName = deriveUserDisplayName(invitedUserProfile, email);
+
             // Send email to existing user
             await sendInvitationEmail(supabase, email, result.id, "existing_user", {
-              user_name: "Użytkowniku",
+              user_name: userName,
               inviter_name: user.full_name || "Użytkownik Billzilla",
               group_name: result.name || command.name,
-              accept_url: `${process.env.APP_URL || "http://localhost:4321"}/invitations/${invitation.id}/accept`,
-              decline_url: `${process.env.APP_URL || "http://localhost:4321"}/invitations/${invitation.id}/decline`,
+              app_url: import.meta.env.APP_URL || "http://localhost:4321",
             });
           } else {
             // Create invitation for new user
             invitation = await createInvitationForNewUser(supabase, result.id, email);
 
             // Send email to new user
-            const { generateInvitationToken } = await import("../../../lib/services/emailService");
-            const invitationToken = await generateInvitationToken(invitation.id);
-
             await sendInvitationEmail(supabase, email, result.id, "new_user", {
               inviter_name: user.full_name || "Użytkownik Billzilla",
               group_name: result.name || command.name,
-              signup_url: `${process.env.APP_URL || "http://localhost:4321"}/signup?invitation=${invitationToken}`,
-              invitation_token: invitationToken,
+              app_url: import.meta.env.APP_URL || "http://localhost:4321",
             });
           }
 

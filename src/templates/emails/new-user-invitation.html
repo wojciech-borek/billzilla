@@ -1,145 +1,75 @@
 <!DOCTYPE html>
 <html lang="pl">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Zaproszenie do grupy w Billzilla</title>
-    <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #f8f9fa;
-        }
-        .container {
-            background-color: white;
-            padding: 30px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        .logo {
-            font-size: 24px;
-            font-weight: bold;
-            color: #2563eb;
-            margin-bottom: 10px;
-        }
-        .title {
-            font-size: 20px;
-            font-weight: 600;
-            color: #1f2937;
-            margin: 20px 0;
-        }
-        .content {
-            margin: 20px 0;
-        }
-        .group-info {
-            background-color: #f3f4f6;
-            padding: 20px;
-            border-radius: 6px;
-            margin: 20px 0;
-            border-left: 4px solid #2563eb;
-        }
-        .group-name {
-            font-weight: 600;
-            color: #1f2937;
-            font-size: 18px;
-        }
-        .inviter-info {
-            color: #6b7280;
-            margin-top: 8px;
-        }
-        .actions {
-            text-align: center;
-            margin: 30px 0;
-        }
-        .button {
-            display: inline-block;
-            padding: 12px 24px;
-            background-color: #2563eb;
-            color: white;
-            text-decoration: none;
-            border-radius: 6px;
-            font-weight: 500;
-            margin: 0 10px 10px 0;
-        }
-        .button:hover {
-            background-color: #1d4ed8;
-        }
-        .features {
-            background-color: #f0f9ff;
-            border: 1px solid #0ea5e9;
-            border-radius: 6px;
-            padding: 20px;
-            margin: 20px 0;
-        }
-        .features h3 {
-            color: #0c4a6e;
-            margin-top: 0;
-        }
-        .features ul {
-            margin: 10px 0 0 0;
-            padding-left: 20px;
-        }
-        .features li {
-            margin-bottom: 5px;
-            color: #0c4a6e;
-        }
-        .footer {
-            margin-top: 30px;
-            padding-top: 20px;
-            border-top: 1px solid #e5e7eb;
-            font-size: 14px;
-            color: #6b7280;
-            text-align: center;
-        }
-    </style>
+    <title>Zaproszenie do Billzilla</title>
 </head>
-<body>
-    <div class="container">
-        <div class="header">
-            <div class="logo">Billzilla</div>
-            <h1 class="title">Zaproszenie do grupy</h1>
+
+<body
+    style="font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #0C2231; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9fafb;">
+    <div
+        style="background-color: #ffffff; padding: 40px; border-radius: 24px; box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05); border: 1px solid #f9fafb;">
+        <!-- Header -->
+        <div style="text-align: center; margin-bottom: 30px;">
+            <div style="margin-bottom: 20px;">
+                <img src="cid:logo" alt="Billzilla Logo"
+                    style="width: 120px; height: auto; display: block; margin: 0 auto;">
+                <div style="font-size: 24px; font-weight: 700; color: #49A067; margin-top: 12px;">Billzilla</div>
+            </div>
+            <h1 style="font-size: 24px; font-weight: 600; color: #0C2231; margin: 20px 0 10px 0;">Zaproszenie do
+                Billzilla!</h1>
+            <p style="font-size: 16px; color: #6b7280; margin: 0;">Ktoś chce rozliczać się z Tobą w nowej aplikacji</p>
         </div>
 
-        <div class="content">
-            <p>Cześć!</p>
+        <!-- Content -->
+        <div style="margin: 30px 0;">
+            <p style="font-size: 16px; color: #4b5563; margin-bottom: 20px;">Cześć!</p>
 
-            <p><strong>{{inviter_name}}</strong> zaprasza Cię do dołączenia do grupy w aplikacji Billzilla.</p>
-
-            <div class="group-info">
-                <div class="group-name">{{group_name}}</div>
-                <div class="inviter-info">Zaproszenie od: {{inviter_name}}</div>
+            <div style="background-color: #49A067; padding: 24px; border-radius: 24px; margin: 24px 0;">
+                <p style="font-weight: 600; font-size: 18px; margin: 0; line-height: 1.4; color: #ffffff;">
+                    {{inviter_name}} zaprasza Cię do grupy:</p>
+                <p style="font-weight: 600; font-size: 18px; margin: 8px 0 0 0; line-height: 1.4; color: #ffffff;">
+                    „{{group_name}}"</p>
             </div>
 
-            <div class="features">
-                <h3>Dlaczego warto dołączyć do Billzilla?</h3>
-                <ul>
-                    <li><strong>Łatwe rozliczanie:</strong> Automatyczne obliczanie kto komu jest winien pieniądze</li>
-                    <li><strong>Głosowe dodawanie wydatków:</strong> Wystarczy powiedzieć "Ja zapłaciłem 50 złotych za obiad"</li>
-                    <li><strong>Wspólne zarządzanie:</strong> Wszystkie wydatki w jednym miejscu, widoczne dla wszystkich członków</li>
-                    <li><strong>Wiele walut:</strong> Obsługa różnych walut z automatycznym przeliczaniem</li>
-                    <li><strong>Bezpieczeństwo:</strong> Twoje dane są chronione, a prywatność jest priorytetem</li>
+            <div
+                style="background-color: #fef3c7; border-left: 4px solid #F49B7A; border-radius: 12px; padding: 20px; margin: 24px 0;">
+                <h3 style="color: #78350f; margin-top: 0; margin-bottom: 12px; font-weight: 600; font-size: 16px;">✨
+                    Dlaczego warto dołączyć do Billzilla?</h3>
+                <ul style="margin: 0; padding-left: 20px;">
+                    <li style="margin-bottom: 8px; color: #78350f; font-size: 14px;"><strong>Łatwe rozliczanie</strong>
+                        – automatyczne obliczanie kto komu jest winien</li>
+                    <li style="margin-bottom: 8px; color: #78350f; font-size: 14px;"><strong>Głosowe dodawanie
+                            wydatków</strong> – wystarczy powiedzieć co zapłaciłeś</li>
+                    <li style="margin-bottom: 8px; color: #78350f; font-size: 14px;"><strong>Wspólne
+                            zarządzanie</strong> – wszystkie wydatki w jednym miejscu</li>
+                    <li style="margin-bottom: 8px; color: #78350f; font-size: 14px;"><strong>Wiele walut</strong> –
+                        obsługa różnych walut z automatycznym przeliczaniem</li>
+                    <li style="margin-bottom: 0; color: #78350f; font-size: 14px;"><strong>Bezpieczeństwo</strong> –
+                        Twoje dane są chronione</li>
                 </ul>
             </div>
 
-            <p>Aby dołączyć do grupy, najpierw utwórz konto w Billzilla, a następnie zaakceptuj zaproszenie.</p>
+            <p style="font-size: 14px; color: #4b5563;">Aby dołączyć do grupy, utwórz konto w Billzilla i zaloguj się.
+                Zaproszenie będzie czekać na Ciebie na dashboardzie.</p>
         </div>
 
-        <div class="actions">
-            <a href="{{signup_url}}?invitation_token={{invitation_token}}" class="button">Utwórz konto i dołącz</a>
+        <!-- CTA Button -->
+        <div style="text-align: center; margin: 32px 0;">
+            <a href="{{app_url}}"
+                style="display: inline-block; padding: 14px 32px; background-color: #49A067; color: #ffffff; text-decoration: none; border-radius: 24px; font-weight: 600; font-size: 16px; box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);">Utwórz
+                konto i dołącz</a>
         </div>
 
-        <div class="footer">
-            <p>Ta wiadomość została wysłana automatycznie przez aplikację Billzilla.</p>
-            <p>Jeśli nie jesteś zainteresowany dołączeniem do grupy, możesz zignorować tę wiadomość.</p>
+        <!-- Footer -->
+        <div
+            style="margin-top: 40px; padding-top: 24px; border-top: 1px solid #e2e8f0; font-size: 13px; color: #9ca3af; text-align: center;">
+            <p style="margin: 8px 0;">Ta wiadomość została wysłana automatycznie przez aplikację Billzilla.</p>
+            <p style="margin: 8px 0;">Jeśli nie jesteś zainteresowany, zignoruj tę wiadomość.</p>
         </div>
     </div>
 </body>
+
 </html>

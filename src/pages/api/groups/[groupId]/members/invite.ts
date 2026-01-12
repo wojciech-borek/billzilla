@@ -9,6 +9,7 @@ import {
   createInvitationForExistingUser,
   createInvitationForNewUser,
   findUserByEmail,
+  deriveUserDisplayName,
   InvitationOperationError,
 } from "@/lib/services/invitationService";
 import { sendInvitationEmail } from "@/lib/services/emailService";
@@ -165,27 +166,36 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
           // Create invitation for existing user
           invitation = await createInvitationForExistingUser(supabase, groupId, email, existingUserId);
 
+          // Fetch invited user's profile to get their name
+          const { data: invitedUserProfile, error: profileError } = await supabase
+            .from("profiles")
+            .select("full_name, email")
+            .eq("id", existingUserId)
+            .single();
+
+          if (profileError) {
+            console.error(`[InviteMembersAPI] Failed to fetch profile for user ${existingUserId}:`, profileError);
+          }
+
+          // Derive user name with fallback chain
+          const userName = deriveUserDisplayName(invitedUserProfile, email);
+
           // Send email to existing user
           await sendInvitationEmail(supabase, email, groupId, "existing_user", {
-            user_name: "Użytkowniku", // Will be replaced with actual name in email service
+            user_name: userName,
             inviter_name: user.full_name || "Użytkownik Billzilla",
             group_name: groupName,
-            accept_url: `${process.env.APP_URL || "http://localhost:4321"}/invitations/${invitation.id}/accept`,
-            decline_url: `${process.env.APP_URL || "http://localhost:4321"}/invitations/${invitation.id}/decline`,
+            app_url: import.meta.env.APP_URL || "http://localhost:4321",
           });
         } else {
           // Create invitation for new user
           invitation = await createInvitationForNewUser(supabase, groupId, email);
 
           // Send email to new user
-          const { generateInvitationToken } = await import("@/lib/services/emailService");
-          const invitationToken = await generateInvitationToken(invitation.id);
-
           await sendInvitationEmail(supabase, email, groupId, "new_user", {
             inviter_name: user.full_name || "Użytkownik Billzilla",
             group_name: groupName,
-            signup_url: `${process.env.APP_URL || "http://localhost:4321"}/signup?invitation=${invitationToken}`,
-            invitation_token: invitationToken,
+            app_url: import.meta.env.APP_URL || "http://localhost:4321",
           });
         }
 

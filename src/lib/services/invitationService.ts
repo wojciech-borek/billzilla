@@ -44,6 +44,20 @@ export class InvitationAlreadyProcessedError extends InvitationOperationError {
 }
 
 /**
+ * Derives a user's display name from their profile data
+ *
+ * @param profile - User profile data (or null if fetch failed)
+ * @param fallbackEmail - Email to use as fallback
+ * @returns Derived display name with fallback chain
+ */
+export function deriveUserDisplayName(
+  profile: { full_name?: string | null; email?: string | null } | null,
+  fallbackEmail: string
+): string {
+  return profile?.full_name || profile?.email?.split("@")[0] || fallbackEmail.split("@")[0] || "Użytkowniku";
+}
+
+/**
  * Creates an invitation for an existing user
  *
  * @param supabase - Supabase client instance
@@ -59,6 +73,9 @@ export async function createInvitationForExistingUser(
   email: string,
   inviteeProfileId: string
 ): Promise<Invitation> {
+  // Normalize email for consistency
+  const normalizedEmail = email.toLowerCase().trim();
+
   // Check if user is already a member of the group
   const { data: existingMember, error: memberError } = await supabase
     .from("group_members")
@@ -99,7 +116,7 @@ export async function createInvitationForExistingUser(
     .from("invitations")
     .insert({
       group_id: groupId,
-      email,
+      email: normalizedEmail,
       invitee_profile_id: inviteeProfileId,
       status: "pending",
     })
@@ -127,12 +144,15 @@ export async function createInvitationForNewUser(
   groupId: string,
   email: string
 ): Promise<Invitation> {
+  // Normalize email for consistency
+  const normalizedEmail = email.toLowerCase().trim();
+
   // Check if there's already a pending invitation for this email to this group
   const { data: existingInvitation, error: invitationError } = await supabase
     .from("invitations")
     .select("id, status")
     .eq("group_id", groupId)
-    .eq("email", email)
+    .eq("email", normalizedEmail)
     .is("invitee_profile_id", null)
     .eq("status", "pending")
     .single();
@@ -150,7 +170,7 @@ export async function createInvitationForNewUser(
     .from("invitations")
     .insert({
       group_id: groupId,
-      email,
+      email: normalizedEmail,
       status: "pending",
     })
     .select()
@@ -177,6 +197,9 @@ export async function getUserInvitations(
   userId: string,
   userEmail: string
 ): Promise<InvitationDTO[]> {
+  // Normalize email for consistent querying
+  const normalizedEmail = userEmail.toLowerCase().trim();
+
   const { data: invitations, error } = await supabase
     .from("invitations")
     .select(
@@ -193,7 +216,7 @@ export async function getUserInvitations(
     `
     )
     .eq("status", "pending")
-    .or(`invitee_profile_id.eq.${userId},and(email.eq.${userEmail},invitee_profile_id.is.null)`);
+    .or(`invitee_profile_id.eq.${userId},and(email.eq.${normalizedEmail},invitee_profile_id.is.null)`);
 
   if (error) {
     throw new InvitationOperationError("fetch invitations", error.message);
@@ -253,10 +276,11 @@ export async function acceptInvitation(
     throw new InvitationOperationError("fetch invitation", fetchError.message);
   }
 
-  // Check if invitation belongs to the user
+  // Check if invitation belongs to the user (case-insensitive email comparison)
   const isExistingUserInvitation = invitation.invitee_profile_id === userId;
-  const isNewUserInvitation =
-    invitation.invitee_profile_id === null && invitation.email === (await getUserEmail(supabase, userId));
+  const userEmail = (await getUserEmail(supabase, userId)).toLowerCase().trim();
+  const invitationEmail = invitation.email.toLowerCase().trim();
+  const isNewUserInvitation = invitation.invitee_profile_id === null && invitationEmail === userEmail;
 
   if (!isExistingUserInvitation && !isNewUserInvitation) {
     throw new InvitationAccessError(invitationId, userId);
@@ -348,10 +372,11 @@ export async function declineInvitation(
     throw new InvitationOperationError("fetch invitation", fetchError.message);
   }
 
-  // Check if invitation belongs to the user
-  const userEmail = await getUserEmail(supabase, userId);
+  // Check if invitation belongs to the user (case-insensitive email comparison)
+  const userEmail = (await getUserEmail(supabase, userId)).toLowerCase().trim();
+  const invitationEmail = invitation.email.toLowerCase().trim();
   const isExistingUserInvitation = invitation.invitee_profile_id === userId;
-  const isNewUserInvitation = invitation.invitee_profile_id === null && invitation.email === userEmail;
+  const isNewUserInvitation = invitation.invitee_profile_id === null && invitationEmail === userEmail;
 
   if (!isExistingUserInvitation && !isNewUserInvitation) {
     throw new InvitationAccessError(invitationId, userId);
@@ -399,9 +424,12 @@ async function getUserEmail(supabase: SupabaseClient, userId: string): Promise<s
  * @returns Profile ID if user exists, null otherwise
  */
 export async function findUserByEmail(supabase: SupabaseClient, email: string): Promise<string | null> {
+  // Normalize email for consistent user lookup
+  const normalizedEmail = email.toLowerCase().trim();
+
   // Use RPC function that bypasses RLS to find user by email
   const { data: userId, error } = await supabase.rpc("find_user_by_email_safe", {
-    email_to_find: email,
+    email_to_find: normalizedEmail,
   });
 
   if (error) {
